@@ -9,9 +9,7 @@ class RavixApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Ravix',
-      home: Scaffold(
-        body: Center(child: Text('Ravix')),
-      ),
+      home: Scaffold(body: Center(child: Text('Ravix'))),
     );
   }
 }

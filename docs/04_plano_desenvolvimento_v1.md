@@ -13,8 +13,8 @@
 
 | Módulo | Entrega | Depende de | Backlog |
 | --- | --- | --- | --- |
-| M0 · Ambiente | Fedora pronto, projeto criado, rodando no aparelho, CI verde | — | — |
-| M1 · Core | Utilitários de texto, valor, data e IDs | M0 | E01-F03-T02, T03 |
+| M0 · Ambiente ✅ | Fedora pronto, projeto criado, rodando no aparelho, CI verde | — | — |
+| M1 · Core ✅ | Utilitários de texto, valor, data e IDs | M0 | E01-F03-T02, T03 |
 | M2 · Dados | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
 | M3 · Shell e bloqueio | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
 | M4 · Tags | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
@@ -31,7 +31,7 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 | Camada | Ferramenta | Onde roda |
 | --- | --- | --- |
 | Unitário (core, providers) | `flutter_test`, `mocktail` | Fedora e CI |
-| Banco | drift com `NativeDatabase.memory()` | Fedora e CI (precisa da `libsqlite3`) |
+| Banco | drift com `NativeDatabase.memory()` | Fedora e CI (SQLite embutido pelo `sqlite3` 3.x) |
 | Widget | `flutter_test` com repositórios falsos | Fedora e CI |
 | Integração ponta a ponta | `integration_test` | Aparelho ou emulador |
 
@@ -48,33 +48,35 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Ferramentas**
 
-- [ ] Instalar o Flutter SDK (canal stable) e colocar no `PATH`; o Dart vem junto
-- [ ] Android Studio com os plugins Flutter e Dart
-- [ ] No SDK Manager: Android SDK, Platform-Tools, Command-line Tools e Build-Tools
-- [ ] `flutter doctor --android-licenses` e `flutter doctor` sem erros na parte Android
-- [ ] Dependências de teste no Fedora: `sudo dnf install sqlite-devel lcov` (a `libsqlite3` para os testes do drift e o `lcov` para o relatório de cobertura)
+- [x] Instalar o Flutter SDK (canal stable) e colocar no `PATH`; o Dart vem junto
+- [x] Android Studio com os plugins Flutter e Dart
+- [x] No SDK Manager: Android SDK, Platform-Tools, Command-line Tools e Build-Tools
+- [x] `flutter doctor --android-licenses` e `flutter doctor` sem erros na parte Android
+- [x] ~~Dependências de teste no Fedora: `sudo dnf install sqlite-devel lcov`~~ Só o `lcov` (relatório HTML de cobertura). O `sqlite3` 3.x embute o SQLite via hooks, então a `libsqlite3` do sistema não é mais necessária
 
 **Aparelho**
 
-- [ ] Aparelho físico com depuração sem fio (`adb pair`), para o dia a dia
-- [ ] Emulador (AVD) como alternativa: conferir o acesso ao KVM (`ls -l /dev/kvm`) e, se precisar, adicionar o usuário ao grupo `kvm`
+- [x] Aparelho físico com depuração sem fio (`adb pair`), para o dia a dia
+- [x] Emulador (AVD) como alternativa: conferir o acesso ao KVM (`ls -l /dev/kvm`) e, se precisar, adicionar o usuário ao grupo `kvm`
 
 **Projeto**
 
-- [ ] `flutter create --org com.seudominio --platforms android ravix`, trocando `com.seudominio` pelo seu domínio reverso
-- [ ] Repositório git com o `.gitignore` do Flutter e uma convenção de commits
-- [ ] Dependências: `drift`, `sqlite3_flutter_libs`, `flutter_riverpod`, `riverpod_annotation`, `go_router`, `local_auth`, `uuid`, `intl`, `path_provider`, `path`
-- [ ] Dependências de desenvolvimento: `drift_dev`, `riverpod_generator`, `build_runner`, `mocktail`, `integration_test` (do SDK) e o pacote de lint
-- [ ] Escolher o lint (`flutter_lints` ou `very_good_analysis`) e configurar o `analysis_options.yaml`
-- [ ] Estrutura de pastas: `lib/core`, `lib/data`, `lib/features/shell`, `lib/features/compra_avista`, `lib/features/tags`, com `test/` espelhando
-- [ ] `MainActivity` estendendo `FlutterFragmentActivity` (exigência do `local_auth`) e `minSdk` conferido na documentação do pacote
-- [ ] Atalhos (Makefile ou script) para gerar código, testar e gerar cobertura
-- [ ] CI (GitHub Actions ou equivalente): `pub get`, `build_runner`, `flutter analyze`, `flutter test --coverage`
+- [x] `flutter create --org com.seudominio --platforms android ravix`, trocando `com.seudominio` pelo seu domínio reverso
+- [x] Repositório git com o `.gitignore` do Flutter e uma convenção de commits
+- [x] Dependências: `drift`, ~~`sqlite3_flutter_libs`~~ (obsoleto com o `sqlite3` 3.x), `flutter_riverpod`, `riverpod_annotation`, `go_router`, `local_auth`, `uuid`, `intl`, `path_provider`, `path`
+- [x] Dependências de desenvolvimento: `drift_dev`, `riverpod_generator`, `build_runner`, `mocktail`, `integration_test` (do SDK) e o pacote de lint
+- [x] Escolher o lint (`flutter_lints` ou `very_good_analysis`) e configurar o `analysis_options.yaml`
+- [x] Estrutura de pastas: `lib/core`, `lib/data`, `lib/features/shell`, `lib/features/compra_avista`, `lib/features/tags`, com `test/` espelhando
+- [x] `MainActivity` estendendo `FlutterFragmentActivity` (exigência do `local_auth`) e `minSdk` conferido na documentação do pacote
+- [x] Atalhos (Makefile ou script) para gerar código, testar e gerar cobertura
+- [x] CI (GitHub Actions ou equivalente): `pub get`, `build_runner`, `flutter analyze`, `flutter test --coverage`
 
 **Testes automatizados**
 
-- [ ] Smoke test de widget: o app sobe e mostra a tela inicial
-- [ ] CI falha se o `analyze` ou algum teste falhar (validar forçando uma falha uma vez)
+- [x] Smoke test de widget: o app sobe e mostra a tela inicial
+- [x] CI falha se o `analyze` ou algum teste falhar (validar forçando uma falha uma vez)
+
+**Concluído em 24/10/2026:** Flutter 3.47.8, app `com.cintriano.ravix` rodando no Galaxy S23 Ultra (Android 16), lint `very_good_analysis`, CI no GitHub Actions verde e validado com uma falha proposital.
 
 **Pronto quando:** `flutter doctor` sem erros na parte Android, app de exemplo rodando no aparelho e CI verde com o smoke test.
 
@@ -86,16 +88,18 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Normalização de texto: minúsculas, sem acento, espaços colapsados, sem `%` e `_` (base da `descricao_normalizada` e da busca)
-- [ ] Valor: digitação → centavos (`int`) e centavos → "R$ 1.234,56" com `intl` em pt_BR
-- [ ] Datas: data local em ISO (`YYYY-MM-DDTHH:MM:SS`), auditoria em UTC com `Z`, `fuso_minutos` do aparelho e intervalo de um mês (início inclusivo, fim exclusivo)
-- [ ] Interfaces injetáveis: relógio, gerador de UUID v4 e fuso
+- [x] Normalização de texto: minúsculas, sem acento, espaços colapsados, sem `%` e `_` (base da `descricao_normalizada` e da busca)
+- [x] Valor: digitação → centavos (`int`) e centavos → "R$ 1.234,56" com `intl` em pt_BR
+- [x] Datas: data local em ISO (`YYYY-MM-DDTHH:MM:SS`), auditoria em UTC com `Z`, `fuso_minutos` do aparelho e intervalo de um mês (início inclusivo, fim exclusivo)
+- [x] Interfaces injetáveis: relógio, gerador de UUID v4 e fuso
 
 **Testes automatizados**
 
-- [ ] Normalização: "Açaí", "  PADARIA   do Zé ", texto com `%` e `_`, texto vazio
-- [ ] Valor: zero, 1 centavo, milhares, entradas inválidas rejeitadas, ida e volta centavos ↔ texto
-- [ ] Datas: virada de mês, dezembro → janeiro, fevereiro de ano bissexto, fusos −180 e +540, UTC sempre com `Z`
+- [x] Normalização: "Açaí", "  PADARIA   do Zé ", texto com `%` e `_`, texto vazio
+- [x] Valor: zero, 1 centavo, milhares, entradas inválidas rejeitadas, ida e volta centavos ↔ texto
+- [x] Datas: virada de mês, dezembro → janeiro, fevereiro de ano bissexto, fusos −180 e +540, UTC sempre com `Z`
+
+**Concluído em 24/10/2026:** `lib/core/` com `texto.dart`, `valor.dart`, `datas.dart` (inclui `Mes` e `instanteUtc`) e `ambiente.dart` (relógio, UUID e fuso); versões falsas em `test/helpers/ambiente_falso.dart`. 32 testes, cobertura de 100% no core.
 
 **Pronto quando:** testes verdes e cobertura de 90% ou mais no core.
 
