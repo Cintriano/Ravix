@@ -17,7 +17,7 @@
 | M1 · Core ✅ | Utilitários de texto, valor, data e IDs | M0 | E01-F03-T02, T03 |
 | M2 · Dados ✅ | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
 | M3 · Shell e bloqueio ✅ | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
-| M4 · Tags | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
+| M4 · Tags ✅ | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
 | M5 · Formulário | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
 | M6 · Aba à vista | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
 | M7 · Desempenho e release | Massa de teste, metas, teste ponta a ponta, build de release | M6 | DP-36 |
@@ -187,15 +187,24 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Tela de Configuração com a aba Tags, deixando espaço para renda e cartões da v2
-- [ ] Listar, criar e renomear tags (E01-F07-T09)
-- [ ] Remover tag: arquiva se houver registros, exclui se não houver, com confirmação (E01-F07-T10)
-- [ ] Mensagem clara para nome repetido
+- [x] Tela de Configuração com a aba Tags, deixando espaço para renda e cartões da v2
+- [x] Listar, criar e renomear tags (E01-F07-T09)
+- [x] Remover tag: arquiva se houver registros, exclui se não houver, com confirmação (E01-F07-T10)
+- [x] Mensagem clara para nome repetido
 
 **Testes automatizados**
 
-- [ ] Widget: criar, renomear e remover tag; nome repetido mostra a mensagem
-- [ ] Tag arquivada some da lista de ativas e continua aparecendo nos registros antigos
+- [x] Widget: criar, renomear e remover tag; nome repetido mostra a mensagem
+- [x] Tag arquivada some da lista de ativas e continua aparecendo nos registros antigos
+
+**Concluído em 24/10/2026:**
+
+- `lib/features/tags/`: lista das tags ativas em ordem alfabética, "Nova tag" no botão flutuante, tocar renomeia, o botão da linha ou deslizar para a esquerda remove. A confirmação diz quantos gastos usam a tag e se ela será excluída ou arquivada; um aviso temporário confirma o resultado.
+- Nome vazio ou repetido mostra a mensagem no próprio campo e o diálogo continua aberto.
+- `TagRepository.contarUsos` decide o texto da confirmação.
+- A Configuração abre direto na lista de Tags; a barra de abas entra quando a v2 trouxer renda e cartões.
+- `tagsAtivasProvider` escrito sem `@riverpod`: o gerador não resolve tipos vindos do código do drift no mesmo build.
+- 146 testes; cobertura de 97% em telas e providers.
 
 **Pronto quando:** testes verdes e fluxo validado no aparelho.
 

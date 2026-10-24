@@ -106,6 +106,15 @@ void main() {
     });
   });
 
+  test('conta os gastos que usam a tag', () async {
+    final tag = await tags.criar('Viagem');
+    expect(await tags.contarUsos(tag.uuidTag), 0);
+    await compras.criar(gasto(uuidTag: tag.uuidTag));
+    await compras.criar(gasto(uuidTag: tag.uuidTag));
+    await compras.criar(gasto());
+    expect(await tags.contarUsos(tag.uuidTag), 2);
+  });
+
   group('remover', () {
     test('sem registros: exclui', () async {
       final tag = await tags.criar('Viagem');

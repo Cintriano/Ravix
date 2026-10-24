@@ -79,7 +79,7 @@ final class TagRepository {
 
   /// Exclui a tag [uuid] se nenhum registro a usa; senão, arquiva.
   Future<RemocaoTag> remover(String uuid) => _banco.transaction(() async {
-    final emUso = await _banco.contarComprasDaTag(uuidTag: uuid).getSingle();
+    final emUso = await contarUsos(uuid);
     final filtro = _banco.tblTag.uuidTag.equals(uuid);
     if (emUso == 0) {
       await (_banco.delete(_banco.tblTag)..where((_) => filtro)).go();
@@ -93,6 +93,10 @@ final class TagRepository {
     );
     return RemocaoTag.arquivada;
   });
+
+  /// Quantos gastos usam a tag [uuid]. Decide entre excluir e arquivar.
+  Future<int> contarUsos(String uuid) =>
+      _banco.contarComprasDaTag(uuidTag: uuid).getSingle();
 
   /// Tags ativas em ordem alfabética, para os seletores.
   Stream<List<Tag>> observarAtivas() => _banco.tagsAtivas().watch();

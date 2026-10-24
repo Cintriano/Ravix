@@ -62,8 +62,9 @@ void main() {
       await montarApp(tester);
       await tester.tap(find.byIcon(Icones.settings));
       await tester.pumpAndSettle();
-      expect(find.text('Configuração'), findsOneWidget);
-      expect(find.text('Configuração em construção'), findsOneWidget);
+      expect(find.text('Tags'), findsOneWidget);
+      expect(find.text('Nenhuma tag'), findsOneWidget);
+      await encerrarApp(tester);
     });
   });
 

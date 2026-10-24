@@ -75,6 +75,13 @@ Future<void> montarApp(
   await tester.pumpAndSettle();
 }
 
+/// Desmonta o app e deixa correr o timer com que o drift fecha as consultas
+/// observadas. Chame no fim dos testes que mostram dados do banco.
+Future<void> encerrarApp(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox());
+  await tester.pump(const Duration(seconds: 1));
+}
+
 /// Envolve [filho] no tema do Ravix, para testar um widget isolado.
 Widget comTema(Widget filho, {Brightness brilho = Brightness.dark}) =>
     MaterialApp(

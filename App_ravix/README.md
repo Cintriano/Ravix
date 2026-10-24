@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-🚧 **Em implementação (M3 concluído: shell, tema e bloqueio).** Ainda não há versão utilizável.
+🚧 **Em implementação (M4 concluído: tags).** Ainda não há versão utilizável.
 
 ## Desenvolvimento
 
