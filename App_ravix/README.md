@@ -130,4 +130,33 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-🚧 **Em modelagem.** Ainda não há versão utilizável.
+🚧 **Em implementação (M0, ambiente).** Ainda não há versão utilizável.
+
+## Desenvolvimento
+
+Plano de implementação em [`../docs/04_plano_desenvolvimento_v1.md`](../docs/04_plano_desenvolvimento_v1.md). Requisitos: Flutter stable (3.47.8 ou mais novo) e Android SDK.
+
+| Comando | O que faz |
+| --- | --- |
+| `make get` | `flutter pub get` |
+| `make gen` | Gera o código do drift e do riverpod (`*.g.dart`) |
+| `make watch` | Gera o código a cada alteração |
+| `make analyze` | `flutter analyze` (lint `very_good_analysis`) |
+| `make test` | Testes unitários e de widget |
+| `make coverage` | Testes com relatório HTML em `coverage/html` (precisa do `lcov`) |
+| `make check` | O mesmo que o CI: get, gen, analyze e testes com cobertura |
+
+Estrutura: `lib/core` (funções puras), `lib/data` (banco e repositórios), `lib/features/<feature>` (telas e providers). A pasta `test/` espelha `lib/`; os testes ponta a ponta ficam em `integration_test/`.
+
+### Commits
+
+[Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/), com o módulo ou a task do backlog no escopo quando houver:
+
+```text
+feat(m2): repositório de compras à vista
+fix(E01-F03-T03): máscara monetária aceitava zero
+test(core): datas na virada de ano
+chore: atualiza dependências
+```
+
+Tipos: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`, `build`, `perf`.

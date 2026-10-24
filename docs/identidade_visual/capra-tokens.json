@@ -1,0 +1,101 @@
+{
+  "name": "CAPRA",
+  "version": 1,
+  "color": {
+    "themes": [{"id": "dark", "name": "Dark"}, {"id": "light", "name": "Light"}],
+    "tokens": [
+      {"name": "background", "value": {"dark": "#121416", "light": "#f3f5f6"}, "usage": "Void. Fundo principal de páginas e telas; base canônica da marca."},
+      {"name": "surface", "value": {"dark": "#181b1e", "light": "#ffffff"}, "usage": "Superfícies e cartões sobre background."},
+      {"name": "surfaceElevated", "value": {"dark": "#202428", "light": "#e8ecee"}, "usage": "Áreas elevadas, botão secundário, linhas selecionadas."},
+      {"name": "border", "value": {"dark": "#2a3035", "light": "#d0d7db"}, "usage": "Divisórias e contornos decorativos (1,3:1). Não usar como única borda de controles."},
+      {"name": "borderStrong", "value": {"dark": "#68737a", "light": "#7e8990"}, "usage": "Bordas de campos, botões secundários e controles: 3:1 ou mais sobre background, surface e surfaceElevated nos dois temas."},
+      {"name": "textPrimary", "value": {"dark": "#e8ecee", "light": "#121416"}, "usage": "Texto principal sobre background, surface e surfaceElevated (13:1 ou mais). Também o núcleo do símbolo."},
+      {"name": "textSecondary", "value": {"dark": "#aab4b9", "light": "#55606a"}, "usage": "Texto secundário, metadados e legendas sobre background, surface e surfaceElevated (5,4:1 ou mais)."},
+      {"name": "accent", "value": {"dark": "#8fb8c5", "light": "#3b6a79"}, "usage": "Cyan. Acento da CAPRA: links, navegação ativa, botão primário, foco. Legível como texto sobre todas as superfícies (5:1 ou mais)."},
+      {"name": "accentData", "value": {"dark": "#b3a6c9", "light": "#665789"}, "usage": "Lilac. Acento do contexto Dados: gráficos, datasets, analytics."},
+      {"name": "accentAutomation", "value": {"dark": "#9dbbaa", "light": "#45705a"}, "usage": "Mint. Acento do contexto Automação: jobs e fluxos."},
+      {"name": "accentFinance", "value": {"dark": "#d7afa3", "light": "#93503e"}, "usage": "Peach. Acento do contexto Finanças: transações e orçamento. Não indica estado."},
+      {"name": "accentInfra", "value": {"dark": "#d6c58f", "light": "#776220"}, "usage": "Gold. Acento do contexto Infraestrutura (substitui accentAux da v1.0)."},
+      {"name": "success", "value": "{accentAutomation}", "usage": "Estado positivo: concluído, ativo, saudável. Sempre com ícone e texto."},
+      {"name": "warning", "value": "{accentInfra}", "usage": "Estado de atenção: pendente, próximo do limite. Sempre com ícone e texto."},
+      {"name": "danger", "value": {"dark": "#e8877f", "light": "#b23a31"}, "usage": "Erro e ações destrutivas. Texto sobre background e surface (6,7:1 dark; 5,4:1 light)."},
+      {"name": "info", "value": "{accent}", "usage": "Estado informativo."},
+      {"name": "onAccent", "value": {"dark": "#121416", "light": "#ffffff"}, "usage": "Texto e ícones sobre preenchimentos de acento ou de estado (5,6:1 ou mais)."},
+      {"name": "focus", "value": "{accent}", "usage": "Cor do anel de foco; em produtos, troque pelo acento do contexto."}
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "sans": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+      "mono": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
+    },
+    "groups": [
+      {"name": "Títulos", "family": "sans", "styles": [
+        {"name": "display", "fontSize": "40px", "lineHeight": "48px", "fontWeight": 700, "letterSpacing": "-0.01em", "sample": "Uma mesma órbita", "usage": "Capas e títulos de grande impacto. Impresso: 30 pt."},
+        {"name": "h1", "fontSize": "28px", "lineHeight": "36px", "fontWeight": 700, "sample": "Pipelines de dados", "usage": "Títulos de seção. Impresso: 21 pt."},
+        {"name": "h2", "fontSize": "20px", "lineHeight": "28px", "fontWeight": 700, "sample": "Execuções desta semana", "usage": "Subseções. Impresso: 14 pt."}
+      ]},
+      {"name": "Texto", "family": "sans", "styles": [
+        {"name": "body", "fontSize": "14px", "lineHeight": "22px", "fontWeight": 400, "sample": "Partes independentes, uma mesma órbita.", "usage": "Texto de interface e documentação. Impresso: 10,5 pt."},
+        {"name": "caption", "fontSize": "12px", "lineHeight": "16px", "fontWeight": 400, "sample": "Atualizado há 3 min", "usage": "Metadados e legendas, em textSecondary. Impresso: 8,5 pt."}
+      ]},
+      {"name": "Código", "family": "mono", "styles": [
+        {"name": "code", "fontSize": "12px", "lineHeight": "18px", "fontWeight": 400, "sample": "accentFinance: #D7AFA3", "usage": "Tokens e exemplos técnicos. Impresso: 8,5 pt."}
+      ]}
+    ]
+  },
+  "spacing": {"tokens": [
+    {"name": "space-xs", "value": "4px", "usage": "Ícone e rótulo; ajustes finos."},
+    {"name": "space-sm", "value": "8px", "usage": "Itens próximos, padding de badges."},
+    {"name": "space-md", "value": "16px", "usage": "Padding de cartões e campos; gutter padrão."},
+    {"name": "space-lg", "value": "24px", "usage": "Entre grupos de conteúdo."},
+    {"name": "space-xl", "value": "32px", "usage": "Entre seções de uma tela."},
+    {"name": "space-xxl", "value": "48px", "usage": "Margens de página e respiro de banners."}
+  ]},
+  "radius": {"tokens": [
+    {"name": "radius-sm", "value": "8px", "usage": "Campos, chips, badges retangulares."},
+    {"name": "radius-md", "value": "12px", "usage": "Botões e cartões."},
+    {"name": "radius-lg", "value": "16px", "usage": "Painéis grandes e modais."},
+    {"name": "radius-pill", "value": "999px", "usage": "Badges e controles em pílula."}
+  ]},
+  "shadow": {"tokens": [
+    {"name": "focus-ring", "value": {"dark": "0 0 0 2px #121416, 0 0 0 4px #8fb8c5", "light": "0 0 0 2px #ffffff, 0 0 0 4px #3b6a79"}, "usage": "Foco por teclado: um respiro na cor do fundo e um anel de 2px no acento. Halo mínimo, sem glow."}
+  ]},
+  "icon": {"tokens": [
+    {"name": "icon-stroke-dense", "value": "1.5px", "usage": "Traço de ícones em interfaces densas."},
+    {"name": "icon-stroke", "value": "2px", "usage": "Traço de ícones em destaque."},
+    {"name": "icon-size-sm", "value": "16px", "usage": "Ícones em texto e badges."},
+    {"name": "icon-size-md", "value": "20px", "usage": "Ícones de botões e campos."},
+    {"name": "icon-size-lg", "value": "24px", "usage": "Navegação e ações principais."}
+  ]},
+  "data": {"tokens": [
+    {"name": "data-1", "value": "{accent}", "usage": "Cyan. Série 1 do modo categórico. A série principal usa o acento do produto; as demais seguem a ordem data-1 a data-4, pulando a cor já usada."},
+    {"name": "data-2", "value": "{accentData}", "usage": "Lilac. Série 2 do modo categórico."},
+    {"name": "data-3", "value": "{accentFinance}", "usage": "Peach. Série 3 do modo categórico."},
+    {"name": "data-4", "value": "{accentInfra}", "usage": "Gold. Série 4 do modo categórico. Mint (accentAutomation) nunca é cor de série."},
+    {"name": "data-other", "value": "{borderStrong}", "usage": "Séries fora do destaque e grupo Outros (3,5:1 sobre surface)."},
+    {"name": "data-seq-1", "value": {"dark": "#313a40", "light": "#ced8dc"}, "usage": "Escala sequencial, passo 1 (exemplo com Cyan: mistura de surfaceElevated até o acento). Valor sempre escrito ou na dica."},
+    {"name": "data-seq-2", "value": {"dark": "#47585f", "light": "#abbec5"}, "usage": "Escala sequencial, passo 2. Valor sempre escrito ou na dica."},
+    {"name": "data-seq-3", "value": {"dark": "#5d757e", "light": "#89a4ae"}, "usage": "Escala sequencial, passo 3."},
+    {"name": "data-seq-4", "value": {"dark": "#73939e", "light": "#668a96"}, "usage": "Escala sequencial, passo 4."},
+    {"name": "data-seq-5", "value": "{accent}", "usage": "Escala sequencial, passo 5: o próprio acento."},
+    {"name": "data-div-neg-2", "value": "{accentFinance}", "usage": "Escala divergente: muito abaixo da referência (Peach)."},
+    {"name": "data-div-neg-1", "value": {"dark": "#80706c", "light": "#b2948c"}, "usage": "Escala divergente: abaixo da referência."},
+    {"name": "data-div-0", "value": "{border}", "usage": "Escala divergente: na referência."},
+    {"name": "data-div-pos-1", "value": {"dark": "#5c747d", "light": "#86a0aa"}, "usage": "Escala divergente: acima da referência."},
+    {"name": "data-div-pos-2", "value": "{accent}", "usage": "Escala divergente: muito acima da referência (Cyan). A escala não indica se o desvio é bom ou ruim."}
+  ]},
+  "motion": {"tokens": [
+    {"name": "motion-fast", "value": "100ms", "usage": "Pressionar, hover, troca de cor."},
+    {"name": "motion-base", "value": "200ms", "usage": "Chaves, seleção, menus, dicas, troca de valores."},
+    {"name": "motion-screen", "value": "300ms", "usage": "Troca de tela, painel, folha inferior, diálogo."},
+    {"name": "motion-slow", "value": "450ms", "usage": "Onboarding, entrada de banner, gráficos que se desenham."},
+    {"name": "motion-brand", "value": "1400ms", "usage": "Entrada do logo CAPRA. Só animações de marca."},
+    {"name": "motion-brand-short", "value": "800ms", "usage": "Entrada curta do símbolo e entrada das logos filhas."},
+    {"name": "motion-loop", "value": "1200ms", "usage": "Uma volta do carregamento orbital, em velocidade constante."},
+    {"name": "ease-enter", "value": "cubic-bezier(0.2, 0, 0, 1)", "usage": "Entrada: desacelera ao chegar."},
+    {"name": "ease-exit", "value": "cubic-bezier(0.3, 0, 1, 1)", "usage": "Saída: acelera ao sair; usa o token de duração imediatamente menor que o da entrada."},
+    {"name": "motion-distance", "value": "16px", "usage": "Deslocamento máximo de um elemento ao entrar ou sair."}
+  ]}
+}

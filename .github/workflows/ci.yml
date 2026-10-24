@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: App_ravix
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      # O sqlite3 3.x embute o SQLite via hooks; não precisa de libsqlite3 no runner.
+      - run: flutter pub get
+
+      - run: dart run build_runner build --delete-conflicting-outputs
+
+      - run: flutter analyze
+
+      - run: flutter test --coverage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: App_ravix/coverage/lcov.info
