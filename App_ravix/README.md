@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-🚧 **Em implementação (M0, ambiente).** Ainda não há versão utilizável.
+🚧 **Em implementação (M3 concluído: shell, tema e bloqueio).** Ainda não há versão utilizável.
 
 ## Desenvolvimento
 
@@ -145,6 +145,8 @@ Plano de implementação em [`../docs/04_plano_desenvolvimento_v1.md`](../docs/0
 | `make test` | Testes unitários e de widget |
 | `make coverage` | Testes com relatório HTML em `coverage/html` (precisa do `lcov`) |
 | `make check` | O mesmo que o CI: get, gen, analyze e testes com cobertura |
+| `dart run tool/gerar_tokens.dart` | Gera `lib/core/tema/capra_tokens.dart` a partir de `docs/identidade_visual/capra-tokens.json` |
+| `bash tool/gerar_icones.sh` | Gera ícone, abertura e marca do app a partir dos SVGs da marca (precisa do ImageMagick com librsvg) |
 
 Estrutura: `lib/core` (funções puras), `lib/data` (banco e repositórios), `lib/features/<feature>` (telas e providers). A pasta `test/` espelha `lib/`; os testes ponta a ponta ficam em `integration_test/`.
 

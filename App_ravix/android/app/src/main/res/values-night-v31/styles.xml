@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Abertura do Android 12+: fundo no neutro do Ravix e a marca, iguais nos
+         dois temas (a marca sem fundo só aparece sobre o próprio neutro). -->
+    <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/ravix_neutro</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/abertura_marca</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ravix_neutro</item>
+        <item name="android:windowBackground">@color/ravix_neutro</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>

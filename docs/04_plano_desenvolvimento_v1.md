@@ -16,7 +16,7 @@
 | M0 · Ambiente ✅ | Fedora pronto, projeto criado, rodando no aparelho, CI verde | — | — |
 | M1 · Core ✅ | Utilitários de texto, valor, data e IDs | M0 | E01-F03-T02, T03 |
 | M2 · Dados ✅ | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
-| M3 · Shell e bloqueio | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
+| M3 · Shell e bloqueio ✅ | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
 | M4 · Tags | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
 | M5 · Formulário | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
 | M6 · Aba à vista | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
@@ -154,18 +154,28 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] `go_router` com `StatefulShellRoute`: na v1, só a aba À vista, com a estrutura pronta para Macro e Faturada da v2
-- [ ] Seletor de mês global como provider, com meses passados e futuros
-- [ ] Componentes padrão de estado de tela (carregando, vazio, erro), conforme E01-F02-T04
-- [ ] Botão flutuante de novo registro e navegação para Configuração
-- [ ] Serviço de bloqueio sobre o `local_auth` (credencial do aparelho), conforme E01-F01-T07
+- [x] `go_router` com `StatefulShellRoute`: na v1, só a aba À vista, com a estrutura pronta para Macro e Faturada da v2
+- [x] Seletor de mês global como provider, com meses passados e futuros
+- [x] Componentes padrão de estado de tela (carregando, vazio, erro), conforme E01-F02-T04
+- [x] Botão flutuante de novo registro e navegação para Configuração
+- [x] Serviço de bloqueio sobre o `local_auth` (credencial do aparelho), conforme E01-F01-T07
 
 **Testes automatizados**
 
-- [ ] Widget: o shell mostra a aba, o botão flutuante abre o formulário, a navegação leva à Configuração
-- [ ] Provider: o seletor avança e volta o mês, inclusive na virada de ano
-- [ ] Bloqueio com serviço falso: sucesso libera; falha ou cancelamento mantém o app bloqueado
-- [ ] Estados de tela: cada componente aparece no estado certo
+- [x] Widget: o shell mostra a aba, o botão flutuante abre o formulário, a navegação leva à Configuração
+- [x] Provider: o seletor avança e volta o mês, inclusive na virada de ano
+- [x] Bloqueio com serviço falso: sucesso libera; falha ou cancelamento mantém o app bloqueado
+- [x] Estados de tela: cada componente aparece no estado certo
+
+**Concluído em 24/10/2026** (com o tema CAPRA, antecipado do M7):
+
+- Tema: `lib/core/tema/capra_tokens.dart` gerado do `capra-tokens.json` por `tool/gerar_tokens.dart` (um teste falha se o JSON mudar sem gerar de novo); `tema.dart` com o mapeamento do guia mobile para o Material 3, acento Peach, Inter embarcada (400 a 700) e os dois modos seguindo o sistema. Ícones Lucide no peso 300 (`Icones`).
+- Ícone adaptativo (com camada monocromática), ícone legado e abertura do Android 12+ gerados dos SVGs da marca por `tool/gerar_icones.sh`. A marca ocupa 54% da camada do ícone, e não 58%: com 58% os arcos passam do círculo seguro de 66 dp.
+- Shell com `StatefulShellRoute` (só a aba À vista; a barra inferior aparece quando houver duas abas ou mais), seletor de mês global (tocar no nome volta para hoje), botão flutuante "Novo gasto" e acesso à Configuração. Formulário e Configuração são telas provisórias até o M4 e o M5.
+- Estados de tela: carregamento orbital (parado com animações reduzidas), vazio com espiral e erro com "Tentar de novo"; `ConteudoAssincrono` escolhe o estado a partir de um `AsyncValue`.
+- Bloqueio: pede a credencial do aparelho ao abrir e ao voltar depois de 30 s ou mais em segundo plano; aparelho sem PIN abre direto. O conteúdo fica montado atrás da tela de bloqueio, sem perder a navegação.
+- 135 testes; cobertura de 96% em telas e providers. Testado no Galaxy S23 Ultra (abertura, bloqueio e shell).
+- Em aberto: a escolha Sistema / Escuro / Claro na Configuração (o guia pede; hoje o app só segue o sistema).
 
 **Pronto quando:** testes verdes e app navegando no aparelho com o bloqueio real.
 

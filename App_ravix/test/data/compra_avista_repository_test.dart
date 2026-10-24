@@ -121,9 +121,7 @@ void main() {
     setUp(() async {
       viagem = (await tags.criar('Viagem')).uuidTag;
       final dia = DateTime(2026, 10, 10);
-      await compras.criar(
-        gasto(momento: dia, valorCentavos: 100),
-      );
+      await compras.criar(gasto(momento: dia, valorCentavos: 100));
       await compras.criar(
         gasto(momento: dia, idSubcategoria: 103, valorCentavos: 200),
       );

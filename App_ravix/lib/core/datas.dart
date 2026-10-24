@@ -53,6 +53,22 @@ DateTime instanteUtc(String isoLocal, int fusoMinutos) {
   return comoUtc.subtract(Duration(minutes: fusoMinutos));
 }
 
+/// Nomes dos meses em português, de janeiro a dezembro.
+const nomesDosMeses = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+];
+
 /// Um mês do calendário, usado pelo seletor de mês global e pelas consultas.
 ///
 /// O intervalo é semiaberto: [inicioIso] entra, [fimIso] não.
@@ -77,6 +93,12 @@ final class Mes implements Comparable<Mes> {
 
   /// Mês anterior (janeiro vira dezembro do ano anterior).
   Mes get anterior => mes == 1 ? Mes(ano - 1, 12) : Mes(ano, mes - 1);
+
+  /// Nome do mês por extenso, em minúsculas: "outubro".
+  String get nome => nomesDosMeses[mes - 1];
+
+  /// Rótulo do seletor de mês: "outubro de 2026".
+  String get rotulo => '$nome de $ano';
 
   /// Primeiro instante do mês, inclusivo: `YYYY-MM-01T00:00:00`.
   String get inicioIso => paraIsoLocal(DateTime(ano, mes));

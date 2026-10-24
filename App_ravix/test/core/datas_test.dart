@@ -117,6 +117,12 @@ void main() {
       expect(Mes(2027, 2).fimIso, '2027-03-01T00:00:00');
     });
 
+    test('nome e rótulo em português', () {
+      expect(Mes(2026, 3).nome, 'março');
+      expect(Mes(2026, 10).rotulo, 'outubro de 2026');
+      expect(Mes(2027, 1).rotulo, 'janeiro de 2027');
+    });
+
     test('Mes.de usa o mês da data', () {
       expect(Mes.de(DateTime(2026, 10, 31, 23, 59)), Mes(2026, 10));
     });
