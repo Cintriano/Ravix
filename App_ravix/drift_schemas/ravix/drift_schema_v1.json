@@ -1,0 +1,446 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": false
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "tbl_categoria",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id_categoria",
+            "getter_name": "idCategoria",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "nome",
+            "getter_name": "nome",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL UNIQUE",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "unique"
+            ]
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 1,
+      "references": [
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "tbl_subcategoria",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id_subcategoria",
+            "getter_name": "idSubcategoria",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "id_categoria",
+            "getter_name": "idCategoria",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL REFERENCES tbl_categoria(id_categoria)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tbl_categoria",
+                    "column": "id_categoria"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "nome",
+            "getter_name": "nome",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE(id_categoria, nome)",
+          "CHECK(id_subcategoria / 100 = id_categoria)"
+        ],
+        "unique_keys": [
+          [
+            "id_categoria",
+            "nome"
+          ]
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "tbl_tag",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "uuid_tag",
+            "getter_name": "uuidTag",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "nome",
+            "getter_name": "nome",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL UNIQUE COLLATE NOCASE",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "unique"
+            ]
+          },
+          {
+            "name": "status",
+            "getter_name": "status",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'ativa' CHECK (status IN ('ativa', 'arquivada'))",
+            "default_dart": "const CustomExpression('\\'ativa\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "criado_em",
+            "getter_name": "criadoEm",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "atualizado_em",
+            "getter_name": "atualizadoEm",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 3,
+      "references": [
+        1,
+        2
+      ],
+      "type": "table",
+      "data": {
+        "name": "tbl_compra_avista",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "uuid_compra_avista",
+            "getter_name": "uuidCompraAvista",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "timestamp_compra_avista",
+            "getter_name": "timestampCompraAvista",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fuso_minutos",
+            "getter_name": "fusoMinutos",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "descricao",
+            "getter_name": "descricao",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL CHECK (length(trim(descricao)) > 0)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "descricao_normalizada",
+            "getter_name": "descricaoNormalizada",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "valor_compra_avista",
+            "getter_name": "valorCompraAvista",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL CHECK (valor_compra_avista > 0)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tipo_pagamento",
+            "getter_name": "tipoPagamento",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher'))",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "id_subcategoria",
+            "getter_name": "idSubcategoria",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL REFERENCES tbl_subcategoria(id_subcategoria)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tbl_subcategoria",
+                    "column": "id_subcategoria"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "uuid_tag",
+            "getter_name": "uuidTag",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "NULL REFERENCES tbl_tag(uuid_tag)ON DELETE RESTRICT",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tbl_tag",
+                    "column": "uuid_tag"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": "restrict"
+                }
+              }
+            ]
+          },
+          {
+            "name": "criado_em",
+            "getter_name": "criadoEm",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "atualizado_em",
+            "getter_name": "atualizadoEm",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 4,
+      "references": [
+        3
+      ],
+      "type": "index",
+      "data": {
+        "on": 3,
+        "name": "idx_compra_avista_timestamp",
+        "sql": "CREATE INDEX idx_compra_avista_timestamp    ON tbl_compra_avista (timestamp_compra_avista);",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 5,
+      "references": [
+        3
+      ],
+      "type": "index",
+      "data": {
+        "on": 3,
+        "name": "idx_compra_avista_subcategoria",
+        "sql": "CREATE INDEX idx_compra_avista_subcategoria ON tbl_compra_avista (id_subcategoria);",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 6,
+      "references": [
+        3
+      ],
+      "type": "index",
+      "data": {
+        "on": 3,
+        "name": "idx_compra_avista_tag",
+        "sql": "CREATE INDEX idx_compra_avista_tag          ON tbl_compra_avista (uuid_tag);",
+        "unique": false,
+        "columns": []
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "tbl_categoria",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"tbl_categoria\" (\"id_categoria\" INTEGER NOT NULL PRIMARY KEY, \"nome\" TEXT NOT NULL UNIQUE);"
+        }
+      ]
+    },
+    {
+      "name": "tbl_subcategoria",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"tbl_subcategoria\" (\"id_subcategoria\" INTEGER NOT NULL PRIMARY KEY, \"id_categoria\" INTEGER NOT NULL REFERENCES tbl_categoria(id_categoria), \"nome\" TEXT NOT NULL, UNIQUE(id_categoria, nome), CHECK(id_subcategoria / 100 = id_categoria));"
+        }
+      ]
+    },
+    {
+      "name": "tbl_tag",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"tbl_tag\" (\"uuid_tag\" TEXT NOT NULL PRIMARY KEY, \"nome\" TEXT NOT NULL UNIQUE COLLATE NOCASE, \"status\" TEXT NOT NULL DEFAULT 'ativa' CHECK (status IN ('ativa', 'arquivada')), \"criado_em\" TEXT NOT NULL, \"atualizado_em\" TEXT NOT NULL);"
+        }
+      ]
+    },
+    {
+      "name": "tbl_compra_avista",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"tbl_compra_avista\" (\"uuid_compra_avista\" TEXT NOT NULL PRIMARY KEY, \"timestamp_compra_avista\" TEXT NOT NULL, \"fuso_minutos\" INTEGER NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840), \"descricao\" TEXT NOT NULL CHECK (length(trim(descricao)) > 0), \"descricao_normalizada\" TEXT NOT NULL, \"valor_compra_avista\" INTEGER NOT NULL CHECK (valor_compra_avista > 0), \"tipo_pagamento\" TEXT NOT NULL CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher')), \"id_subcategoria\" INTEGER NOT NULL REFERENCES tbl_subcategoria(id_subcategoria), \"uuid_tag\" TEXT NULL REFERENCES tbl_tag(uuid_tag)ON DELETE RESTRICT, \"criado_em\" TEXT NOT NULL, \"atualizado_em\" TEXT NOT NULL);"
+        }
+      ]
+    },
+    {
+      "name": "idx_compra_avista_timestamp",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_compra_avista_timestamp ON tbl_compra_avista (timestamp_compra_avista)"
+        }
+      ]
+    },
+    {
+      "name": "idx_compra_avista_subcategoria",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_compra_avista_subcategoria ON tbl_compra_avista (id_subcategoria)"
+        }
+      ]
+    },
+    {
+      "name": "idx_compra_avista_tag",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_compra_avista_tag ON tbl_compra_avista (uuid_tag)"
+        }
+      ]
+    }
+  ]
+}

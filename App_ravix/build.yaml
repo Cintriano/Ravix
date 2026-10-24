@@ -1,0 +1,10 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          named_parameters: true
+          databases:
+            ravix: lib/data/banco.dart
+          schema_dir: drift_schemas/
+          test_dir: test/data/migracoes/

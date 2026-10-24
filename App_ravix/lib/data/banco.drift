@@ -1,0 +1,86 @@
+-- Esquema da v1 (docs/03_modelo_de_dados.md, seção 3).
+-- Valores em centavos; datas do evento em ISO local com fuso_minutos;
+-- criado_em e atualizado_em em ISO UTC com Z (DP-33).
+
+CREATE TABLE tbl_categoria (
+  id_categoria INTEGER NOT NULL PRIMARY KEY,
+  nome         TEXT    NOT NULL UNIQUE
+) AS Categoria;
+
+CREATE TABLE tbl_subcategoria (
+  id_subcategoria INTEGER NOT NULL PRIMARY KEY,  -- categoria x 100 + sequência
+  id_categoria    INTEGER NOT NULL REFERENCES tbl_categoria (id_categoria),
+  nome            TEXT    NOT NULL,
+  UNIQUE (id_categoria, nome),
+  CHECK (id_subcategoria / 100 = id_categoria)
+) AS Subcategoria;
+
+CREATE TABLE tbl_tag (
+  uuid_tag      TEXT NOT NULL PRIMARY KEY,
+  nome          TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  status        TEXT NOT NULL DEFAULT 'ativa'
+                CHECK (status IN ('ativa', 'arquivada')),
+  criado_em     TEXT NOT NULL,
+  atualizado_em TEXT NOT NULL
+) AS Tag;
+
+CREATE TABLE tbl_compra_avista (
+  uuid_compra_avista      TEXT    NOT NULL PRIMARY KEY,
+  timestamp_compra_avista TEXT    NOT NULL,
+  fuso_minutos            INTEGER NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840),
+  descricao               TEXT    NOT NULL CHECK (length(trim(descricao)) > 0),
+  descricao_normalizada   TEXT    NOT NULL,
+  valor_compra_avista     INTEGER NOT NULL CHECK (valor_compra_avista > 0),
+  tipo_pagamento          TEXT    NOT NULL
+                          CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher')),
+  id_subcategoria         INTEGER NOT NULL
+                          REFERENCES tbl_subcategoria (id_subcategoria),
+  uuid_tag                TEXT    NULL
+                          REFERENCES tbl_tag (uuid_tag) ON DELETE RESTRICT,
+  criado_em               TEXT    NOT NULL,
+  atualizado_em           TEXT    NOT NULL
+) AS CompraAvista;
+
+CREATE INDEX idx_compra_avista_timestamp    ON tbl_compra_avista (timestamp_compra_avista);
+CREATE INDEX idx_compra_avista_subcategoria ON tbl_compra_avista (id_subcategoria);
+CREATE INDEX idx_compra_avista_tag          ON tbl_compra_avista (uuid_tag);
+
+-- Acumulado do mês (E01-F04-T01). Ignora os filtros da tabela.
+acumuladoDoMes:
+SELECT COALESCE(SUM(valor_compra_avista), 0) AS total
+FROM tbl_compra_avista
+WHERE timestamp_compra_avista >= :inicio AND timestamp_compra_avista < :fim;
+
+-- Tabela do mês com filtros opcionais (E01-F04-T02, T05).
+comprasDoMes(
+  REQUIRED :id_categoria AS INTEGER OR NULL,
+  REQUIRED :id_subcategoria AS INTEGER OR NULL,
+  REQUIRED :uuid_tag AS TEXT OR NULL
+) AS CompraDoMes:
+SELECT c.**, s.nome AS subcategoria, k.id_categoria, k.nome AS categoria, t.nome AS tag
+FROM tbl_compra_avista c
+JOIN tbl_subcategoria s ON s.id_subcategoria = c.id_subcategoria
+JOIN tbl_categoria    k ON k.id_categoria    = s.id_categoria
+LEFT JOIN tbl_tag     t ON t.uuid_tag        = c.uuid_tag
+WHERE c.timestamp_compra_avista >= :inicio AND c.timestamp_compra_avista < :fim
+  AND (:id_categoria    IS NULL OR k.id_categoria    = :id_categoria)
+  AND (:id_subcategoria IS NULL OR c.id_subcategoria = :id_subcategoria)
+  AND (:uuid_tag        IS NULL OR c.uuid_tag        = :uuid_tag)
+ORDER BY c.timestamp_compra_avista DESC, c.criado_em DESC;
+
+-- Sugestão pela descrição (E01-F03-T16, DP-36). :texto já normalizado.
+sugestaoDeSubcategoria:
+SELECT id_subcategoria
+FROM tbl_compra_avista
+WHERE descricao_normalizada LIKE '%' || :texto || '%'
+GROUP BY id_subcategoria
+ORDER BY COUNT(*) DESC, MAX(timestamp_compra_avista) DESC
+LIMIT 1;
+
+-- Tags que aparecem nos seletores do formulário e do filtro.
+tagsAtivas:
+SELECT * FROM tbl_tag WHERE status = 'ativa' ORDER BY nome COLLATE NOCASE;
+
+-- Quantos registros usam a tag; decide entre excluir e arquivar.
+contarComprasDaTag(REQUIRED :uuid_tag AS TEXT):
+SELECT COUNT(*) FROM tbl_compra_avista WHERE uuid_tag = :uuid_tag;

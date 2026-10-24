@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | M0 · Ambiente ✅ | Fedora pronto, projeto criado, rodando no aparelho, CI verde | — | — |
 | M1 · Core ✅ | Utilitários de texto, valor, data e IDs | M0 | E01-F03-T02, T03 |
-| M2 · Dados | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
+| M2 · Dados ✅ | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
 | M3 · Shell e bloqueio | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
 | M4 · Tags | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
 | M5 · Formulário | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
@@ -111,29 +111,38 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Arquivo `.drift` com o DDL da modelagem: 4 tabelas, `CHECK`s, FKs, índices, `descricao_normalizada` e `fuso_minutos`
-- [ ] Abertura em isolate separado (`NativeDatabase.createInBackground`)
-- [ ] PRAGMAs na abertura: `journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`
-- [ ] `schemaVersion = 1` e carga inicial (8 categorias, 34 subcategorias) só no `onCreate`
-- [ ] Consultas nomeadas: acumulado do mês, tabela do mês com filtros, sugestão pela descrição, tags ativas, registros por tag
-- [ ] `CompraAvistaRepository`: criar, editar, excluir, observar o mês, sugerir subcategoria
-- [ ] `TagRepository`: criar, renomear, remover (exclui sem registros, arquiva com registros)
-- [ ] `CategoriaRepository`: listar em ordem alfabética, com Diversos por último
-- [ ] Os repositórios preenchem `criado_em`/`atualizado_em` (UTC), `descricao_normalizada` e `fuso_minutos`; as telas nunca preenchem esses campos
-- [ ] Exportar o schema 1 com o `drift_dev`
+- [x] Arquivo `.drift` com o DDL da modelagem: 4 tabelas, `CHECK`s, FKs, índices, `descricao_normalizada` e `fuso_minutos`
+- [x] Abertura em isolate separado (`NativeDatabase.createInBackground`)
+- [x] PRAGMAs na abertura: `journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`
+- [x] `schemaVersion = 1` e carga inicial (8 categorias, 34 subcategorias) só no `onCreate`
+- [x] Consultas nomeadas: acumulado do mês, tabela do mês com filtros, sugestão pela descrição, tags ativas, registros por tag
+- [x] `CompraAvistaRepository`: criar, editar, excluir, observar o mês, sugerir subcategoria
+- [x] `TagRepository`: criar, renomear, remover (exclui sem registros, arquiva com registros)
+- [x] `CategoriaRepository`: listar em ordem alfabética, com Diversos por último
+- [x] Os repositórios preenchem `criado_em`/`atualizado_em` (UTC), `descricao_normalizada` e `fuso_minutos`; as telas nunca preenchem esses campos
+- [x] Exportar o schema 1 com o `drift_dev`
 
 **Testes automatizados** (banco em memória)
 
-- [ ] Schema: 4 tabelas criadas; carga com 8 categorias e 34 subcategorias, sem o ID 403
-- [ ] Constraints: rejeita valor ≤ 0, descrição vazia, forma de pagamento inválida, subcategoria incoerente com a categoria e fuso fora da faixa
-- [ ] FK: excluir tag com registro falha no banco; remover pelo repositório arquiva
-- [ ] Tag: nome repetido com maiúsculas diferentes é rejeitado; renomear não altera os registros
-- [ ] Mês: registro em 31/10 23:59:59 entra em outubro; 01/11 00:00:00 não
-- [ ] Filtros: categoria, subcategoria e tag, isolados e combinados; acumulado ignora os filtros
-- [ ] Sugestão: "contém", acentos ("acai" encontra "Açaí"), mais frequente vence, desempate pela mais recente, sem histórico não sugere
-- [ ] Ordenação: alfabética, com Diversos por último
-- [ ] Edição: atualiza `atualizado_em` e mantém `criado_em`; mantém o fuso se a data não mudar
-- [ ] Streams: inserir um registro emite o novo resultado na consulta do mês
+- [x] Schema: 4 tabelas criadas; carga com 8 categorias e 34 subcategorias, sem o ID 403
+- [x] Constraints: rejeita valor ≤ 0, descrição vazia, forma de pagamento inválida, subcategoria incoerente com a categoria e fuso fora da faixa
+- [x] FK: excluir tag com registro falha no banco; remover pelo repositório arquiva
+- [x] Tag: nome repetido com maiúsculas diferentes é rejeitado; renomear não altera os registros
+- [x] Mês: registro em 31/10 23:59:59 entra em outubro; 01/11 00:00:00 não
+- [x] Filtros: categoria, subcategoria e tag, isolados e combinados; acumulado ignora os filtros
+- [x] Sugestão: "contém", acentos ("acai" encontra "Açaí"), mais frequente vence, desempate pela mais recente, sem histórico não sugere
+- [x] Ordenação: alfabética, com Diversos por último
+- [x] Edição: atualiza `atualizado_em` e mantém `criado_em`; mantém o fuso se a data não mudar
+- [x] Streams: inserir um registro emite o novo resultado na consulta do mês
+
+**Concluído em 24/10/2026:**
+
+- `lib/data/banco.drift` com o DDL da modelagem e as consultas nomeadas; `banco.dart` com a migração (carga só no `onCreate`), as PRAGMAs em `configurarConexao` e `abrirBancoRavix` (isolate separado).
+- `carga_inicial.dart` guarda nomes e descrições das subcategorias (as descrições ficam só no app, como texto de ajuda).
+- Repositórios: `CompraAvistaRepository`, `TagRepository`, `CategoriaRepository`.
+- Schema 1 exportado em `drift_schemas/ravix/drift_schema_v1.json` (`dart run drift_dev make-migrations`).
+- 54 testes novos (86 no total); cobertura de 96,5% no código escrito à mão de `lib/data` (o gerado `*.g.dart` fica fora da conta). Teste de integração `integration_test/banco_test.dart` roda no aparelho.
+- Desvios: a remoção de tag conta os registros antes (em vez de tentar excluir e cair no erro da FK), porque o erro chega embrulhado quando o banco roda em outro isolate; a FK `RESTRICT` continua como rede de segurança. A unicidade do nome da tag é checada no repositório também, porque o `COLLATE NOCASE` do SQLite só ignora maiúsculas em ASCII ("Rolê" × "ROLÊ").
 
 **Pronto quando:** testes verdes, cobertura de 80% ou mais e schema 1 exportado.
 

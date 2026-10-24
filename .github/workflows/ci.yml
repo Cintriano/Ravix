@@ -24,7 +24,7 @@ jobs:
       # O sqlite3 3.x embute o SQLite via hooks; não precisa de libsqlite3 no runner.
       - run: flutter pub get
 
-      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: dart run build_runner build
 
       - run: flutter analyze
 

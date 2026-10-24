@@ -5,10 +5,10 @@ get:
 
 # Gera o código do drift e do riverpod (*.g.dart).
 gen:
-	dart run build_runner build --delete-conflicting-outputs
+	dart run build_runner build
 
 watch:
-	dart run build_runner watch --delete-conflicting-outputs
+	dart run build_runner watch
 
 analyze:
 	flutter analyze
@@ -16,9 +16,11 @@ analyze:
 test:
 	flutter test
 
-# Relatório HTML em coverage/html (precisa do lcov: sudo dnf install lcov).
+# Relatório HTML em coverage/html, sem o código gerado (precisa do lcov:
+# sudo dnf install lcov).
 coverage:
 	flutter test --coverage
+	lcov --quiet --remove coverage/lcov.info '*.g.dart' --output-file coverage/lcov.info
 	genhtml coverage/lcov.info --output-directory coverage/html --quiet
 	@echo "Relatório: coverage/html/index.html"
 
