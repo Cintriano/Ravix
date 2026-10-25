@@ -98,6 +98,14 @@ final class TagRepository {
   Future<int> contarUsos(String uuid) =>
       _banco.contarComprasDaTag(uuidTag: uuid).getSingle();
 
+  /// Todas as tags, ativas e arquivadas, em ordem alfabética (filtro da
+  /// tabela, que alcança gastos antigos).
+  Stream<List<Tag>> observarTodas() =>
+      (_banco.select(_banco.tblTag)..orderBy([
+            (t) => OrderingTerm(expression: t.nome.collate(Collate.noCase)),
+          ]))
+          .watch();
+
   /// Tags ativas em ordem alfabética, para os seletores.
   Stream<List<Tag>> observarAtivas() => _banco.tagsAtivas().watch();
 

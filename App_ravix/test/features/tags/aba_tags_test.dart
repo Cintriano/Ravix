@@ -35,7 +35,7 @@ void main() {
     await digitarESalvar(tester, nome, 'Criar');
   }
 
-  testWidgets('sem tags mostra o estado vazio com ação', (tester) async {
+  testarApp('sem tags mostra o estado vazio com ação', (tester) async {
     await abrirTags(tester);
     expect(find.text('Nenhuma tag'), findsOneWidget);
 
@@ -45,10 +45,9 @@ void main() {
 
     expect(find.text('Viagem'), findsOneWidget);
     expect(find.text('Nenhuma tag'), findsNothing);
-    await encerrarApp(tester);
   });
 
-  testWidgets('cria tags e lista em ordem alfabética', (tester) async {
+  testarApp('cria tags e lista em ordem alfabética', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viagem');
     await criarPelaTela(tester, '  aniversário  ');
@@ -57,10 +56,9 @@ void main() {
         .widgetList<ListTile>(find.byType(ListTile))
         .map((t) => (t.title! as Text).data);
     expect(nomes, ['aniversário', 'Viagem']);
-    await encerrarApp(tester);
   });
 
-  testWidgets('nome repetido mostra a mensagem e mantém o diálogo', (
+  testarApp('nome repetido mostra a mensagem e mantém o diálogo', (
     tester,
   ) async {
     await abrirTags(tester);
@@ -79,17 +77,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Viagem 2'), findsNothing);
-    await encerrarApp(tester);
   });
 
-  testWidgets('nome vazio mostra a mensagem', (tester) async {
+  testarApp('nome vazio mostra a mensagem', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, '   ');
     expect(find.text('O nome da tag não pode ficar vazio.'), findsOneWidget);
-    await encerrarApp(tester);
   });
 
-  testWidgets('tocar na tag renomeia', (tester) async {
+  testarApp('tocar na tag renomeia', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viajem');
 
@@ -104,10 +100,9 @@ void main() {
 
     expect(find.text('Viagem'), findsOneWidget);
     expect(find.text('Viajem'), findsNothing);
-    await encerrarApp(tester);
   });
 
-  testWidgets('sem gastos: confirma e exclui', (tester) async {
+  testarApp('sem gastos: confirma e exclui', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viagem');
 
@@ -120,12 +115,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Tag "Viagem" excluída.'), findsOneWidget);
     expect(find.text('Nenhuma tag'), findsOneWidget);
-    await encerrarApp(tester);
   });
 
-  testWidgets('com gastos: arquiva e mantém nos gastos antigos', (
-    tester,
-  ) async {
+  testarApp('com gastos: arquiva e mantém nos gastos antigos', (tester) async {
     final container = await abrirTags(tester);
     final tags = container.read(tagRepositoryProvider);
     final compras = container.read(compraAvistaRepositoryProvider);
@@ -150,10 +142,9 @@ void main() {
       () => compras.observarMes(Mes(2026, 10)).first,
     );
     expect(linhas!.single.tag, 'Viagem');
-    await encerrarApp(tester);
   });
 
-  testWidgets('cancelar a remoção mantém a tag', (tester) async {
+  testarApp('cancelar a remoção mantém a tag', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viagem');
 
@@ -162,10 +153,9 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.text('Viagem'), findsOneWidget);
-    await encerrarApp(tester);
   });
 
-  testWidgets('deslizar para a esquerda remove', (tester) async {
+  testarApp('deslizar para a esquerda remove', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viagem');
 
@@ -175,10 +165,9 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Excluir'));
     await tester.pumpAndSettle();
     expect(find.text('Nenhuma tag'), findsOneWidget);
-    await encerrarApp(tester);
   });
 
-  testWidgets('deslizar e cancelar devolve a linha', (tester) async {
+  testarApp('deslizar e cancelar devolve a linha', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viagem');
 
@@ -187,6 +176,5 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.text('Viagem'), findsOneWidget);
-    await encerrarApp(tester);
   });
 }

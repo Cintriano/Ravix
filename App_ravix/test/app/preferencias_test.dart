@@ -64,7 +64,7 @@ void main() {
     ThemeMode modoDoApp(WidgetTester tester) =>
         tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode!;
 
-    testWidgets('trocar a aparência muda o tema na hora', (tester) async {
+    testarApp('trocar a aparência muda o tema na hora', (tester) async {
       await montarApp(tester);
       expect(modoDoApp(tester), ThemeMode.system);
 
@@ -77,10 +77,9 @@ void main() {
       await tester.tap(find.text('Claro'));
       await tester.pumpAndSettle();
       expect(modoDoApp(tester), ThemeMode.light);
-      await encerrarApp(tester);
     });
 
-    testWidgets('abre na aparência guardada', (tester) async {
+    testarApp('abre na aparência guardada', (tester) async {
       await montarApp(
         tester,
         extras: [
@@ -90,7 +89,6 @@ void main() {
         ],
       );
       expect(modoDoApp(tester), ThemeMode.light);
-      await encerrarApp(tester);
     });
   });
 }

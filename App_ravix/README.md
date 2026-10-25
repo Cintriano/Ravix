@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-🚧 **Em implementação (M5 concluído: formulário de gasto à vista e aparência).** Ainda não há versão utilizável.
+🚧 **Em implementação (M6 concluído: aba À vista). Falta o M7: desempenho e release.** Ainda não há versão utilizável.
 
 ## Desenvolvimento
 

@@ -27,6 +27,25 @@ String formatarData(DateTime data) =>
     '${_doisDigitos(data.day)}/${_doisDigitos(data.month)}/'
     '${data.year.toString().padLeft(4, '0')}';
 
+/// Dias da semana em português, de segunda (1) a domingo (7), como em
+/// `DateTime.weekday`.
+const nomesDosDiasDaSemana = [
+  'segunda',
+  'terça',
+  'quarta',
+  'quinta',
+  'sexta',
+  'sábado',
+  'domingo',
+];
+
+/// Dia por extenso, para os grupos da lista: "Sexta, 24 de outubro".
+String formatarDiaPorExtenso(DateTime data) {
+  final dia = nomesDosDiasDaSemana[data.weekday - 1];
+  return '${dia[0].toUpperCase()}${dia.substring(1)}, ${data.day} de '
+      '${nomesDosMeses[data.month - 1]}';
+}
+
 /// Hora para exibição: `HH:mm`.
 String formatarHora(DateTime data) =>
     '${_doisDigitos(data.hour)}:${_doisDigitos(data.minute)}';

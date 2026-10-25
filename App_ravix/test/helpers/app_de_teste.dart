@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meta/meta.dart';
 import 'package:ravix/app.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/data/banco.dart';
 import 'package:ravix/features/shell/bloqueio.dart';
 
 import 'ambiente_falso.dart';
@@ -48,17 +50,21 @@ final agoraDosTestes = DateTime(2026, 10, 24, 15);
 List<Override> substituicoes({
   RelogioFixo? relogio,
   ServicoBloqueio? bloqueio,
+  BancoRavix? banco,
   List<Override> extras = const [],
 }) => [
   ...extras,
   relogioProvider.overrideWithValue(relogio ?? RelogioFixo(agoraDosTestes)),
   geradorUuidProvider.overrideWithValue(GeradorUuidSequencial()),
   fusoProvider.overrideWithValue(FusoFixo(-180)),
-  bancoProvider.overrideWith((ref) {
-    final banco = bancoEmMemoria();
-    ref.onDispose(banco.close);
-    return banco;
-  }),
+  if (banco != null)
+    bancoProvider.overrideWithValue(banco)
+  else
+    bancoProvider.overrideWith((ref) {
+      final banco = bancoEmMemoria();
+      ref.onDispose(banco.close);
+      return banco;
+    }),
   servicoBloqueioProvider.overrideWithValue(bloqueio ?? ServicoBloqueioFalso()),
 ];
 
@@ -67,6 +73,7 @@ Future<void> montarApp(
   WidgetTester tester, {
   RelogioFixo? relogio,
   ServicoBloqueio? bloqueio,
+  BancoRavix? banco,
   List<Override> extras = const [],
 }) async {
   await tester.pumpWidget(
@@ -74,6 +81,7 @@ Future<void> montarApp(
       overrides: substituicoes(
         relogio: relogio,
         bloqueio: bloqueio,
+        banco: banco,
         extras: extras,
       ),
       child: const RavixApp(),
@@ -88,6 +96,17 @@ Future<void> encerrarApp(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox());
   await tester.pump(const Duration(seconds: 1));
 }
+
+/// `testWidgets` para testes que montam o app inteiro: chama [encerrarApp]
+/// no fim, porque a aba À vista observa o banco desde a abertura.
+@isTest
+void testarApp(
+  String descricao,
+  Future<void> Function(WidgetTester tester) corpo,
+) => testWidgets(descricao, (tester) async {
+  await corpo(tester);
+  await encerrarApp(tester);
+});
 
 /// Envolve [filho] no tema do Ravix, para testar um widget isolado.
 Widget comTema(Widget filho, {Brightness brilho = Brightness.dark}) =>

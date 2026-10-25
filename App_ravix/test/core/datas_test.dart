@@ -49,6 +49,18 @@ void main() {
       expect(formatarHora(data), '07:09');
       expect(formatarHora(DateTime(2026, 1, 1, 23, 59)), '23:59');
     });
+
+    test('dia por extenso', () {
+      expect(
+        formatarDiaPorExtenso(DateTime(2026, 10, 24)),
+        'Sábado, 24 de outubro',
+      );
+      expect(
+        formatarDiaPorExtenso(DateTime(2026, 10, 19)),
+        'Segunda, 19 de outubro',
+      );
+      expect(formatarDiaPorExtenso(DateTime(2026, 3)), 'Domingo, 1 de março');
+    });
   });
 
   group('paraIsoUtc', () {

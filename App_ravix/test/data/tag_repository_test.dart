@@ -135,6 +135,18 @@ void main() {
     });
   });
 
+  test('todas: ativas e arquivadas, em ordem alfabética', () async {
+    final viagem = await tags.criar('viagem');
+    await tags.criar('Aniversário');
+    await compras.criar(gasto(uuidTag: viagem.uuidTag));
+    await tags.remover(viagem.uuidTag);
+    final todas = await tags.observarTodas().first;
+    expect(todas.map((t) => (t.nome, t.status)), [
+      ('Aniversário', 'ativa'),
+      ('viagem', 'arquivada'),
+    ]);
+  });
+
   test('ativas em ordem alfabética, sem as arquivadas', () async {
     await tags.criar('viagem');
     await tags.criar('Aniversário');

@@ -19,7 +19,7 @@
 | M3 · Shell e bloqueio ✅ | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
 | M4 · Tags ✅ | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
 | M5 · Formulário ✅ | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
-| M6 · Aba à vista | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
+| M6 · Aba à vista ✅ | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
 | M7 · Desempenho e release | Massa de teste, metas, teste ponta a ponta, build de release | M6 | DP-36 |
 
 Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só começam com o banco testado.
@@ -253,19 +253,28 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Acumulado do mês selecionado, que ignora os filtros (E01-F04-T01)
-- [ ] Tabela do mês com `ListView.builder`, mais recentes primeiro (T02)
-- [ ] Botão de edição em cada registro, abrindo o formulário no modo editar (T03)
-- [ ] Filtros de categoria, subcategoria e tag, que afetam só a tabela (T05)
-- [ ] Providers com `autoDispose` e estados de tela do M3
+- [x] Acumulado do mês selecionado, que ignora os filtros (E01-F04-T01)
+- [x] Tabela do mês com `ListView.builder`, mais recentes primeiro (T02)
+- [x] Botão de edição em cada registro, abrindo o formulário no modo editar (T03)
+- [x] Filtros de categoria, subcategoria e tag, que afetam só a tabela (T05)
+- [x] Providers com `autoDispose` e estados de tela do M3
 
 **Testes automatizados**
 
-- [ ] Acumulado correto e inalterado ao aplicar filtros
-- [ ] Filtros isolados e combinados na tabela
-- [ ] Trocar o mês atualiza acumulado e tabela
-- [ ] Estado vazio em mês sem registros
-- [ ] Salvar no formulário atualiza a aba sozinha, sem recarregar
+- [x] Acumulado correto e inalterado ao aplicar filtros
+- [x] Filtros isolados e combinados na tabela
+- [x] Trocar o mês atualiza acumulado e tabela
+- [x] Estado vazio em mês sem registros
+- [x] Salvar no formulário atualiza a aba sozinha, sem recarregar
+
+**Concluído em 24/10/2026** (falta usar a aba no aparelho com dados reais):
+
+- Total do mês em destaque (Display, números tabulares), que ignora os filtros.
+- Gastos agrupados por dia ("Sábado, 10 de outubro"), mais recentes primeiro, numa lista preguiçosa (`SliverList.builder`). Cada linha: ícone da forma de pagamento, descrição, subcategoria · hora · tag e o valor. Tocar abre a edição.
+- Filtros em chips (Categoria; Subcategoria aparece depois da categoria; Tag) com folha de escolha e "Todas"; trocar a categoria limpa a subcategoria; "Limpar" tira todos. O filtro de tag inclui as arquivadas, para alcançar gastos antigos. Filtro sem resultado oferece "Limpar filtros".
+- `TagRepository.observarTodas` e `formatarDiaPorExtenso` no core.
+- Testes que montam o app usam `testarApp`, que desmonta no fim (a aba observa o banco desde a abertura); quando o teste precisa de dados prontos, o banco é preparado antes de o app abrir.
+- 197 testes; cobertura de 97% em telas e providers.
 
 **Pronto quando:** testes verdes e a aba usada no aparelho com dados reais.
 

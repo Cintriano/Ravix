@@ -9,9 +9,11 @@ import 'package:ravix/app/rotas.dart';
 import 'package:ravix/core/datas.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
+import 'package:ravix/data/tag_repository.dart';
 import 'package:ravix/features/compra_avista/formulario_compra.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
 
+import '../../helpers/ambiente_falso.dart';
 import '../../helpers/app_de_teste.dart';
 import '../../helpers/banco_de_teste.dart';
 
@@ -107,7 +109,7 @@ void main() {
       ))!;
 
   group('validação', () {
-    testWidgets('salvar vazio mostra todos os avisos e não grava', (
+    testarApp('salvar vazio mostra todos os avisos e não grava', (
       tester,
     ) async {
       await abrirFormulario(tester);
@@ -119,10 +121,9 @@ void main() {
       expect(find.text('Escolha a categoria.'), findsOneWidget);
       expect(find.text('Escolha a subcategoria.'), findsOneWidget);
       expect(await gastosDe(tester, outubro), isEmpty);
-      await encerrarApp(tester);
     });
 
-    testWidgets('cada campo vazio bloqueia o salvar', (tester) async {
+    testarApp('cada campo vazio bloqueia o salvar', (tester) async {
       for (final (faltando, aviso) in [
         ('descricao', 'Informe a descrição.'),
         ('valor', 'Informe um valor maior que zero.'),
@@ -145,17 +146,16 @@ void main() {
       }
     });
 
-    testWidgets('o aviso some ao corrigir o campo', (tester) async {
+    testarApp('o aviso some ao corrigir o campo', (tester) async {
       await abrirFormulario(tester);
       await salvar(tester);
       await tester.enterText(campo('Descrição'), 'Padaria');
       await tester.pump();
       expect(find.text('Informe a descrição.'), findsNothing);
       expect(find.text('Informe um valor maior que zero.'), findsOneWidget);
-      await encerrarApp(tester);
     });
 
-    testWidgets('o valor rejeita letras e usa a máscara', (tester) async {
+    testarApp('o valor rejeita letras e usa a máscara', (tester) async {
       await abrirFormulario(tester);
       await tester.enterText(campo('Valor'), 'abc');
       await tester.pump();
@@ -164,12 +164,11 @@ void main() {
       await tester.enterText(campo('Valor'), '1250');
       await tester.pump();
       expect(find.text('12,50'), findsOneWidget);
-      await encerrarApp(tester);
     });
   });
 
   group('salvar', () {
-    testWidgets('grava os campos calculados e volta ao shell', (tester) async {
+    testarApp('grava os campos calculados e volta ao shell', (tester) async {
       await abrirFormulario(tester);
       expect(find.text('24/10/2026'), findsOneWidget);
       expect(find.text('15:00'), findsOneWidget);
@@ -189,10 +188,9 @@ void main() {
       expect(gasto.fusoMinutos, -180);
       expect(gasto.criadoEm, endsWith('Z'));
       expect(gasto.uuidTag, isNull);
-      await encerrarApp(tester);
     });
 
-    testWidgets('aceita data futura escolhida no calendário', (tester) async {
+    testarApp('aceita data futura escolhida no calendário', (tester) async {
       await abrirFormulario(tester);
       await preencher(tester);
       await tester.ensureVisible(find.text('24/10/2026'));
@@ -206,10 +204,9 @@ void main() {
       await salvar(tester);
       final gasto = (await gastosDe(tester, outubro)).single.c;
       expect(gasto.timestampCompraAvista, '2026-10-30T15:00:00');
-      await encerrarApp(tester);
     });
 
-    testWidgets('troca a hora pelo relógio', (tester) async {
+    testarApp('troca a hora pelo relógio', (tester) async {
       await abrirFormulario(tester);
       await tester.ensureVisible(find.text('15:00'));
       await tester.tap(find.text('15:00'));
@@ -218,10 +215,9 @@ void main() {
       await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
       expect(find.text('15:00'), findsOneWidget);
-      await encerrarApp(tester);
     });
 
-    testWidgets('tag criada no formulário já fica selecionada', (tester) async {
+    testarApp('tag criada no formulário já fica selecionada', (tester) async {
       await abrirFormulario(tester);
       await preencher(tester);
       await tester.ensureVisible(find.text('Nova tag'));
@@ -236,12 +232,11 @@ void main() {
       await salvar(tester);
       final linha = (await gastosDe(tester, outubro)).single;
       expect(linha.tag, 'Viagem');
-      await encerrarApp(tester);
     });
   });
 
   group('sugestão pela descrição', () {
-    testWidgets('espera 3 caracteres e 300 ms antes de consultar', (
+    testarApp('espera 3 caracteres e 300 ms antes de consultar', (
       tester,
     ) async {
       final espia = SugestaoEspia(302);
@@ -261,10 +256,9 @@ void main() {
       expect(find.text('Transporte'), findsOneWidget);
       expect(find.text('Mobilidade Urbana'), findsOneWidget);
       expect(find.text('Sugerida pelo histórico'), findsOneWidget);
-      await encerrarApp(tester);
     });
 
-    testWidgets('cada tecla reinicia a espera', (tester) async {
+    testarApp('cada tecla reinicia a espera', (tester) async {
       final espia = SugestaoEspia(302);
       await abrirFormulario(tester, sugestao: espia);
 
@@ -275,20 +269,18 @@ void main() {
       expect(espia.consultas, isEmpty);
       await tester.pump(const Duration(milliseconds: 100));
       expect(espia.consultas, ['uber c']);
-      await encerrarApp(tester);
     });
 
-    testWidgets('sem histórico não preenche nada', (tester) async {
+    testarApp('sem histórico não preenche nada', (tester) async {
       final espia = SugestaoEspia();
       await abrirFormulario(tester, sugestao: espia);
       await tester.enterText(campo('Descrição'), 'novidade');
       await tester.pumpAndSettle(const Duration(milliseconds: 400));
       expect(espia.consultas, ['novidade']);
       expect(find.text('Sugerida pelo histórico'), findsNothing);
-      await encerrarApp(tester);
     });
 
-    testWidgets('não sobrescreve a escolha manual', (tester) async {
+    testarApp('não sobrescreve a escolha manual', (tester) async {
       final espia = SugestaoEspia(302);
       await abrirFormulario(tester, sugestao: espia);
       await escolherNoMenu(tester, 'Categoria', 'Alimentação');
@@ -298,10 +290,9 @@ void main() {
       expect(espia.consultas, isEmpty);
       expect(find.text('Alimentação'), findsOneWidget);
       expect(find.text('Transporte'), findsNothing);
-      await encerrarApp(tester);
     });
 
-    testWidgets('usa o histórico real do banco', (tester) async {
+    testarApp('usa o histórico real do banco', (tester) async {
       await abrirFormulario(tester);
       await tester.runAsync(
         () =>
@@ -314,38 +305,45 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
       expect(find.text('Mobilidade Urbana'), findsOneWidget);
-      await encerrarApp(tester);
     });
   });
 
   group('editar e excluir', () {
+    /// Prepara o banco antes de abrir o app (com o app aberto, a aba
+    /// À vista observa o banco e as escritas diretas travam no relógio falso
+    /// do teste) e abre a edição do gasto criado.
     Future<String> criarEAbrir(
       WidgetTester tester, {
-      String? uuidTag,
-      bool arquivarTag = false,
+      bool comTagArquivada = false,
     }) async {
-      await montarApp(tester);
-      final container = containerDo(tester);
+      final banco = bancoEmMemoria();
+      addTearDown(banco.close);
+      final relogio = RelogioFixo(agoraDosTestes);
+      final uuids = GeradorUuidSequencial();
       final uuid = (await tester.runAsync(() async {
-        var tag = uuidTag;
-        if (tag == 'nova') {
-          tag = (await container.read(tagRepositoryProvider).criar('Viagem'))
-              .uuidTag;
-        }
-        final id = await container
-            .read(compraAvistaRepositoryProvider)
-            .criar(gasto(uuidTag: tag));
-        if (arquivarTag) {
-          await container.read(tagRepositoryProvider).remover(tag!);
-        }
+        final tags = TagRepository(banco, relogio: relogio, uuid: uuids);
+        final compras = CompraAvistaRepository(
+          banco,
+          relogio: relogio,
+          uuid: uuids,
+          fuso: FusoFixo(-180),
+        );
+        final tag = comTagArquivada
+            ? (await tags.criar('Viagem')).uuidTag
+            : null;
+        final id = await compras.criar(gasto(uuidTag: tag));
+        if (tag != null) await tags.remover(tag);
         return id;
       }))!;
-      unawaited(container.read(rotasProvider).push('/registro/$uuid'));
+      await montarApp(tester, banco: banco);
+      unawaited(
+        containerDo(tester).read(rotasProvider).push('/registro/$uuid'),
+      );
       await tester.pumpAndSettle();
       return uuid;
     }
 
-    testWidgets('carrega os valores salvos e atualiza', (tester) async {
+    testarApp('carrega os valores salvos e atualiza', (tester) async {
       final uuid = await criarEAbrir(tester);
 
       expect(find.text('Editar gasto'), findsOneWidget);
@@ -374,10 +372,9 @@ void main() {
       );
       expect(salvo!.valorCompraAvista, 999);
       expect(salvo.descricao, 'Padaria do Zé');
-      await encerrarApp(tester);
     });
 
-    testWidgets('excluir só depois de confirmar', (tester) async {
+    testarApp('excluir só depois de confirmar', (tester) async {
       final uuid = await criarEAbrir(tester);
       final repositorio = containerDo(tester)
           .read(compraAvistaRepositoryProvider);
@@ -396,22 +393,19 @@ void main() {
       expect(find.text('Gasto excluído.'), findsOneWidget);
       expect(find.text('Outubro de 2026'), findsOneWidget);
       expect(await tester.runAsync(() => repositorio.buscar(uuid)), isNull);
-      await encerrarApp(tester);
     });
 
-    testWidgets('mostra a tag arquivada de um gasto antigo', (tester) async {
-      await criarEAbrir(tester, uuidTag: 'nova', arquivarTag: true);
+    testarApp('mostra a tag arquivada de um gasto antigo', (tester) async {
+      await criarEAbrir(tester, comTagArquivada: true);
       await tester.pumpAndSettle();
       expect(find.text('Viagem (arquivada)'), findsOneWidget);
-      await encerrarApp(tester);
     });
 
-    testWidgets('gasto inexistente mostra o erro', (tester) async {
+    testarApp('gasto inexistente mostra o erro', (tester) async {
       await montarApp(tester);
       unawaited(containerDo(tester).read(rotasProvider).push('/registro/x'));
       await tester.pumpAndSettle();
       expect(find.text('Gasto não encontrado'), findsOneWidget);
-      await encerrarApp(tester);
     });
   });
 

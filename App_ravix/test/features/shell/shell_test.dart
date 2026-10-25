@@ -8,7 +8,7 @@ import '../../helpers/app_de_teste.dart';
 
 void main() {
   group('shell', () {
-    testWidgets('abre na aba À vista do mês atual', (tester) async {
+    testarApp('abre na aba À vista do mês atual', (tester) async {
       await montarApp(tester);
       expect(find.text('Outubro de 2026'), findsOneWidget);
       expect(find.text('Nenhum gasto em outubro'), findsOneWidget);
@@ -16,7 +16,7 @@ void main() {
       expect(find.byType(NavigationBar), findsNothing);
     });
 
-    testWidgets('o seletor troca o mês da tela inteira', (tester) async {
+    testarApp('o seletor troca o mês da tela inteira', (tester) async {
       await montarApp(tester);
 
       await tester.tap(find.byTooltip('Próximo mês'));
@@ -36,7 +36,7 @@ void main() {
       expect(find.text('Setembro de 2026'), findsOneWidget);
     });
 
-    testWidgets('tocar no mês volta para hoje', (tester) async {
+    testarApp('tocar no mês volta para hoje', (tester) async {
       await montarApp(tester);
       await tester.tap(find.byTooltip('Mês anterior'));
       await tester.pumpAndSettle();
@@ -47,7 +47,7 @@ void main() {
       expect(find.text('Outubro de 2026'), findsOneWidget);
     });
 
-    testWidgets('o botão flutuante abre o formulário', (tester) async {
+    testarApp('o botão flutuante abre o formulário', (tester) async {
       await montarApp(tester);
       await tester.tap(find.text('Novo gasto'));
       await tester.pumpAndSettle();
@@ -57,10 +57,9 @@ void main() {
       await tester.tap(find.byTooltip('Voltar'));
       await tester.pumpAndSettle();
       expect(find.text('Outubro de 2026'), findsOneWidget);
-      await encerrarApp(tester);
     });
 
-    testWidgets('a engrenagem leva à Configuração e às Tags', (tester) async {
+    testarApp('a engrenagem leva à Configuração e às Tags', (tester) async {
       await montarApp(tester);
       await tester.tap(find.byIcon(Icones.settings));
       await tester.pumpAndSettle();
@@ -70,12 +69,11 @@ void main() {
       await tester.tap(find.text('Tags'));
       await tester.pumpAndSettle();
       expect(find.text('Nenhuma tag'), findsOneWidget);
-      await encerrarApp(tester);
     });
   });
 
   group('bloqueio na tela', () {
-    testWidgets('pede o desbloqueio ao abrir e libera', (tester) async {
+    testarApp('pede o desbloqueio ao abrir e libera', (tester) async {
       final servico = ServicoBloqueioFalso();
       await montarApp(tester, bloqueio: servico);
       expect(servico.pedidos, 1);
@@ -83,7 +81,7 @@ void main() {
       expect(find.text('Outubro de 2026'), findsOneWidget);
     });
 
-    testWidgets('cancelado: continua bloqueado e explica', (tester) async {
+    testarApp('cancelado: continua bloqueado e explica', (tester) async {
       final servico = ServicoBloqueioFalso([ResultadoDesbloqueio.negado]);
       await montarApp(tester, bloqueio: servico);
 
@@ -102,7 +100,7 @@ void main() {
       expect(find.text('Outubro de 2026'), findsOneWidget);
     });
 
-    testWidgets('falha temporária mostra a mensagem própria', (tester) async {
+    testarApp('falha temporária mostra a mensagem própria', (tester) async {
       await montarApp(
         tester,
         bloqueio: ServicoBloqueioFalso([ResultadoDesbloqueio.falhou]),
