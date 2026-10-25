@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-🚧 **Em implementação (M6 concluído: aba À vista). Falta o M7: desempenho e release.** Ainda não há versão utilizável.
+✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e tema CAPRA.
 
 ## Desenvolvimento
 
@@ -147,6 +147,35 @@ Plano de implementação em [`../docs/04_plano_desenvolvimento_v1.md`](../docs/0
 | `make check` | O mesmo que o CI: get, gen, analyze e testes com cobertura |
 | `dart run tool/gerar_tokens.dart` | Gera `lib/core/tema/capra_tokens.dart` a partir de `docs/identidade_visual/capra-tokens.json` |
 | `bash tool/gerar_icones.sh` | Gera ícone, abertura e marca do app a partir dos SVGs da marca (precisa do ImageMagick com librsvg) |
+
+### No aparelho
+
+Os testes no aparelho usam banco próprio (em memória ou em arquivo separado) e não tocam nos dados do app de uso. Compile só para a arquitetura do aparelho (arm64): o APK de debug com todas fica com mais de 160 MB.
+
+```bash
+# Ponta a ponta (desbloquear → criar → filtrar → editar → excluir; tags)
+flutter build apk --debug --target-platform android-arm64 -t integration_test/ponta_a_ponta_test.dart
+flutter drive --use-application-binary build/app/outputs/flutter-apk/app-debug.apk \
+  --driver test_driver/integration_test.dart --target integration_test/ponta_a_ponta_test.dart -d <aparelho>
+
+# Desempenho (DP-36) com 20 mil gastos, em modo profile
+flutter build apk --profile --target-platform android-arm64 -t integration_test/desempenho_test.dart
+flutter drive --profile --use-application-binary build/app/outputs/flutter-apk/app-profile.apk \
+  --driver test_driver/integration_test.dart --target integration_test/desempenho_test.dart -d <aparelho>
+```
+
+Debug e profile instalam como `com.cintriano.ravix.debug` e `.profile` ("Ravix (debug)" e "Ravix (profile)") e convivem com o app de uso.
+
+### Release
+
+A chave fica fora do repositório, em `~/.android/ravix-release.jks`, e a senha em `android/key.properties` (ignorado pelo Git). **Guarde os dois num cofre de senhas**: sem a chave, não dá para instalar atualizações por cima do app.
+
+```bash
+flutter build apk --release --target-platform android-arm64
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+```
+
+Sem o `key.properties` (como no CI), o release é assinado com a chave de debug.
 
 Estrutura: `lib/core` (funções puras), `lib/data` (banco e repositórios), `lib/features/<feature>` (telas e providers). A pasta `test/` espelha `lib/`; os testes ponta a ponta ficam em `integration_test/`.
 

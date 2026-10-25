@@ -1,13 +1,30 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Chave de release fora do repositório (~/.android/ravix-release.jks), com a
+// senha em android/key.properties (ignorado pelo Git). Sem o arquivo, como no
+// CI, o release é assinado com a chave de debug.
+val propriedadesDaChave =
+    Properties().apply {
+        val arquivo = rootProject.file("key.properties")
+        if (arquivo.exists()) arquivo.inputStream().use { load(it) }
+    }
+val temChaveDeRelease = propriedadesDaChave.getProperty("storeFile") != null
+
 android {
     namespace = "com.cintriano.ravix"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+    // Nome do app por tipo de build (resValue app_name).
+    buildFeatures {
+        resValues = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -15,7 +32,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.cintriano.ravix"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -27,13 +43,34 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "app_name", "Ravix")
+    }
+
+    signingConfigs {
+        if (temChaveDeRelease) {
+            create("release") {
+                storeFile = file(propriedadesDaChave.getProperty("storeFile"))
+                storePassword = propriedadesDaChave.getProperty("storePassword")
+                keyAlias = propriedadesDaChave.getProperty("keyAlias")
+                keyPassword = propriedadesDaChave.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
+        // Debug e profile convivem com o app de uso no mesmo aparelho, cada
+        // um com os próprios dados.
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "Ravix (debug)")
+        }
+        getByName("profile") {
+            applicationIdSuffix = ".profile"
+            resValue("string", "app_name", "Ravix (profile)")
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig =
+                signingConfigs.getByName(if (temChaveDeRelease) "release" else "debug")
         }
     }
 }

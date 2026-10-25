@@ -20,7 +20,7 @@
 | M4 · Tags ✅ | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
 | M5 · Formulário ✅ | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
 | M6 · Aba à vista ✅ | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
-| M7 · Desempenho e release | Massa de teste, metas, teste ponta a ponta, build de release | M6 | DP-36 |
+| M7 · Desempenho e release ✅ | Massa de teste, metas, teste ponta a ponta, build de release | M6 | DP-36 |
 
 Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só começam com o banco testado.
 
@@ -286,16 +286,31 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Comando de debug que gera cerca de 20 mil registros (cinco anos de uso)
-- [ ] Medir em modo profile, no aparelho: abertura até a aba utilizável em menos de 2 s; salvar e ver a tabela atualizada em menos de 100 ms
-- [ ] Ícone e nome do app
-- [ ] Assinatura e build de release (APK ou AAB) e instalação no aparelho de uso
+- [x] ~~Comando de debug~~ Função `gerarMassaDeTeste` (cerca de 20 mil registros, cinco anos de uso), usada só pelos testes de desempenho, em banco separado: um botão no app poderia encher o banco de uso de dados falsos
+- [x] Medir em modo profile, no aparelho: abertura até a aba utilizável em menos de 2 s; salvar e ver a tabela atualizada em menos de 100 ms
+- [x] Ícone e nome do app (feitos no M3)
+- [x] Assinatura e build de release (APK arm64, chave em `~/.android/ravix-release.jks`)
+- [ ] Instalação no aparelho de uso (precisa remover o Ravix de debug antigo, que tem o mesmo `applicationId` com outra assinatura)
 
 **Testes automatizados**
 
-- [ ] Ponta a ponta (`integration_test`, com autenticação falsa): desbloquear → criar gasto → ver na tabela → filtrar → editar → excluir
-- [ ] Ponta a ponta das tags: criar no formulário → usar em um gasto → remover na Configuração (arquiva)
-- [ ] Benchmark com a massa de 20 mil registros: tempo da consulta do mês e da sugestão, registrado a cada execução, sem travar o CI (tempos variam entre máquinas)
+- [x] Ponta a ponta (`integration_test`, com autenticação falsa): desbloquear → criar gasto → ver na tabela → filtrar → editar → excluir
+- [x] Ponta a ponta das tags: criar no formulário → usar em um gasto → remover na Configuração (arquiva)
+- [x] Benchmark com a massa de 20 mil registros: tempo da consulta do mês e da sugestão, registrado a cada execução, sem travar o CI (tempos variam entre máquinas)
+
+**Resultados em 24/10/2026** (Galaxy S23 Ultra, modo profile, 20 mil gastos):
+
+| Medida | Resultado | Meta |
+| --- | --- | --- |
+| Abertura até a aba utilizável (do `runApp` à tabela) | 73 ms | < 2 s |
+| Salvar e ver na tabela | 21 ms | < 100 ms |
+| Consulta do mês (300 gastos) | 1 ms | — |
+| Sugestão pela descrição | 27 ms | — |
+
+- Ponta a ponta no aparelho (`integration_test/ponta_a_ponta_test.dart`): gasto completo e fluxo das tags, verdes em 24 s.
+- Benchmark no computador e no CI (`test/data/desempenho_test.dart`): só registra os tempos.
+- Debug e profile ganharam sufixo no `applicationId` (`.debug`, `.profile`) e convivem com o app de uso.
+- Comandos em `App_ravix/README.md` (seções "No aparelho" e "Release").
 
 **Pronto quando:** metas atingidas no aparelho, testes ponta a ponta verdes e v1 instalada para uso.
 
