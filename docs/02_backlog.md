@@ -18,6 +18,8 @@
 
 > **Revisão 5 (22/10/2026):** modelo de dados da v1 fechado (DP-33, DP-34): sem `uuid_usuario` nas tabelas locais (o usuário é gravado na carga para o banco externo), datas em horário local com `fuso_minutos` (auditoria em UTC), exclusão física na v1 e lógica na v2. E01 e E02-F01 fechados para a v1.
 
+> **Revisão 6 (24/10/2026):** v1 implementada e instalada ([Plano de desenvolvimento — v1](04_plano_desenvolvimento_v1.md), M0 a M7). Todas as tasks `v1` marcadas como (F). Além do backlog: escolha de aparência (Sistema, Escuro, Claro) na Configuração, que virou uma lista com Aparência e Tags; filtro de tag inclui as arquivadas. Na v1 o app abre na aba à vista sem barra de abas, que aparece quando houver duas ou mais.
+
 ---
 
 ## E01 — Front-end
@@ -76,39 +78,39 @@ Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Lo
 - **T04** Autenticação biométrica, oferecida após o primeiro login válido `v2`
 - **T05** Recuperação de senha `v2`
 - **T06** Tratamento de sessão expirada `v2`
-- **T07** Bloqueio local ao abrir o app `v1`
+- **T07** Bloqueio local ao abrir o app `v1` (F)
   - PIN ou padrão do próprio Android, via `local_auth`; o app não guarda PIN próprio (DP-31).
 
 ### E01-F02 — Shell (tela inicial)
 
-- **T01** Estrutura de abas: À vista `v1`; Macro (padrão) e Faturada `v2`
-- **T02** Seletor de mês global: meses passados e futuros (nos futuros aparecem parcelas e recorrências previstas) `v1`
+- **T01** Estrutura de abas: À vista `v1` (F); Macro (padrão) e Faturada `v2`
+- **T02** Seletor de mês global: meses passados e futuros (nos futuros aparecem parcelas e recorrências previstas) `v1` (F)
 - **T03** Indicador de data da última atualização dos dados `v2`
-- **T04** Padrão de estados de tela: carregando, vazio e erro `v1`; offline `v2`
-- **T05** Navegação para Configuração `v1`; Registros pendentes e Central de notificações `v2`
+- **T04** Padrão de estados de tela: carregando, vazio e erro `v1` (F); offline `v2`
+- **T05** Navegação para Configuração `v1` (F); Registros pendentes e Central de notificações `v2`
   - Na v1 a Configuração tem só a aba Tags (F07-T09); renda, cartões, pendências e notificações são v2.
 - **T06** Farol de conexão do app com a API `v2`
   - 🟢 conectado e sincronizado
   - 🟡 sincronizando ou dados desatualizados além do limite (limite a definir)
   - 🔴 falha, com a causa na mensagem: sem internet, API própria indisponível ou conexão bancária expirada
   - Ao tocar, abre a Central de notificações com o log resumido
-- **T07** Botão flutuante de novo registro: abre o formulário no tipo da aba ativa; na aba Macro, pergunta o tipo `v1`
+- **T07** Botão flutuante de novo registro: abre o formulário no tipo da aba ativa; na aba Macro, pergunta o tipo `v1` (F)
   - Substitui os botões por aba (F04-T04 e F05-T08), conforme DP-16.
 
 ### E01-F03 — Formulário de registro (único)
 
 Componente reutilizável. Define `tipo` (à vista, faturado ou pagamento de fatura) e `modo` (criar | editar | completar pendência).
 
-- **T01** Estrutura base parametrizada por tipo e modo `v1`
-- **T02** Data e hora automáticas e editáveis `v1`
+- **T01** Estrutura base parametrizada por tipo e modo `v1` (F)
+- **T02** Data e hora automáticas e editáveis `v1` (F)
   - Datas futuras são aceitas (DP-15).
   - O app grava o fuso do aparelho (deslocamento em minutos, lido do sistema, sem rede) junto com a data. Ao editar a data, usa o fuso atual; se a data não for tocada, mantém o gravado (DP-33).
-- **T03** Campo de valor com máscara monetária de até duas casas decimais, sempre maior que zero `v1`
-- **T04** Campos do tipo **à vista** `v1`
+- **T03** Campo de valor com máscara monetária de até duas casas decimais, sempre maior que zero `v1` (F)
+- **T04** Campos do tipo **à vista** `v1` (F)
   - UUID (sistema), data, hora, descrição, valor
   - Forma de pagamento: Pix, débito, dinheiro, voucher
   - Categoria, subcategoria (ver T10) e tag opcional (ver T15)
-- **T05** Modo editar (acionado pelos botões de edição das abas) `v1`
+- **T05** Modo editar (acionado pelos botões de edição das abas) `v1` (F)
 - **T06** Campos do tipo **faturado** `v2`
   - UUID (sistema), data, hora, descrição, valor total
   - Cartão
@@ -120,15 +122,15 @@ Componente reutilizável. Define `tipo` (à vista, faturado ou pagamento de fatu
   - Ativo: esconde quantidade de parcelas e mostra periodicidade, dia de cobrança e data fim (opcional)
   - Depende de `tbl_recorrencia` (ver modelagem banco)
 - **T09** Modo completar pendência `v2`
-- **T10** Carga inicial de categorias e subcategorias (tabela abaixo), usada nos dois tipos de registro `v1`
-- **T11** Excluir registro no modo editar, com confirmação `v1`
+- **T10** Carga inicial de categorias e subcategorias (tabela abaixo), usada nos dois tipos de registro `v1` (F)
+- **T11** Excluir registro no modo editar, com confirmação `v1` (F)
 - **T12** Editar ou excluir lançamento recorrente: escolher entre "só este" e "este e os próximos" `v2`
 - **T13** Campos do tipo **pagamento de fatura** `v2`
   - UUID (sistema), data, hora, valor, forma de pagamento (Pix ou débito), cartão, mês e ano de vencimento da fatura paga
   - Não entra nas somas de consumo; marca a fatura como paga (F05-T09)
-- **T14** Validação: todos os campos são obrigatórios, exceto a tag e a data fim da recorrência (vazia = sem fim) `v1`
-- **T15** Campo **tag**: opcional, uma por registro, com seletor das tags ativas e criação inline ("+ nova tag") `v1`
-- **T16** Sugestão de categoria e subcategoria pela descrição: histórico que contém o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms; só preenche se o usuário ainda não escolheu (DP-36) `v1`
+- **T14** Validação: todos os campos são obrigatórios, exceto a tag e a data fim da recorrência (vazia = sem fim) `v1` (F)
+- **T15** Campo **tag**: opcional, uma por registro, com seletor das tags ativas e criação inline ("+ nova tag") `v1` (F)
+- **T16** Sugestão de categoria e subcategoria pela descrição: histórico que contém o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms; só preenche se o usuário ainda não escolheu (DP-36) `v1` (F)
 
 *Decidido:* mês e ano de vencimento são preenchidos só pelo formulário (DP-3). Compras faturadas vindas da API ou de notificações chegam sem esse campo e entram em Registros pendentes para completar.
 
@@ -177,11 +179,11 @@ Fonte: planilha `App_Gestão_Financeira.xlsx`, aba Categorias, ajustada pelo DP-
 
 Consumo à vista (Pix, débito, dinheiro físico, voucher). Dinheiro físico e voucher são registrados manualmente.
 
-- **T01** Acumulado de gastos do mês `v1`
-- **T02** Tabela de histórico de consumo (somente o mês selecionado) `v1`
-- **T03** Botão de edição do registro na tabela `v1`
+- **T01** Acumulado de gastos do mês `v1` (F)
+- **T02** Tabela de histórico de consumo (somente o mês selecionado) `v1` (F)
+- **T03** Botão de edição do registro na tabela `v1` (F)
 - **T04** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
-- **T05** Filtro de categoria/subcategoria e tag `v1`
+- **T05** Filtro de categoria/subcategoria e tag `v1` (F)
 - **T06** Gráfico de gasto agregado por categoria/subcategoria, com seletor de visão `v2`
 
 *Comportamento dos filtros:* o mês (global) afeta a tela inteira; categoria/subcategoria e tag filtram apenas a tabela.
@@ -235,9 +237,9 @@ Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à v
 - **T08** Remover cartão `v2`
   - Com compras vinculadas: arquiva (some da seleção no formulário, histórico preservado).
   - Sem compras: exclui.
-- **T09** Aba Tags: listar, criar e renomear tags `v1`
+- **T09** Aba Tags: listar, criar e renomear tags `v1` (F)
   - Renomear não afeta os registros, que guardam só o ID da tag.
-- **T10** Remover tag `v1`
+- **T10** Remover tag `v1` (F)
   - Com registros vinculados: arquiva (some da seleção no formulário, histórico preservado).
   - Sem registros: exclui.
 

@@ -477,14 +477,15 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 
 | Necessidade | Ferramenta |
 | --- | --- |
-| Banco | `drift` e `sqlite3_flutter_libs`, com o DDL em arquivo `.drift` |
+| Banco | `drift` e `sqlite3` 3.x (que embute o SQLite; ~~`sqlite3_flutter_libs`~~ ficou obsoleto), com o DDL em arquivo `.drift` |
 | Estado | `flutter_riverpod` e `riverpod_generator` |
 | Navegação | `go_router` (`StatefulShellRoute`) |
 | Bloqueio | `local_auth` (PIN do aparelho, DP-31) |
 | IDs | `uuid` |
 | Formatação | `intl` |
 | Geração de código | `build_runner` |
-| Lint | `flutter_lints` ou `very_good_analysis` (escolha no M0 do plano) |
+| Lint | `very_good_analysis` (escolhido no M0) |
+| Preferências | `shared_preferences` (aparência escolhida; entrou no M5) |
 
 Arquitetura em três camadas: telas → providers → repositórios → drift. A sincronização da v2 entra nos repositórios sem mexer nas telas.
 
@@ -504,6 +505,8 @@ Arquitetura em três camadas: telas → providers → repositórios → drift. A
 - Providers com `autoDispose`; tabela do mês com `ListView.builder`, sem paginação no banco.
 - Totais calculados na hora (`SUM`), sem valores guardados.
 - Fora por enquanto: FTS5, índices compostos e cache. Ficam como caminho de escalada se as medições pedirem.
+
+**Resultado no aparelho (24/10/2026, Galaxy S23 Ultra, profile, 20 mil gastos):** abertura até a aba em 73 ms (mais 292 a 552 ms de abertura a frio do processo), salvar e ver em 21 ms. Metas atingidas.
 
 **Metas (medidas em profile/release, com massa de ~20 mil registros):** app aberto até a aba à vista utilizável em menos de 2 s; salvar e ver a tabela atualizada em menos de 100 ms; cadastrar um gasto em menos de 10 s.
 

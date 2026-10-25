@@ -15,6 +15,6 @@ Documentação do projeto trazida do Notion (Projetos / Ravix) em 24/10/2026, ma
 
 ## Estado em 24/10/2026
 
-- **Status:** Modelagem. E01 e E02-F01 fechados para a v1; próximo passo é o M0 do plano.
+- **Status:** v1 concluída em 24/10/2026 (M0 a M7) e instalada; em fase de testes no aparelho.
 - **v1:** só local (SQLite), aba à vista, formulário, tags e bloqueio pelo PIN do aparelho.
 - **Decisões em aberto:** 17 de 36 (todas de v2, v3 ou sem versão), nenhuma bloqueando a v1.

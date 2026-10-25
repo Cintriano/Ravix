@@ -4,7 +4,8 @@
 > Fonte: https://app.notion.com/p/3fdb044db6b182bd870201140670d798
 
 **Descrição:** Gerenciador de gastos pessoais<br />
-**Status:** Modelagem<br />
+**Status:** v1 concluída em 24/10/2026, em fase de testes no aparelho ([plano](04_plano_desenvolvimento_v1.md))<br />
+**Repositório:** [github.com/Cintriano/Ravix](https://github.com/Cintriano/Ravix) (app em `App_ravix`)<br />
 **Linguagem:** Dart<br />
 **Documentos relacionados:** [02_backlog.md](02_backlog.md) · [03_modelo_de_dados.md](03_modelo_de_dados.md)
 
@@ -34,6 +35,9 @@ Amálgama de **Ratio** + **Vindex** (latim): "razão e defesa", "raciocínio e p
 | Linguagem / framework | Dart com Flutter |
 | Editor | Android Studio |
 | Sistema operacional | Linux (Fedora) |
+| Stack da v1 | Flutter 3.47 (Dart 3.13), drift + `sqlite3` 3.x, Riverpod 3, go_router, local_auth, shared_preferences (DP-36) |
+| Qualidade | `very_good_analysis`, CI no GitHub Actions (`analyze` + testes com cobertura) |
+| Identidade visual | Logo filha CAPRA (marca R, área Finanças, acento Peach, neutro preto), tokens de `capra-tokens.json` |
 
 ### 2.2 Recursos Android
 

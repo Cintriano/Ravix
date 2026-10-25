@@ -5,6 +5,8 @@
 
 > **Status:** esquema da v1 (SQLite) fechado e pronto para implementação (seção 3), com todas as decisões aplicadas (DP-33, DP-34). Tabelas da v2 seguem como rascunho (seção 4).
 
+> **Revisão 7 (24/10/2026):** esquema da v1 implementado no M2 exatamente como na seção 3 (`App_ravix/lib/data/banco.drift`), com as consultas da seção 3.4 e o schema 1 exportado em `App_ravix/drift_schemas/`. O SQLite vem embutido pelo `sqlite3` 3.x (sem `sqlite3_flutter_libs`). Duas regras ficaram também no repositório: remover tag conta os registros antes de decidir entre excluir e arquivar, e nome de tag repetido é checado sem diferenciar maiúsculas inclusive em letras acentuadas (o `COLLATE NOCASE` só cobre ASCII). Medido no aparelho com 20 mil gastos: consulta do mês em 1 ms e sugestão em 27 ms.
+
 > **Revisão 5 (22/10/2026):** `fuso_minutos` adicionado às tabelas com data de evento; `criado_em` e `atualizado_em` em UTC (DP-33).
 
 > **Revisão 6 (22/10/2026):** coluna `descricao_normalizada` e consulta da sugestão pela descrição; configuração de desempenho do banco (DP-36). Plano de implementação em [Plano de desenvolvimento — v1](04_plano_desenvolvimento_v1.md).
