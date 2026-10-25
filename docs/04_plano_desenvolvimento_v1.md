@@ -290,7 +290,7 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 - [x] Medir em modo profile, no aparelho: abertura até a aba utilizável em menos de 2 s; salvar e ver a tabela atualizada em menos de 100 ms
 - [x] Ícone e nome do app (feitos no M3)
 - [x] Assinatura e build de release (APK arm64, chave em `~/.android/ravix-release.jks`)
-- [ ] Instalação no aparelho de uso (precisa remover o Ravix de debug antigo, que tem o mesmo `applicationId` com outra assinatura)
+- [x] Instalação no aparelho de uso (o Ravix de debug antigo, sem dados, foi removido antes)
 
 **Testes automatizados**
 
@@ -306,6 +306,7 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 | Salvar e ver na tabela | 21 ms | < 100 ms |
 | Consulta do mês (300 gastos) | 1 ms | — |
 | Sugestão pela descrição | 27 ms | — |
+| Abertura a frio da release (`am start -W`, até o primeiro quadro, 5 medições) | 292 a 552 ms | — |
 
 - Ponta a ponta no aparelho (`integration_test/ponta_a_ponta_test.dart`): gasto completo e fluxo das tags, verdes em 24 s.
 - Benchmark no computador e no CI (`test/data/desempenho_test.dart`): só registra os tempos.
