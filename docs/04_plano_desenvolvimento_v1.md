@@ -18,7 +18,7 @@
 | M2 · Dados ✅ | Banco drift, carga inicial, consultas e repositórios | M1 | E02-F01, E01-F03-T10 |
 | M3 · Shell e bloqueio ✅ | Navegação, seletor de mês, estados de tela, PIN do aparelho | M2 | E01-F01-T07, E01-F02 |
 | M4 · Tags ✅ | Configuração > aba Tags | M3 | E01-F07-T09, T10 |
-| M5 · Formulário | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
+| M5 · Formulário ✅ | Criar, editar e excluir gasto, sugestão, tag inline | M4 | E01-F03 |
 | M6 · Aba à vista | Acumulado, tabela do mês e filtros | M5 | E01-F04 |
 | M7 · Desempenho e release | Massa de teste, metas, teste ponta a ponta, build de release | M6 | DP-36 |
 
@@ -216,22 +216,32 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 **Tarefas**
 
-- [ ] Componente parametrizado por tipo e modo (E01-F03-T01), na v1 só à vista
-- [ ] Data e hora preenchidas com o momento atual, editáveis, com datas futuras aceitas (T02)
-- [ ] Valor só com números, convertido para centavos (T03)
-- [ ] Descrição, forma de pagamento, categoria → subcategoria em ordem alfabética com Diversos por último (T04, T10)
-- [ ] Tag opcional, com criação inline (T15)
-- [ ] Sugestão pela descrição: a partir de 3 caracteres, espera de 300 ms, só preenche categoria e subcategoria se o usuário ainda não escolheu (T16)
-- [ ] Validação: todos os campos obrigatórios, exceto a tag (T14)
-- [ ] Modo editar e exclusão com confirmação (T05, T11)
+- [x] Componente parametrizado por tipo e modo (E01-F03-T01), na v1 só à vista
+- [x] Data e hora preenchidas com o momento atual, editáveis, com datas futuras aceitas (T02)
+- [x] Valor só com números, convertido para centavos (T03)
+- [x] Descrição, forma de pagamento, categoria → subcategoria em ordem alfabética com Diversos por último (T04, T10)
+- [x] Tag opcional, com criação inline (T15)
+- [x] Sugestão pela descrição: a partir de 3 caracteres, espera de 300 ms, só preenche categoria e subcategoria se o usuário ainda não escolheu (T16)
+- [x] Validação: todos os campos obrigatórios, exceto a tag (T14)
+- [x] Modo editar e exclusão com confirmação (T05, T11)
 
 **Testes automatizados**
 
-- [ ] Validação: cada campo obrigatório vazio bloqueia o salvar; valor rejeita letras; data futura é aceita
-- [ ] Sugestão (com `fakeAsync`): não consulta antes de 3 caracteres nem antes de 300 ms; preenche quando vazio; não sobrescreve escolha manual
-- [ ] Tag criada inline já fica selecionada
-- [ ] Editar carrega os valores salvos; excluir remove o registro só depois da confirmação
-- [ ] Formulário + banco em memória: salvar grava os campos calculados (centavos, normalização, fuso, UTC)
+- [x] Validação: cada campo obrigatório vazio bloqueia o salvar; valor rejeita letras; data futura é aceita
+- [x] Sugestão (com `fakeAsync`): não consulta antes de 3 caracteres nem antes de 300 ms; preenche quando vazio; não sobrescreve escolha manual
+- [x] Tag criada inline já fica selecionada
+- [x] Editar carrega os valores salvos; excluir remove o registro só depois da confirmação
+- [x] Formulário + banco em memória: salvar grava os campos calculados (centavos, normalização, fuso, UTC)
+
+**Concluído em 24/10/2026** (falta só medir no aparelho o cadastro em menos de 10 s):
+
+- `lib/features/compra_avista/`: `FormularioCompra` nos modos criar e editar (rotas `/registro/novo` e `/registro/:uuid`); `RascunhoCompra` concentra a validação; `MascaraValor` preenche da direita para a esquerda e ignora o que não é dígito.
+- Campos na ordem: descrição, valor (prefixo R$, números tabulares), data e hora (seletores do sistema em português), forma de pagamento (sem padrão, para ser escolha consciente), categoria → subcategoria (descrição da subcategoria como ajuda), tag opcional com "Nova tag" no próprio formulário.
+- Sugestão: espera de 300 ms e 3 caracteres; só preenche enquanto o usuário não escolheu a categoria; mostra "Sugerida pelo histórico". A consulta passa por `sugestaoDeSubcategoriaProvider` para os testes contarem as chamadas.
+- Editar mostra a tag arquivada de um gasto antigo como "Nome (arquivada)". Excluir pede confirmação. Salvar e excluir avisam com uma mensagem temporária e vibração.
+- Junto com o M5, a escolha de aparência do guia CAPRA: Configuração > Aparência (Sistema, Escuro, Claro), guardada com `shared_preferences` e lida antes de o app abrir. A Configuração virou uma lista (Aparência e Tags; Renda e Cartões entram na v2).
+- `flutter_localizations`: datas, horas e textos do Material em português.
+- 183 testes; cobertura de 96,5% em telas e providers.
 
 **Pronto quando:** testes verdes e um gasto cadastrado no aparelho em menos de 10 s.
 

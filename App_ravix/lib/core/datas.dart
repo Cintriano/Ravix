@@ -22,6 +22,15 @@ final _isoLocal = RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$');
 /// são descartados.
 String paraIsoLocal(DateTime data) => _isoSemFuso(data);
 
+/// Data para exibição: `dd/MM/yyyy`.
+String formatarData(DateTime data) =>
+    '${_doisDigitos(data.day)}/${_doisDigitos(data.month)}/'
+    '${data.year.toString().padLeft(4, '0')}';
+
+/// Hora para exibição: `HH:mm`.
+String formatarHora(DateTime data) =>
+    '${_doisDigitos(data.hour)}:${_doisDigitos(data.minute)}';
+
 /// Lê uma data gravada por [paraIsoLocal] como `DateTime` local.
 ///
 /// Lança [FormatException] se [texto] não estiver no formato exato.

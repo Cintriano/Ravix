@@ -14,6 +14,8 @@ void main() {
     await montarApp(tester);
     await tester.tap(find.byIcon(Icones.settings));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Tags'));
+    await tester.pumpAndSettle();
     return ProviderScope.containerOf(tester.element(find.byType(RavixApp)));
   }
 

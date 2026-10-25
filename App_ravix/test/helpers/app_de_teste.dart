@@ -48,7 +48,9 @@ final agoraDosTestes = DateTime(2026, 10, 24, 15);
 List<Override> substituicoes({
   RelogioFixo? relogio,
   ServicoBloqueio? bloqueio,
+  List<Override> extras = const [],
 }) => [
+  ...extras,
   relogioProvider.overrideWithValue(relogio ?? RelogioFixo(agoraDosTestes)),
   geradorUuidProvider.overrideWithValue(GeradorUuidSequencial()),
   fusoProvider.overrideWithValue(FusoFixo(-180)),
@@ -65,10 +67,15 @@ Future<void> montarApp(
   WidgetTester tester, {
   RelogioFixo? relogio,
   ServicoBloqueio? bloqueio,
+  List<Override> extras = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: substituicoes(relogio: relogio, bloqueio: bloqueio),
+      overrides: substituicoes(
+        relogio: relogio,
+        bloqueio: bloqueio,
+        extras: extras,
+      ),
       child: const RavixApp(),
     ),
   );

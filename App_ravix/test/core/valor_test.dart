@@ -57,6 +57,14 @@ void main() {
     });
   });
 
+  group('formatarCentavosSemSimbolo', () {
+    test(r'formata sem R$', () {
+      expect(formatarCentavosSemSimbolo(0), '0,00');
+      expect(formatarCentavosSemSimbolo(5), '0,05');
+      expect(formatarCentavosSemSimbolo(123456), '1.234,56');
+    });
+  });
+
   group('formatarCentavos', () {
     test('formata em reais com vírgula e milhar', () {
       expect(formatarCentavos(0), 'R\$${_nbsp}0,00');

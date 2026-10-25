@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ravix/app/preferencias.dart';
 import 'package:ravix/app/rotas.dart';
 import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/features/shell/bloqueio.dart';
 import 'package:ravix/features/shell/tela_bloqueio.dart';
 
-/// Raiz do app: tema CAPRA nos dois modos (segue o sistema), rotas e
+/// Raiz do app: tema CAPRA na aparência escolhida, português, rotas e
 /// bloqueio local.
 class RavixApp extends ConsumerStatefulWidget {
   /// Cria a raiz do app.
@@ -42,6 +44,10 @@ class _RavixAppState extends ConsumerState<RavixApp> {
       debugShowCheckedModeBanner: false,
       theme: temaRavix(Brightness.light),
       darkTheme: temaRavix(Brightness.dark),
+      themeMode: ref.watch(aparenciaEscolhidaProvider).modo,
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: ref.watch(rotasProvider),
       // O conteúdo fica montado (e escondido) atrás do bloqueio, para não
       // perder a navegação ao desbloquear.

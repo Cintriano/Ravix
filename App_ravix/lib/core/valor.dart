@@ -3,6 +3,8 @@ library;
 
 import 'package:intl/intl.dart';
 
+final _formatoNumero = NumberFormat('#,##0.00', 'pt_BR');
+
 final _formatoReal = NumberFormat.currency(
   locale: 'pt_BR',
   symbol: r'R$',
@@ -46,6 +48,11 @@ int centavosDeDigitos(String digitado) {
   final digitos = digitado.replaceAll(RegExp(r'\D'), '');
   return digitos.isEmpty ? 0 : int.parse(digitos);
 }
+
+/// Formata [centavos] sem o símbolo: 123456 vira `"1.234,56"`. É o texto
+/// do campo de valor, que mostra `R$` como prefixo.
+String formatarCentavosSemSimbolo(int centavos) =>
+    _formatoNumero.format(centavos / 100);
 
 /// Formata [centavos] como moeda brasileira: 123456 vira `"R$ 1.234,56"`.
 ///

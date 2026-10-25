@@ -3,6 +3,7 @@ import 'package:ravix/features/compra_avista/aba_avista.dart';
 import 'package:ravix/features/compra_avista/tela_registro.dart';
 import 'package:ravix/features/configuracao/tela_configuracao.dart';
 import 'package:ravix/features/shell/shell_ravix.dart';
+import 'package:ravix/features/tags/tela_tags.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rotas.g.dart';
@@ -33,8 +34,16 @@ GoRouter rotas(Ref ref) {
         builder: (context, state) => const TelaRegistro(),
       ),
       GoRoute(
+        path: '/registro/:uuid',
+        builder: (context, state) =>
+            TelaRegistro(uuid: state.pathParameters['uuid']),
+      ),
+      GoRoute(
         path: '/configuracao',
         builder: (context, state) => const TelaConfiguracao(),
+        routes: [
+          GoRoute(path: 'tags', builder: (context, state) => const TelaTags()),
+        ],
       ),
     ],
   );

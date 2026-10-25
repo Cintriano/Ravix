@@ -42,6 +42,15 @@ void main() {
     });
   });
 
+  group('formatarData / formatarHora', () {
+    test('formato brasileiro com zeros à esquerda', () {
+      final data = DateTime(2026, 3, 5, 7, 9);
+      expect(formatarData(data), '05/03/2026');
+      expect(formatarHora(data), '07:09');
+      expect(formatarHora(DateTime(2026, 1, 1, 23, 59)), '23:59');
+    });
+  });
+
   group('paraIsoUtc', () {
     test('converte para UTC e termina sempre com Z', () {
       expect(

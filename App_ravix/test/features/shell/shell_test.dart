@@ -51,18 +51,24 @@ void main() {
       await montarApp(tester);
       await tester.tap(find.text('Novo gasto'));
       await tester.pumpAndSettle();
-      expect(find.text('Formulário em construção'), findsOneWidget);
+      expect(find.text('Descrição'), findsOneWidget);
+      expect(find.text('Salvar'), findsOneWidget);
 
-      await tester.pageBack();
+      await tester.tap(find.byTooltip('Voltar'));
       await tester.pumpAndSettle();
       expect(find.text('Outubro de 2026'), findsOneWidget);
+      await encerrarApp(tester);
     });
 
-    testWidgets('a engrenagem leva à Configuração', (tester) async {
+    testWidgets('a engrenagem leva à Configuração e às Tags', (tester) async {
       await montarApp(tester);
       await tester.tap(find.byIcon(Icones.settings));
       await tester.pumpAndSettle();
-      expect(find.text('Tags'), findsOneWidget);
+      expect(find.text('Configuração'), findsOneWidget);
+      expect(find.text('Aparência'), findsOneWidget);
+
+      await tester.tap(find.text('Tags'));
+      await tester.pumpAndSettle();
       expect(find.text('Nenhuma tag'), findsOneWidget);
       await encerrarApp(tester);
     });
