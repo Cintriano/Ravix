@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Neutro do Ravix (registro CAPRA): fundo do ícone e da abertura nos dois temas. -->
-    <color name="ravix_neutro">#121416</color>
+    <!-- Floresta (identidade v2): fundo do ícone e da abertura nos dois temas. -->
+    <color name="ravix_floresta">#163730</color>
 </resources>

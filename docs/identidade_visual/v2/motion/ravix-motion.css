@@ -1,0 +1,163 @@
+/* Ravix v2: movimento para o site.
+   Use junto de tokens/ravix.css. Tudo é opt-in: as animações só rodam quando o
+   elemento (ou um ancestral) tem a classe .rxm-play. Sem a classe, o elemento
+   aparece no estado final, então a página continua correta sem JS.
+
+   Gesto da marca: a haste DESCE (o gasto), a seta SOBE (o crescimento).
+   Sem sombra, brilho, quique ou elástico: só deslocamento, opacidade e cor. */
+
+:root {
+  --rxm-ease: var(--rx-ease, cubic-bezier(.2, .8, .2, 1));
+  --rxm-rapido: 120ms;   /* toque, troca de estado */
+  --rxm-padrao: 220ms;   /* folhas, troca de mês, entrada de linhas */
+  --rxm-enfase: 420ms;   /* seta na confirmação */
+  --rxm-abertura: 900ms; /* seta na abertura (única animação mais longa) */
+  --rxm-stagger: 40ms;   /* defasagem entre itens de uma lista */
+}
+
+/* ------------------------------------------------------------------ */
+/* 1. Logotipo e símbolo (SVG inline com a estrutura abaixo)           */
+/*                                                                     */
+/*   <svg class="rxm-logo" viewBox="65 -712 2487 712">                 */
+/*     <path class="rxm-ltr" style="--i:0"/> … (R, a, v, i)            */
+/*     <path class="rxm-stem-a"/> <path class="rxm-stem-b"/>           */
+/*     <path class="rxm-arrow"/>                                       */
+/*                                                                     */
+/* A base do viewBox é a linha de base (y = 0): o que está abaixo dela */
+/* é cortado pelo próprio SVG, então a seta e as letras "nascem" do    */
+/* chão sem precisar de máscara.                                       */
+/* ------------------------------------------------------------------ */
+
+.rxm-stem-a, .rxm-stem-b, .rxm-arrow, .rxm-arrow-next, .rxm-ltr { transform-box: fill-box; }
+
+/* Abertura: haste desce, seta sobe, letras sobem em sequência */
+.rxm-play .rxm-stem-a { animation: rxm-stem-fall 420ms var(--rxm-ease) 0ms both; }
+.rxm-play .rxm-stem-b { animation: rxm-stem-fall 420ms var(--rxm-ease) 90ms both; }
+.rxm-play .rxm-arrow  { animation: rxm-arrow-rise var(--rxm-abertura) var(--rxm-ease) 240ms both; }
+.rxm-play .rxm-ltr    { animation: rxm-letter-rise 560ms var(--rxm-ease) calc(520ms + var(--i, 0) * 70ms) both; }
+
+@keyframes rxm-stem-fall {
+  from { transform: translate(-70px, -98px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes rxm-arrow-rise {
+  /* percorre o próprio eixo da seta (382, -523), começando abaixo da linha de base */
+  from { transform: translate(-535px, 732px); }
+  to   { transform: none; }
+}
+@keyframes rxm-letter-rise {
+  from { transform: translateY(720px); }
+  to   { transform: none; }
+}
+
+/* Confirmação: a seta atual sai pelo canto superior direito e outra entra por baixo.
+   O SVG precisa de uma segunda seta (.rxm-arrow-next) igual à primeira. */
+.rxm-confirm .rxm-arrow-next { opacity: 0; }
+.rxm-confirm.rxm-play .rxm-arrow      { animation: rxm-arrow-pass var(--rxm-enfase) var(--rxm-ease) var(--rxm-delay, 0ms) both; }
+.rxm-confirm.rxm-play .rxm-arrow-next { animation: rxm-arrow-rise var(--rxm-enfase) var(--rxm-ease) var(--rxm-delay, 0ms) both; opacity: 1; }
+@keyframes rxm-arrow-pass {
+  from { transform: none; }
+  to   { transform: translate(535px, -732px); }
+}
+
+/* Carregamento: a seta passa em laço. A haste fica parada. */
+.rxm-loop .rxm-arrow-next { opacity: 0; }
+.rxm-loop.rxm-play .rxm-arrow      { animation: rxm-loop-out 1200ms var(--rxm-ease) infinite; }
+.rxm-loop.rxm-play .rxm-arrow-next { animation: rxm-loop-in  1200ms var(--rxm-ease) infinite; opacity: 1; }
+@keyframes rxm-loop-out {
+  0%, 12%   { transform: none; }
+  60%, 100% { transform: translate(535px, -732px); }
+}
+@keyframes rxm-loop-in {
+  0%, 12%   { transform: translate(-535px, 732px); }
+  60%, 100% { transform: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Entrada de linhas (listas, cards)                                */
+/*    <li class="rxm-row" style="--i:3">                               */
+/* ------------------------------------------------------------------ */
+.rxm-play .rxm-row {
+  animation: rxm-row-in var(--rxm-padrao) var(--rxm-ease)
+             calc(var(--rxm-delay, 0ms) + var(--i, 0) * var(--rxm-stagger)) both;
+}
+@keyframes rxm-row-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* Linha nova (gasto salvo): entra de cima */
+.rxm-row-new { animation: rxm-row-new var(--rxm-padrao) var(--rxm-ease) both; }
+@keyframes rxm-row-new {
+  from { transform: translateY(-10px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Barra de orçamento                                               */
+/*    <div class="rxm-bar" style="--p:.58"><i class="rxm-bar-fill"/>   */
+/*    Estado: < 80% ok, 80–100% atenção, > 100% estourado              */
+/* ------------------------------------------------------------------ */
+.rxm-bar-fill {
+  display: block; height: 100%; width: 100%;
+  background: var(--rxm-bar-color, var(--rx-ok, #3FB282));
+  transform-origin: left center;
+  transform: scaleX(min(var(--p, 0), 1));
+  transition: transform var(--rxm-enfase) var(--rxm-ease), background-color var(--rxm-padrao) var(--rxm-ease);
+}
+.rxm-bar[data-state="atencao"]   { --rxm-bar-color: var(--rx-atencao, #D9A441); }
+.rxm-bar[data-state="estourado"] { --rxm-bar-color: var(--rx-estourado, #D0614E); }
+.rxm-play .rxm-bar-fill.rxm-bar-intro { animation: rxm-bar-grow 700ms var(--rxm-ease) var(--rxm-delay, 0ms) both; }
+@keyframes rxm-bar-grow { from { transform: scaleX(0); } }
+
+/* ------------------------------------------------------------------ */
+/* 4. Gráficos                                                         */
+/* ------------------------------------------------------------------ */
+/* Rosca: uma varredura (círculo com pathLength=100 usado como máscara) revela as fatias */
+.rxm-donut-sweep { stroke-dasharray: 100 100; }
+.rxm-play .rxm-donut-sweep { animation: rxm-sweep 900ms var(--rxm-ease) var(--rxm-delay, 0ms) both; }
+@keyframes rxm-sweep { from { stroke-dasharray: 0 100; } to { stroke-dasharray: 100 100; } }
+
+/* Colunas crescem da base */
+.rxm-col { transform-box: fill-box; transform-origin: bottom; }
+.rxm-play .rxm-col { animation: rxm-col-grow 520ms var(--rxm-ease) calc(var(--rxm-delay, 0ms) + var(--i, 0) * 50ms) both; }
+@keyframes rxm-col-grow { from { transform: scaleY(0); } }
+
+/* ------------------------------------------------------------------ */
+/* 5. Toque e troca de estado                                          */
+/* ------------------------------------------------------------------ */
+.rxm-press { transition: transform var(--rxm-rapido) var(--rxm-ease), filter var(--rxm-rapido) var(--rxm-ease); }
+.rxm-press:active { transform: scale(.97); }
+
+/* Troca de rótulo (Salvar gasto → Gasto salvo) */
+.rxm-swap-out { animation: rxm-swap-out var(--rxm-rapido) var(--rxm-ease) both; }
+.rxm-swap-in  { animation: rxm-swap-in  var(--rxm-padrao) var(--rxm-ease) both; }
+@keyframes rxm-swap-out { to   { transform: translateY(-8px); opacity: 0; } }
+@keyframes rxm-swap-in  { from { transform: translateY(8px);  opacity: 0; } }
+
+/* Aviso (snackbar): sobe da base */
+.rxm-toast-in { animation: rxm-toast-in var(--rxm-padrao) var(--rxm-ease) both; }
+@keyframes rxm-toast-in { from { transform: translateY(16px); opacity: 0; } }
+
+/* Troca de mês: o conteúdo entra pelo lado (--dir: 1 ou -1) */
+.rxm-month-in { animation: rxm-month-in var(--rxm-padrao) var(--rxm-ease) both; }
+@keyframes rxm-month-in { from { transform: translateX(calc(var(--dir, 1) * 24px)); opacity: 0; } }
+
+/* ------------------------------------------------------------------ */
+/* Reduzir movimento: o estado final é o estado natural, então basta   */
+/* encurtar tudo. .rxm-reduce simula a opção do sistema (demonstração). */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  [class*="rxm-"], [class*="rxm-"] * {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+.rxm-reduce [class*="rxm-"], .rxm-reduce [class*="rxm-"] * {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}

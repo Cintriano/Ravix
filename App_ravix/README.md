@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e tema CAPRA.
+✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e identidade visual v2 (DP-37).
 
 ## Desenvolvimento
 
@@ -145,8 +145,6 @@ Plano de implementação em [`../docs/04_plano_desenvolvimento_v1.md`](../docs/0
 | `make test` | Testes unitários e de widget |
 | `make coverage` | Testes com relatório HTML em `coverage/html` (precisa do `lcov`) |
 | `make check` | O mesmo que o CI: get, gen, analyze e testes com cobertura |
-| `dart run tool/gerar_tokens.dart` | Gera `lib/core/tema/capra_tokens.dart` a partir de `docs/identidade_visual/capra-tokens.json` |
-| `bash tool/gerar_icones.sh` | Gera ícone, abertura e marca do app a partir dos SVGs da marca (precisa do ImageMagick com librsvg) |
 
 ### No aparelho
 

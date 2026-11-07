@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Abertura até o Android 11: neutro do Ravix e a marca centralizada. -->
+<!-- Abertura até o Android 11: Floresta do Ravix e a marca centralizada. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/ravix_neutro" />
+    <item android:drawable="@color/ravix_floresta" />
     <item>
         <bitmap
             android:gravity="center"

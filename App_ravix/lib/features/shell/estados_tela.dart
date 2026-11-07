@@ -1,103 +1,29 @@
 /// Estados de tela padrão (E01-F02-T04): carregando, vazio e erro.
 library;
 
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
+import 'package:ravix/core/tema/marca.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/core/tema/tokens.dart';
 
-/// Carregamento orbital CAPRA: arco de 2 no acento com um ponto em órbita.
-/// Fica parado quando o sistema pede para reduzir animações.
-class EstadoCarregando extends StatefulWidget {
+/// Carregando: o símbolo da marca com a seta passando, em laço. Fica
+/// parado quando o sistema pede para reduzir movimento.
+class EstadoCarregando extends StatelessWidget {
   /// Cria o indicador.
   const new({super.key});
 
   @override
-  State<EstadoCarregando> createState() => _EstadoCarregandoState();
-}
-
-class _EstadoCarregandoState extends State<EstadoCarregando>
-    with SingleTickerProviderStateMixin {
-  late final _giro = AnimationController(
-    vsync: this,
-    duration: CapraTokens.motionLoop,
+  Widget build(BuildContext context) => Center(
+    child: Semantics(
+      label: 'Carregando…',
+      child: const ExcludeSemantics(child: MarcaRavix.simbolo(emLaco: true)),
+    ),
   );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _giro.stop();
-    } else if (!_giro.isAnimating) {
-      _giro.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _giro.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final acento = context.temaRavix.acento;
-    return Center(
-      child: Semantics(
-        label: 'Carregando…',
-        child: SizedBox.square(
-          dimension: 40,
-          child: AnimatedBuilder(
-            animation: _giro,
-            builder: (context, _) => CustomPaint(
-              painter: _OrbitaPainter(acento, _giro.value * 2 * math.pi),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-class _OrbitaPainter extends CustomPainter {
-  new(this.cor, this.angulo);
-
-  final Color cor;
-  final double angulo;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final raio = size.shortestSide / 2 - 4;
-    final centro = size.center(Offset.zero);
-    final traco = Paint()
-      ..color = cor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromCircle(center: centro, radius: raio),
-      angulo,
-      math.pi * 1.4,
-      false,
-      traco,
-    );
-    final ponto = angulo + math.pi * 1.7;
-    canvas.drawCircle(
-      centro + Offset(math.cos(ponto), math.sin(ponto)) * raio,
-      3,
-      Paint()..color = cor,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_OrbitaPainter old) =>
-      old.angulo != angulo || old.cor != cor;
-}
-
-/// Estado vazio: fragmento de espiral, título, uma frase e, se houver, uma
+/// Estado vazio: símbolo da marca, título, uma frase e, se houver, uma
 /// ação.
 class EstadoVazio extends StatelessWidget {
   /// Cria o estado vazio.
@@ -127,68 +53,22 @@ class EstadoVazio extends StatelessWidget {
     final tema = context.temaRavix;
     return _Centralizado(
       children: [
-        ExcludeSemantics(
-          child: CustomPaint(
-            size: const Size.square(72),
-            painter: _EspiralPainter(tema.acento, tema.paleta.borderStrong),
-          ),
-        ),
-        const SizedBox(height: CapraTokens.spaceLg),
+        const ExcludeSemantics(child: MarcaRavix.simbolo(altura: 48)),
+        const SizedBox(height: TokensRavix.spaceLg),
         Text(titulo, style: texto.titleLarge, textAlign: TextAlign.center),
-        const SizedBox(height: CapraTokens.spaceSm),
+        const SizedBox(height: TokensRavix.spaceSm),
         Text(
           mensagem,
           style: texto.bodyLarge?.copyWith(color: tema.paleta.textSecondary),
           textAlign: TextAlign.center,
         ),
         if (rotuloAcao != null) ...[
-          const SizedBox(height: CapraTokens.spaceLg),
+          const SizedBox(height: TokensRavix.spaceLg),
           OutlinedButton(onPressed: aoAgir, child: Text(rotuloAcao!)),
         ],
       ],
     );
   }
-}
-
-class _EspiralPainter extends CustomPainter {
-  new(this.acento, this.traco);
-
-  final Color acento;
-  final Color traco;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centro = size.center(Offset.zero);
-    final caminho = Path();
-    for (var i = 0; i <= 60; i++) {
-      final t = i / 60;
-      final angulo = math.pi * (0.6 + 1.5 * t);
-      final raio = size.shortestSide * (0.14 + 0.32 * t);
-      final p = centro + Offset(math.cos(angulo), math.sin(angulo)) * raio;
-      i == 0 ? caminho.moveTo(p.dx, p.dy) : caminho.lineTo(p.dx, p.dy);
-    }
-    canvas.drawPath(
-      caminho,
-      Paint()
-        ..color = traco
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round,
-    );
-    for (final (t, cor) in [(0.0, traco), (0.5, traco), (1.0, acento)]) {
-      final angulo = math.pi * (0.6 + 1.5 * t);
-      final raio = size.shortestSide * (0.14 + 0.32 * t);
-      canvas.drawCircle(
-        centro + Offset(math.cos(angulo), math.sin(angulo)) * raio,
-        t == 1 ? 4 : 2.5,
-        Paint()..color = cor,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_EspiralPainter old) =>
-      old.acento != acento || old.traco != traco;
 }
 
 /// Estado de erro: ícone e mensagem em `danger` e a ação de tentar de novo.
@@ -217,19 +97,19 @@ class EstadoErro extends StatelessWidget {
     return _Centralizado(
       children: [
         Icon(Icones.circleAlert, size: 40, color: paleta.danger),
-        const SizedBox(height: CapraTokens.spaceMd),
+        const SizedBox(height: TokensRavix.spaceMd),
         Text(titulo, style: texto.titleLarge, textAlign: TextAlign.center),
-        const SizedBox(height: CapraTokens.spaceSm),
+        const SizedBox(height: TokensRavix.spaceSm),
         Text(
           mensagem,
           style: texto.bodyLarge?.copyWith(color: paleta.textSecondary),
           textAlign: TextAlign.center,
         ),
         if (aoTentarDeNovo != null) ...[
-          const SizedBox(height: CapraTokens.spaceLg),
+          const SizedBox(height: TokensRavix.spaceLg),
           OutlinedButton.icon(
             onPressed: aoTentarDeNovo,
-            icon: const Icon(Icones.refreshCw, size: CapraTokens.iconSizeMd),
+            icon: const Icon(Icones.refreshCw, size: TokensRavix.iconSizeMd),
             label: const Text('Tentar de novo'),
           ),
         ],
@@ -246,7 +126,7 @@ class _Centralizado extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: SingleChildScrollView(
-      padding: const EdgeInsets.all(CapraTokens.spaceXl),
+      padding: const EdgeInsets.all(TokensRavix.spaceXl),
       child: Column(mainAxisSize: MainAxisSize.min, children: children),
     ),
   );

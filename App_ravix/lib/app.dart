@@ -7,7 +7,7 @@ import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/features/shell/bloqueio.dart';
 import 'package:ravix/features/shell/tela_bloqueio.dart';
 
-/// Raiz do app: tema CAPRA na aparência escolhida, português, rotas e
+/// Raiz do app: identidade v2 na aparência escolhida, português, rotas e
 /// bloqueio local.
 class RavixApp extends ConsumerStatefulWidget {
   /// Cria a raiz do app.

@@ -54,6 +54,7 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 | DP-34 | Exclusão de registros: física ou lógica | Aplicado | 🟡 | v1, v2 | E01, E02 |
 | DP-35 | Tag nas recorrências | A decidir | 🟢 | v2 | E02 |
 | DP-36 | Stack, sugestão por descrição e otimização da v1 | Aplicado | 🟡 | v1 | E01, E02 |
+| DP-37 | Identidade visual v2 (Floresta e Menta) | Aplicado | 🟢 | v1 | E01 |
 
 ---
 
@@ -513,3 +514,19 @@ Arquitetura em três camadas: telas → providers → repositórios → drift. A
 **Fora do escopo por enquanto:** backup dos dados.
 
 **Por que 🟡:** a coluna nova altera o esquema da v1, ainda antes de existirem dados; o resto é configuração de implementação.
+
+## DP-37 — Identidade visual v2
+
+- **Status:** Aplicado · **Risco:** 🟢 Baixo · **Versão:** v1 · **Épico:** E01
+- **Decisão:** O Ravix deixa de ser logo filha da CAPRA e ganha identidade própria (manual em [`identidade_visual/v2`](identidade_visual/v2/README.md), 06/11/2026): Floresta `#163730` e Menta `#78CFA5`, Chakra Petch nos títulos, Archivo na interface, Ravix Valores nos valores em dinheiro, cantos chanfrados a 45° e ícones Material Sharp. O Peach sai do app.
+
+**Aplicado no app (07/11/2026):**
+
+- Tema: `lib/core/tema/tokens.dart` (paleta, grade de 4 dp, chanfros, movimento) e `tema.dart` (Material 3 com componentes chanfrados e `RavixBordaDeCampo`). Substituem o `capra_tokens.dart` gerado e o `tool/gerar_tokens.dart`.
+- Marca desenhada por vetores em `lib/core/tema/marca.dart`, com a abertura na tela de bloqueio e o laço da seta no estado de carregamento. Sem `flutter_svg`.
+- Ícone adaptativo, ícone temático e abertura do Android com os arquivos prontos de `v2/mobile/android`, fundo Floresta. O `tool/gerar_icones.sh` saiu.
+- Aba À vista: card de resumo em Floresta com o total e a divisão por categoria (nova consulta `totaisPorCategoriaDoMes`), cabeçalho do dia em sobretítulo com o subtotal à direita e ícone no quadrado chanfrado com a cor da categoria. Sem barra de orçamento: a renda só entra na v2.
+- Formulário: o valor vem primeiro e em destaque; botão **Salvar gasto**.
+
+**Por que 🟢:** só aparência; nenhum dado ou esquema muda (a consulta nova é só leitura).
+

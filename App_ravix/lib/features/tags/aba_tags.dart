@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ravix/app/dependencias.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/tag_repository.dart';
 import 'package:ravix/features/shell/estados_tela.dart';
@@ -42,7 +42,7 @@ class AbaTags extends ConsumerWidget {
         // Espaço para o botão flutuante não cobrir a última tag.
         padding: const EdgeInsets.only(bottom: 96),
         itemCount: tags.length,
-        separatorBuilder: (_, _) => const Divider(indent: CapraTokens.spaceMd),
+        separatorBuilder: (_, _) => const Divider(indent: TokensRavix.spaceMd),
         itemBuilder: (context, i) => _LinhaTag(tag: tags[i]),
       ),
     );
@@ -76,8 +76,8 @@ class _LinhaTag extends ConsumerWidget {
         child: Align(
           alignment: Alignment.centerRight,
           child: Padding(
-            padding: const EdgeInsets.only(right: CapraTokens.spaceLg),
-            child: Icon(Icones.trash2, color: paleta.onAccent),
+            padding: const EdgeInsets.only(right: TokensRavix.spaceLg),
+            child: Icon(Icones.trash2, color: paleta.onDanger),
           ),
         ),
       ),
@@ -122,7 +122,7 @@ Future<bool> removerTag(BuildContext context, WidgetRef ref, Tag tag) async {
         FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: contexto.temaRavix.paleta.danger,
-            foregroundColor: contexto.temaRavix.paleta.onAccent,
+            foregroundColor: contexto.temaRavix.paleta.onDanger,
           ),
           onPressed: () => Navigator.of(contexto).pop(true),
           child: Text(arquivar ? 'Arquivar' : 'Excluir'),

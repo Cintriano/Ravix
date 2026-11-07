@@ -1,0 +1,101 @@
+/* Ravix v2: tokens para o site.
+   Fontes: inclua o <link> de web/head-snippet.html antes deste arquivo. */
+
+:root {
+  /* Marca */
+  --rx-floresta: #163730;
+  --rx-menta: #78CFA5;
+  --rx-menta-600: #3FB282;
+  --rx-petroleo: #22727B;
+  --rx-areia: #C9AD78;
+  --rx-nevoa: #EEF4F0;
+  --rx-tinta: #0C2420;
+  --rx-ok: #3FB282;
+  --rx-atencao: #D9A441;
+  --rx-estourado: #D0614E;
+
+  /* Tema claro */
+  --rx-bg: #F4F7F4;
+  --rx-surface: #FFFFFF;
+  --rx-surface-alt: #E9F0EC;
+  --rx-text: #11241F;
+  --rx-text-muted: #5B6F69;
+  --rx-line: #D2DFD8;
+  --rx-primary: #163730;
+  --rx-on-primary: #EEF4F0;
+  --rx-accent: #3FB282;
+  --rx-accent-fill: #78CFA5;
+  --rx-on-accent-fill: #0C2420;
+  --rx-info: #22727B;
+
+  /* Tipografia */
+  --rx-font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --rx-font-text: "Archivo", "Segoe UI", system-ui, sans-serif;
+
+  /* Espaço (grade de 4) */
+  --rx-s1: 4px; --rx-s2: 8px; --rx-s3: 12px; --rx-s4: 16px; --rx-s6: 24px;
+  --rx-s8: 32px; --rx-s12: 48px; --rx-s16: 64px; --rx-s24: 96px;
+
+  /* Chanfros */
+  --rx-cut-p: 4px;
+  --rx-cut-m: 8px;
+  --rx-cut-g: 12px;
+
+  --rx-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --rx-bg: #0D1C19; --rx-surface: #132823; --rx-surface-alt: #1B3530;
+    --rx-text: #E7F0EC; --rx-text-muted: #93A9A2; --rx-line: #244038;
+    --rx-primary: #78CFA5; --rx-on-primary: #0C2420; --rx-accent: #78CFA5; --rx-info: #6CC1C8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --rx-bg: #0D1C19; --rx-surface: #132823; --rx-surface-alt: #1B3530;
+  --rx-text: #E7F0EC; --rx-text-muted: #93A9A2; --rx-line: #244038;
+  --rx-primary: #78CFA5; --rx-on-primary: #0C2420; --rx-accent: #78CFA5; --rx-info: #6CC1C8;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--rx-bg);
+  color: var(--rx-text);
+  font-family: var(--rx-font-text);
+  font-size: 17px;
+  line-height: 1.6;
+}
+h1, h2, h3, .rx-display { font-family: var(--rx-font-display); letter-spacing: -0.02em; text-wrap: balance; }
+.rx-num { font-variant-numeric: tabular-nums; }
+
+/* Chanfro: aplica cantos cortados a 45° (use --c para o tamanho) */
+.rx-cut {
+  --c: var(--rx-cut-m);
+  clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)),
+                     calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c));
+}
+/* Chanfro com contorno de 1px (o contorno é o fundo; o ::before é o preenchimento) */
+.rx-cut-outline { position: relative; isolation: isolate; background: var(--rx-line); }
+.rx-cut-outline::before {
+  content: ""; position: absolute; inset: 1px; z-index: -1; background: var(--fill, var(--rx-surface));
+  --ci: calc(var(--c) - 0.41px);
+  clip-path: polygon(var(--ci) 0, calc(100% - var(--ci)) 0, 100% var(--ci), 100% calc(100% - var(--ci)),
+                     calc(100% - var(--ci)) 100%, var(--ci) 100%, 0 calc(100% - var(--ci)), 0 var(--ci));
+}
+
+/* Botões */
+.rx-btn {
+  --c: var(--rx-cut-m);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 22px; border: 0; cursor: pointer;
+  font: 600 16px/1 var(--rx-font-text);
+  background: var(--rx-primary); color: var(--rx-on-primary);
+  transition: transform 120ms var(--rx-ease), filter 120ms var(--rx-ease);
+}
+.rx-btn:hover { filter: brightness(1.08); }
+.rx-btn:active { transform: translateY(1px); }
+/* clip-path corta outline; o foco usa sombra interna */
+.rx-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--rx-info); }
+/* Uso: <button class="rx-btn rx-cut">Baixar o app</button> */
+.rx-btn--accent { background: var(--rx-accent-fill); color: var(--rx-on-accent-fill); }

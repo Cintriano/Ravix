@@ -65,7 +65,7 @@ final class PreferenciasEmMemoria implements Preferencias {
 @Riverpod(keepAlive: true)
 Preferencias preferencias(Ref ref) => PreferenciasEmMemoria();
 
-/// Aparência do app (guia CAPRA: Sistema, Escuro ou Claro).
+/// Aparência do app (Sistema, Escuro ou Claro).
 enum Aparencia {
   /// Segue o tema do sistema.
   sistema('Sistema', ThemeMode.system, Icones.smartphone),

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Marca -->
+    <color name="ravix_floresta">#163730</color>
+    <color name="ravix_menta">#78CFA5</color>
+    <color name="ravix_menta_600">#3FB282</color>
+    <color name="ravix_petroleo">#22727B</color>
+    <color name="ravix_areia">#C9AD78</color>
+    <color name="ravix_nevoa">#EEF4F0</color>
+    <color name="ravix_tinta">#0C2420</color>
+    <!-- Estados do orçamento -->
+    <color name="ravix_ok">#3FB282</color>
+    <color name="ravix_atencao">#D9A441</color>
+    <color name="ravix_estourado">#D0614E</color>
+    <!-- Splash Android 12+ -->
+    <color name="ravix_splash_bg">#163730</color>
+</resources>

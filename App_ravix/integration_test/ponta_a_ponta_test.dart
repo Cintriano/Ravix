@@ -103,7 +103,7 @@ void main() {
     // Criar.
     await tocar(tester, find.text('Novo gasto'));
     await preencherGasto(tester);
-    await tocar(tester, find.text('Salvar'));
+    await tocar(tester, find.text('Salvar gasto'));
 
     // Ver na tabela.
     expect(find.text('Padaria do Zé'), findsOneWidget);
@@ -120,7 +120,7 @@ void main() {
     // Editar.
     await tocar(tester, find.text('Padaria do Zé'));
     await tester.enterText(find.widgetWithText(TextField, 'Valor'), '990');
-    await tocar(tester, find.text('Salvar'));
+    await tocar(tester, find.text('Salvar gasto'));
     expect(find.text(formatarCentavos(990)), findsNWidgets(2));
 
     // Excluir.
@@ -141,7 +141,7 @@ void main() {
     await tocar(tester, find.text('Nova tag'));
     await tester.enterText(find.byType(TextField).last, 'Viagem');
     await tocar(tester, find.widgetWithText(FilledButton, 'Criar'));
-    await tocar(tester, find.text('Salvar'));
+    await tocar(tester, find.text('Salvar gasto'));
     expect(find.textContaining('Viagem'), findsOneWidget);
 
     await tocar(tester, find.byIcon(Icones.settings));

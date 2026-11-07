@@ -37,7 +37,6 @@ dependencies:
   go_router: ^18.1.1
   intl: ^0.20.3
   local_auth: ^3.0.2
-  lucide_icons_flutter: ^4.0.1
   meta: ^1.19.0
   path: ^1.9.1
   path_provider: ^2.1.6
@@ -66,23 +65,32 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/fonts/Inter-OFL.txt
-    - assets/marca/
+    - assets/fonts/OFL-Archivo.txt
+    - assets/fonts/OFL-ChakraPetch.txt
 
-  # Inter embarcada (sem download na primeira abertura). O corte óptico de
-  # 18 pt serve ao texto; o de 28 pt, aos números grandes e títulos de tela.
+  # Fontes da identidade v2, embarcadas (sem download na primeira abertura).
+  # Chakra Petch: títulos. Archivo: interface. Ravix Valores: derivada da
+  # Chakra Petch com dígitos de largura igual, só para valores em dinheiro.
   fonts:
-    - family: Inter
+    - family: ChakraPetch
       fonts:
-        - asset: assets/fonts/Inter_18pt-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Inter_18pt-Medium.ttf
+        - asset: assets/fonts/ChakraPetch-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Inter_18pt-SemiBold.ttf
+        - asset: assets/fonts/ChakraPetch-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Inter_18pt-Bold.ttf
+        - asset: assets/fonts/ChakraPetch-Bold.ttf
           weight: 700
-    - family: InterTitulo
+    - family: Archivo
       fonts:
-        - asset: assets/fonts/Inter_28pt-Bold.ttf
+        - asset: assets/fonts/Archivo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Archivo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Archivo-SemiBold.ttf
+          weight: 600
+    - family: RavixValores
+      fonts:
+        - asset: assets/fonts/RavixValores-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/RavixValores-Bold.ttf
           weight: 700

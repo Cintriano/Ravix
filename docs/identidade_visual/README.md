@@ -1,5 +1,10 @@
 # Ravix — Identidade visual
 
+> **A identidade atual é a v2**, em [`v2/README.md`](v2/README.md) (06/11/2026): Floresta e Menta, Chakra Petch e Archivo, cantos chanfrados. Decisão em [DP-37](../05_decisoes.md).
+>
+> O restante deste arquivo e os arquivos `capra-*` descrevem a identidade anterior (logo filha CAPRA) e ficam só como histórico.
+
+
 > Copiado do repositório da marca CAPRA (https://github.com/Cintriano/Capra, commit `9d5d188`, 24/10/2026).
 > O Ravix é um produto com **logo filha** da CAPRA. Em caso de conflito, o manual de marca prevalece.
 

@@ -37,7 +37,7 @@ Amálgama de **Ratio** + **Vindex** (latim): "razão e defesa", "raciocínio e p
 | Sistema operacional | Linux (Fedora) |
 | Stack da v1 | Flutter 3.47 (Dart 3.13), drift + `sqlite3` 3.x, Riverpod 3, go_router, local_auth, shared_preferences (DP-36) |
 | Qualidade | `very_good_analysis`, CI no GitHub Actions (`analyze` + testes com cobertura) |
-| Identidade visual | Logo filha CAPRA (marca R, área Finanças, acento Peach, neutro preto), tokens de `capra-tokens.json` |
+| Identidade visual | Identidade própria v2 (Floresta e Menta, Chakra Petch e Archivo, cantos chanfrados), em `identidade_visual/v2` (DP-37) |
 
 ### 2.2 Recursos Android
 

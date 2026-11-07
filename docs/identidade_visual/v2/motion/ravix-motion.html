@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ravix: movimento</title>
+<link rel="stylesheet" href="../tokens/ravix.css">
+<link rel="stylesheet" href="ravix-motion.css">
+<style>
+  @font-face { font-family: "Chakra Petch"; font-weight: 600; src: url("../fontes/ChakraPetch-SemiBold.ttf"); }
+  @font-face { font-family: "Chakra Petch"; font-weight: 700; src: url("../fontes/ChakraPetch-Bold.ttf"); }
+  @font-face { font-family: "Archivo"; font-weight: 100 900; src: url("../fontes/Archivo-Variable.ttf"); }
+  @font-face { font-family: "RavixValores"; font-weight: 600; src: url("../fontes/RavixValores-SemiBold.ttf"); }
+  @font-face { font-family: "RavixValores"; font-weight: 700; src: url("../fontes/RavixValores-Bold.ttf"); }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 96px; }
+  header.top { display: flex; align-items: center; gap: 16px; padding: 28px 0 8px; flex-wrap: wrap; }
+  header.top .rx-display { margin: 0 0 0 4px; font-size: 22px; font-weight: 600; color: var(--rx-text-muted); }
+  header.top .spacer { flex: 1; }
+  .lead { color: var(--rx-text-muted); max-width: 64ch; margin: 8px 0 32px; font-size: 17px; }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tool {
+    --c: 6px; font: 500 14px/1 var(--rx-font-text); color: var(--rx-text); cursor: pointer;
+    padding: 11px 14px; border: 0; background: var(--rx-surface-alt);
+  }
+  .tool:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--rx-info); }
+  .tool[aria-pressed="true"] { background: var(--rx-primary); color: var(--rx-on-primary); }
+
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+  .card { grid-column: span 6; --c: 12px; --fill: var(--rx-surface); padding: 1px; }
+  .card.wide { grid-column: span 12; }
+  .card .in { background: var(--rx-surface); padding: 20px 20px 22px; height: 100%; display: flex; flex-direction: column; gap: 14px;
+              clip-path: polygon(11.6px 0, calc(100% - 11.6px) 0, 100% 11.6px, 100% calc(100% - 11.6px), calc(100% - 11.6px) 100%, 11.6px 100%, 0 calc(100% - 11.6px), 0 11.6px); }
+  .card header { display: flex; align-items: baseline; gap: 10px; }
+  .card h2 { font-size: 18px; line-height: 24px; margin: 0; font-weight: 600; }
+  .tag { font: 600 11px/16px var(--rx-font-text); letter-spacing: .08em; text-transform: uppercase; color: var(--rx-text-muted); }
+  .card header .spacer { flex: 1; }
+  .card p.note { margin: 0; color: var(--rx-text-muted); font-size: 14px; line-height: 20px; }
+  .replay { --c: 6px; font: 600 13px/1 var(--rx-font-text); border: 0; cursor: pointer; padding: 9px 12px; background: var(--rx-surface-alt); color: var(--rx-text); }
+  .replay:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--rx-info); }
+
+  .stage { display: grid; place-items: center; min-height: 220px; padding: 24px; overflow: hidden; }
+  .stage.floresta { background: var(--rx-floresta); }
+  .stage.nevoa { background: var(--rx-nevoa); }
+  .stage.surface-alt { background: var(--rx-surface-alt); }
+  .stage svg.logo { width: min(100%, 380px); height: auto; display: block; }
+  .stage svg.symbol { height: 140px; width: auto; display: block; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Valores */
+  .money { font-family: "RavixValores", var(--rx-font-display); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
+  /* --- Gasto salvo --- */
+  .field { --c: 8px; background: var(--rx-surface-alt); padding: 10px 14px; }
+  .field small { display: block; font: 500 12px/16px var(--rx-font-text); color: var(--rx-text-muted); }
+  .field .money { font-size: 40px; line-height: 44px; }
+  .save { --c: 8px; position: relative; width: 100%; min-height: 52px; overflow: hidden; }
+  .save .lbl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .save .lbl.b { opacity: 0; }
+  .save svg { height: 22px; width: auto; display: block; }
+  #s-saved.rxm-play .save { animation: press 120ms var(--rxm-ease) 600ms both; }
+  #s-saved.rxm-play .lbl.a { animation: rxm-swap-out var(--rxm-rapido) var(--rxm-ease) 760ms both; }
+  #s-saved.rxm-play .lbl.b { animation: rxm-swap-in var(--rxm-padrao) var(--rxm-ease) 840ms both; }
+  #s-saved .toast { --c: 8px; background: var(--rx-floresta); color: var(--rx-nevoa); padding: 14px 16px; font-size: 15px; line-height: 22px; min-height: 50px; }
+  #s-saved.rxm-play .toast { animation: rxm-toast-in var(--rxm-padrao) var(--rxm-ease) 1000ms both; }
+  @keyframes press { 40% { transform: scale(.97); } }
+  .toast b { font-family: "RavixValores", var(--rx-font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* --- Orçamento --- */
+  .sum { --c: 12px; background: var(--rx-floresta); color: var(--rx-nevoa); padding: 18px; display: grid; gap: 12px; }
+  .sum .lab { font-size: 12px; line-height: 16px; color: #9DB8AF; }
+  .sum .money { font-size: 40px; line-height: 44px; }
+  .rxm-bar { height: 8px; background: #0D2621; }
+  .sum .row { display: flex; justify-content: space-between; font-size: 13px; line-height: 18px; color: #9DB8AF; }
+  .sum .row b { color: var(--rx-nevoa); font-weight: 600; }
+  .seg { display: flex; gap: 8px; }
+
+  /* --- Lista --- */
+  .list { display: grid; gap: 0; }
+  .day { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 8px; }
+  .day .tag { color: var(--rx-text-muted); }
+  .day .money { font-size: 16px; font-weight: 600; }
+  .item { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; min-height: 64px; border-top: 1px solid var(--rx-line); }
+  .ico { --c: 4px; width: 36px; height: 36px; display: grid; place-items: center; background: color-mix(in srgb, var(--k) 20%, transparent); color: var(--rx-text); }
+  .ico svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: square; stroke-linejoin: miter; }
+  .item .t { font-weight: 500; line-height: 20px; }
+  .item .d { font-size: 13px; line-height: 18px; color: var(--rx-text-muted); }
+  .item .money { font-size: 16px; font-weight: 600; }
+  .fab { --c: 12px; align-self: flex-end; background: var(--rx-accent-fill); color: var(--rx-on-accent-fill); }
+
+  /* --- Gráficos --- */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
+  .donut { position: relative; width: min(100%, 190px); margin: 0 auto; }
+  .donut .center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .donut .center small { font-size: 11px; color: var(--rx-text-muted); }
+  .donut .center .money { font-size: 13px; }
+  .donut .center small { font-size: 10px; }
+  svg.cols { width: 100%; height: auto; display: block; }
+
+  @media (max-width: 820px) {
+    .card { grid-column: span 12; }
+    .charts, .pair { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <svg id="top-logo" data-svg="logo" data-tone="pos" style="height:32px;width:auto" aria-label="Ravix"></svg>
+    <h1 class="rx-display">movimento</h1>
+    <span class="spacer"></span>
+    <div class="tools">
+      <button class="tool rx-cut" id="t-all">Reproduzir tudo</button>
+      <button class="tool rx-cut" id="t-theme" aria-pressed="false">Tema escuro</button>
+      <button class="tool rx-cut" id="t-reduce" aria-pressed="false">Reduzir movimento</button>
+    </div>
+  </header>
+  <p class="lead">A haste desce, a seta sobe. É o único gesto da marca, e as demais animações derivam dele. Nada de sombra, brilho ou quique: só deslocamento, opacidade e cor, nos tempos <b>rápido</b> (120 ms), <b>padrão</b> (220 ms) e <b>ênfase</b> (420 ms). A abertura usa 900 ms só na seta.</p>
+
+  <div class="grid">
+
+    <!-- 1. Abertura -->
+    <section class="card rx-cut-outline wide" id="s-open"><div class="in">
+      <header><h2>Abertura</h2><span class="tag">ênfase · 900 ms na seta</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="pair">
+        <div class="stage floresta" style="min-height:260px"><svg class="logo" data-svg="logo" data-tone="neg" aria-label="Ravix"></svg></div>
+        <div class="stage nevoa" style="min-height:260px"><svg class="logo" data-svg="logo" data-tone="pos" aria-label="Ravix"></svg></div>
+      </div>
+      <p class="note">1. A haste desce em duas peças (0 e 90 ms). 2. A seta sobe pelo próprio eixo, nascendo da linha de base (240 ms). 3. As letras sobem uma a uma, 70 ms entre elas. A seta termina na altura do pingo do i.</p>
+    </div></section>
+
+    <!-- 2. Splash e carregamento -->
+    <section class="card rx-cut-outline" id="s-splash"><div class="in">
+      <header><h2>Splash</h2><span class="tag">símbolo sozinho</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="stage floresta" style="min-height:300px"><svg class="symbol" data-svg="symbol" data-tone="neg" aria-label="Ravix"></svg></div>
+      <p class="note">A mesma abertura, só com o símbolo, sobre Floresta. Substitui a imagem estática depois que o app carrega.</p>
+    </div></section>
+
+    <section class="card rx-cut-outline" id="s-loop"><div class="in">
+      <header><h2>Carregando</h2><span class="tag">laço · 1,2 s</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="stage surface-alt" style="min-height:300px"><svg class="symbol rxm-loop" data-svg="symbol" data-tone="pos" data-next style="height:84px" aria-label="Carregando"></svg></div>
+      <p class="note">A haste fica parada. Uma seta sai pelo canto superior direito enquanto outra entra por baixo. Use no lugar do indicador circular.</p>
+    </div></section>
+
+    <!-- 3. Gasto salvo -->
+    <section class="card rx-cut-outline" id="s-saved"><div class="in">
+      <header><h2>Gasto salvo</h2><span class="tag">rápido + padrão + ênfase</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="field rx-cut"><small>Valor</small><div class="money">R$ 119,90</div></div>
+      <button class="rx-btn rx-cut save rxm-press" type="button" id="save-btn">
+        <span class="lbl a">Salvar gasto</span>
+        <span class="lbl b rxm-confirm" id="save-confirm"><svg data-svg="symbol" data-tone="neg" data-next aria-hidden="true"></svg>Gasto salvo</span>
+      </button>
+      <div class="toast rx-cut">Gasto salvo. Restam <b data-count data-from="45801" data-to="33811" data-delay="1080" data-dur="700"></b> no mês.</div>
+      <p class="note">O toque aperta o botão (120 ms), o rótulo troca (220 ms) e a seta do símbolo passa (420 ms). O aviso sobe e o saldo desce até o novo valor. Toque no botão para repetir.</p>
+    </div></section>
+
+    <!-- 4. Orçamento -->
+    <section class="card rx-cut-outline" id="s-budget"><div class="in">
+      <header><h2>Orçamento</h2><span class="tag">ênfase · cor por estado</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="sum rx-cut">
+        <div class="lab">Gasto no mês</div>
+        <div class="money">R$ <span id="b-total" data-count data-from="0" data-to="104189" data-delay="0" data-dur="700"></span></div>
+        <div class="rxm-bar" id="b-bar" style="--p:.58"><i class="rxm-bar-fill rxm-bar-intro"></i></div>
+        <div class="row"><span id="b-msg"><b>58%</b> do orçamento de novembro</span><span id="b-left">Restam <b>R$ 751,11</b></span></div>
+      </div>
+      <div class="seg" role="group" aria-label="Estado do orçamento">
+        <button class="tool rx-cut" data-p="58" aria-pressed="true">58%, dentro</button>
+        <button class="tool rx-cut" data-p="82" aria-pressed="false">82%, perto</button>
+        <button class="tool rx-cut" data-p="104" aria-pressed="false">104%, estourado</button>
+      </div>
+      <p class="note">A barra cresce da esquerda e a cor muda no limite (80% e 100%), sem tremor nem piscada: o app não julga o gasto.</p>
+    </div></section>
+
+    <!-- 5. Lista -->
+    <section class="card rx-cut-outline" id="s-list"><div class="in">
+      <header><h2>Lista do dia</h2><span class="tag">padrão · 40 ms entre linhas</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="list" id="list">
+        <div class="day rxm-row" style="--i:0"><span class="tag">Quarta, 4 de novembro</span><span class="money" id="day-total" data-count data-from="0" data-to="19130" data-delay="60" data-dur="500"></span></div>
+        <div class="item rxm-row" style="--i:1"><span class="ico rx-cut" style="--k:#C9AD78"><svg viewBox="0 0 24 24"><path d="M7 3v8M11 3v8M7 7h4M9 11v10M17 21V3c-2 2-3 5-3 8h3"/></svg></span><div><div class="t">Mercado</div><div class="d">Alimentação · 18:42</div></div><span class="money">R$ 119,90</span></div>
+        <div class="item rxm-row" style="--i:2"><span class="ico rx-cut" style="--k:#22727B"><svg viewBox="0 0 24 24"><path d="M3 15v-4l2-5h14l2 5v4zM3 15v3M21 15v3M6 11h12"/></svg></span><div><div class="t">Corrida de app</div><div class="d">Transporte · 12:10 · trabalho</div></div><span class="money">R$ 23,40</span></div>
+        <div class="item rxm-row" style="--i:3"><span class="ico rx-cut" style="--k:#78CFA5"><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 9h18M7 5v4M12 5v4M17 5v4"/></svg></span><div><div class="t">Cinema</div><div class="d">Lazer · 20:30</div></div><span class="money">R$ 48,00</span></div>
+      </div>
+      <button class="rx-btn rx-btn--accent rx-cut fab rxm-press" type="button" id="add-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 4v16M4 12h16"/></svg>Novo gasto</button>
+      <p class="note">As linhas entram de baixo, uma a uma. No botão, o gasto novo entra no topo e o subtotal do dia conta até o novo valor.</p>
+    </div></section>
+
+    <!-- 6. Gráficos -->
+    <section class="card rx-cut-outline" id="s-charts"><div class="in">
+      <header><h2>Gráficos</h2><span class="tag">varredura e colunas</span><span class="spacer"></span><button class="replay rx-cut" data-replay>Repetir</button></header>
+      <div class="charts">
+        <div class="donut">
+          <svg viewBox="0 0 100 100" width="100%" aria-label="Gasto por categoria">
+            <defs><mask id="donut-mask"><circle class="rxm-donut-sweep" cx="50" cy="50" r="35" pathLength="100" fill="none" stroke="#fff" stroke-width="32" transform="rotate(-90 50 50)"/></mask></defs>
+            <g mask="url(#donut-mask)" transform="rotate(-90 50 50)" fill="none" stroke-width="16">
+              <circle cx="50" cy="50" r="35" pathLength="100" stroke="#78CFA5" stroke-dasharray="38 62" stroke-dashoffset="0"/>
+              <circle cx="50" cy="50" r="35" pathLength="100" stroke="#22727B" stroke-dasharray="27 73" stroke-dashoffset="-38"/>
+              <circle cx="50" cy="50" r="35" pathLength="100" stroke="#C9AD78" stroke-dasharray="20 80" stroke-dashoffset="-65"/>
+              <circle cx="50" cy="50" r="35" pathLength="100" stroke="#4FA3A0" stroke-dasharray="15 85" stroke-dashoffset="-85"/>
+            </g>
+          </svg>
+          <div class="center"><small>Gasto no mês</small><span class="money">R$ <span data-count data-from="0" data-to="104189" data-delay="0" data-dur="900"></span></span></div>
+        </div>
+        <svg class="cols" viewBox="0 0 240 150" aria-label="Gasto por mês">
+          <g stroke="var(--rx-line)" stroke-width="1"><path d="M0 130.5h240M0 90.5h240M0 50.5h240"/></g>
+          <g fill="#22727B">
+            <rect class="rxm-col" style="--i:0" x="12"  y="80" width="26" height="50"/>
+            <rect class="rxm-col" style="--i:1" x="52"  y="62" width="26" height="68"/>
+            <rect class="rxm-col" style="--i:2" x="92"  y="90" width="26" height="40"/>
+            <rect class="rxm-col" style="--i:3" x="132" y="52" width="26" height="78"/>
+            <rect class="rxm-col" style="--i:4" x="172" y="40" width="26" height="90"/>
+            <rect class="rxm-col" style="--i:5" x="212" y="26" width="26" height="104" fill="#78CFA5"/>
+          </g>
+          <g font-family="Archivo" font-size="9" fill="var(--rx-text-muted)" text-anchor="middle"><text x="25" y="145">Jun</text><text x="65" y="145">Jul</text><text x="105" y="145">Ago</text><text x="145" y="145">Set</text><text x="185" y="145">Out</text><text x="225" y="145">Nov</text></g>
+        </svg>
+      </div>
+      <p class="note">A rosca é revelada por uma varredura no sentido horário (900 ms). As colunas crescem da base, 50 ms entre elas. A última, do mês atual, usa Menta.</p>
+    </div></section>
+
+  </div>
+</div>
+
+<script>
+/* ---------- Símbolo e logotipo ---------- */
+const P = {
+  stemA: "M10.0 -498.0 L159.0 -498.0 L245.4 -379.8 L170.9 -277.8 Z",
+  stemB: "M357.1 -227.0 L523.0 0.0 L374.0 0.0 L282.6 -125.1 Z",
+  arrow: "M5.0 0.0 L154.0 0.0 L536.4 -523.1 L594.4 -480.7 L599.9 -712.0 L381.2 -636.5 L439.2 -594.1 Z",
+  letters: [
+    "M615.0 -232V0H479.0V-201L419.0 -268H201.0V0H65.0V-700H504.0L611.0 -592V-380L543.0 -311ZM201.0 -380H442.0L477.0 -415V-551L442.0 -586H201.0Z",
+    "M700.0 -92V-206L792.0 -298H1045.0V-361L1014.0 -392H864.0L834.0 -361V-333H704.0V-390L811.0 -498H1068.0L1175.0 -390V0H1056.0V-71L982.0 0H792.0ZM973.0 -102 1045.0 -171V-204H857.0L830.0 -177V-127L855.0 -102Z",
+    "M1210.0 -498H1347.0L1463.0 -151H1467.0L1583.0 -498H1720.0L1529.0 0H1401.0Z",
+    "M1755.0 -602V-666L1801.0 -712H1871.0L1917.0 -666V-602L1871.0 -556H1801.0ZM1770.0 -498H1902.0V0H1770.0Z"
+  ]
+};
+const TONES = { pos: { ink: "#163730", arrow: "#3FB282" }, neg: { ink: "#EEF4F0", arrow: "#78CFA5" } };
+function buildSvg(el) {
+  const kind = el.dataset.svg, c = TONES[el.dataset.tone || "pos"], next = el.hasAttribute("data-next");
+  const stemsAndArrow =
+    `<path class="rxm-stem-a" fill="${c.ink}" d="${P.stemA}"/><path class="rxm-stem-b" fill="${c.ink}" d="${P.stemB}"/>` +
+    `<path class="rxm-arrow" fill="${c.arrow}" d="${P.arrow}"/>` +
+    (next ? `<path class="rxm-arrow-next" fill="${c.arrow}" d="${P.arrow}"/>` : "");
+  if (kind === "symbol") {
+    el.setAttribute("viewBox", "5 -712 595 712");
+    el.innerHTML = stemsAndArrow;
+  } else {
+    el.setAttribute("viewBox", "65 -712 2487 712");
+    el.innerHTML = P.letters.map((d, i) => `<path class="rxm-ltr" style="--i:${i}" fill="${c.ink}" d="${d}"/>`).join("") +
+                   `<g transform="translate(1952 0)">${stemsAndArrow}</g>`;
+  }
+  el.setAttribute("role", "img");
+}
+document.querySelectorAll("[data-svg]").forEach(buildSvg);
+
+/* ---------- Contadores (valores em centavos) ---------- */
+const fmt = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const easeOut = x => 1 - Math.pow(1 - x, 4);
+const reduced = () => document.documentElement.classList.contains("rxm-reduce") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+function paint(el, ms) {
+  const from = +el.dataset.from, to = +el.dataset.to, delay = +el.dataset.delay || 0, dur = +el.dataset.dur || 600;
+  const x = reduced() ? 1 : Math.min(Math.max((ms - delay) / dur, 0), 1);
+  el.textContent = fmt.format((from + (to - from) * easeOut(x)) / 100);
+}
+function paintAll(scene, ms) { scene.querySelectorAll("[data-count]").forEach(el => paint(el, ms)); }
+document.querySelectorAll("[data-count]").forEach(el => paint(el, 1e9));
+
+/* ---------- Cenas ---------- */
+const running = new Set();
+function play(scene) {
+  scene.classList.remove("rxm-play"); void scene.offsetWidth; scene.classList.add("rxm-play");
+  scene._t0 = performance.now(); running.add(scene); paintAll(scene, 0); tick();
+}
+let raf = 0;
+function tick() {
+  if (raf) return;
+  raf = requestAnimationFrame(function loop(now) {
+    raf = 0;
+    for (const s of [...running]) {
+      const ms = now - s._t0; paintAll(s, ms);
+      if (ms > 3000) running.delete(s);
+    }
+    if (running.size) raf = requestAnimationFrame(loop);
+  });
+}
+/* Para exportação: congela a cena no instante ms */
+window.seek = function (id, ms) {
+  const s = document.getElementById(id);
+  s.classList.remove("rxm-play"); void s.offsetWidth; s.classList.add("rxm-play");
+  s.getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = ms; });
+  paintAll(s, ms);
+};
+
+const scenes = [...document.querySelectorAll(".card")];
+document.querySelectorAll("[data-replay]").forEach(b => b.addEventListener("click", () => play(b.closest(".card"))));
+document.getElementById("t-all").addEventListener("click", () => scenes.forEach(play));
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && !e.target._seen) { e.target._seen = true; play(e.target); } }), { threshold: .35 });
+scenes.forEach(s => io.observe(s));
+
+/* Logotipo do cabeçalho acompanha o tema */
+const darkMQ = matchMedia("(prefers-color-scheme: dark)");
+function syncTopLogo() {
+  const t = document.documentElement.dataset.theme;
+  const dark = t ? t === "dark" : darkMQ.matches;
+  const el = document.getElementById("top-logo"); el.dataset.tone = dark ? "neg" : "pos"; buildSvg(el);
+  document.getElementById("t-theme").setAttribute("aria-pressed", dark);
+}
+syncTopLogo();
+/* Tema e reduzir movimento */
+const root = document.documentElement;
+document.getElementById("t-theme").addEventListener("click", e => {
+  const dark = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", dark);
+  root.dataset.theme = dark ? "dark" : "light"; syncTopLogo();
+});
+document.getElementById("t-reduce").addEventListener("click", e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  root.classList.toggle("rxm-reduce", on);
+});
+
+/* Gasto salvo: o botão repete a cena */
+document.getElementById("save-btn").addEventListener("click", () => play(document.getElementById("s-saved")));
+
+/* Orçamento: estados */
+const bar = document.getElementById("b-bar"), brl = v => "R$ " + fmt.format(v);
+const BUDGET = 1800, TOTAL = { 58: 1041.89, 82: 1476.00, 104: 1872.00 };
+document.querySelectorAll("#s-budget [data-p]").forEach(btn => btn.addEventListener("click", () => {
+  const p = +btn.dataset.p, scene = document.getElementById("s-budget");
+  scene.querySelectorAll("[data-p]").forEach(b => b.setAttribute("aria-pressed", b === btn));
+  scene.classList.remove("rxm-play");               // as transições assumem daqui em diante
+  bar.style.setProperty("--p", p / 100);
+  bar.dataset.state = p > 100 ? "estourado" : p >= 80 ? "atencao" : "";
+  const totalEl = document.getElementById("b-total"), now = parseFloat(totalEl.textContent.replace(/\./g, "").replace(",", ".")) * 100;
+  totalEl.dataset.from = Math.round(now); totalEl.dataset.to = Math.round(TOTAL[p] * 100); totalEl.dataset.delay = 0; totalEl.dataset.dur = 420;
+  scene._t0 = performance.now(); running.add(scene); tick();
+  document.getElementById("b-msg").innerHTML = `<b>${p}%</b> do orçamento de novembro`;
+  const diff = BUDGET - TOTAL[p];
+  document.getElementById("b-left").innerHTML = diff >= 0 ? `Restam <b>${brl(diff)}</b>` : `<b>${brl(-diff)}</b> acima do orçamento`;
+}));
+
+/* Lista: novo gasto */
+let added = 0;
+document.getElementById("add-btn").addEventListener("click", () => {
+  if (added >= 4) return; added++;
+  const list = document.getElementById("list"), day = document.getElementById("day-total");
+  const row = document.createElement("div");
+  row.className = "item rxm-row-new";
+  row.innerHTML = `<span class="ico rx-cut" style="--k:#C9AD78"><svg viewBox="0 0 24 24"><path d="M7 3v8M11 3v8M7 7h4M9 11v10M17 21V3c-2 2-3 5-3 8h3"/></svg></span><div><div class="t">Café</div><div class="d">Alimentação · agora</div></div><span class="money">R$ 8,50</span>`;
+  list.insertBefore(row, list.children[1]);
+  row.querySelector(".ico").style.clipPath = "";
+  const cur = parseFloat(day.textContent.replace(/\./g, "").replace(",", ".")) * 100;
+  day.dataset.from = Math.round(cur); day.dataset.to = Math.round(cur + 850); day.dataset.delay = 0; day.dataset.dur = 420;
+  const scene = document.getElementById("s-list"); scene._t0 = performance.now(); running.add(scene); tick();
+});
+document.getElementById("s-list").addEventListener("click", e => { if (e.target.closest("[data-replay]")) { added = 0; document.querySelectorAll("#list .rxm-row-new").forEach(r => r.remove()); const d = document.getElementById("day-total"); d.dataset.from = 0; d.dataset.to = 19130; d.dataset.delay = 60; d.dataset.dur = 500; } }, true);
+</script>
+</body>
+</html>

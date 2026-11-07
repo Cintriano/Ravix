@@ -1,0 +1,65 @@
+# Trechos para juntar ao pubspec.yaml do app Ravix.
+# Não substitua o seu pubspec.yaml por este arquivo: copie cada bloco para a seção certa.
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"     # Flutter 3.29 ou mais novo
+  flutter: ">=3.29.0"
+
+dependencies:
+  flutter_svg: ^2.0.10      # RavixLogo / RavixSymbol
+  intl: any                 # formatBRL; "any" segue a versão fixada pelo Flutter
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/brand/
+
+  fonts:
+    - family: ChakraPetch
+      fonts:
+        - asset: assets/fonts/ChakraPetch-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ChakraPetch-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ChakraPetch-Bold.ttf
+          weight: 700
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Archivo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Archivo-SemiBold.ttf
+          weight: 600
+    - family: RavixValores        # Chakra Petch com dígitos de largura igual (só valores)
+      fonts:
+        - asset: assets/fonts/RavixValores-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/RavixValores-Bold.ttf
+          weight: 700
+
+# Ícone do app: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true                  # substitui o ic_launcher
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  image_path: "assets/brand/icon/app_icon_1024.png"
+  adaptive_icon_background: "#163730"
+  adaptive_icon_foreground: "assets/brand/icon/adaptive_foreground_1024.png"
+  adaptive_icon_monochrome: "assets/brand/icon/adaptive_monochrome_1024.png"
+
+# Tela de abertura: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#163730"
+  image: assets/brand/splash/splash_logo.png
+  android_12:
+    color: "#163730"
+    image: assets/brand/splash/splash_android12_1152.png
+  ios_content_mode: center
+  web: false

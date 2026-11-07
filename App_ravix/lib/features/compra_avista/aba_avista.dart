@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/core/datas.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
@@ -80,37 +80,157 @@ class AbaAvista extends ConsumerWidget {
   }
 }
 
+/// Cor de uma categoria, na ordem das cores de gráfico da marca.
+Color corDaCategoria(int idCategoria) =>
+    CoresRavix.graficos[idCategoria % CoresRavix.graficos.length];
+
+/// Card de resumo do mês, em Floresta: total à vista e divisão por
+/// categoria. Ignora os filtros.
 class _Total extends ConsumerWidget {
   const new();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tema = context.temaRavix;
     final texto = Theme.of(context).textTheme;
     final mes = ref.watch(mesSelecionadoProvider);
     final total = ref.watch(acumuladoDoMesProvider).value;
+    final categorias =
+        ref.watch(totaisPorCategoriaProvider).value ??
+        const <TotalPorCategoria>[];
     final valor = total == null ? '—' : formatarCentavos(total);
-    return Semantics(
-      container: true,
-      label: 'Total à vista em ${mes.rotulo}: $valor',
-      excludeSemantics: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          CapraTokens.spaceMd,
-          CapraTokens.spaceSm,
-          CapraTokens.spaceMd,
-          CapraTokens.spaceMd,
+    final apoio = texto.bodySmall?.copyWith(color: tema.resumoApoio);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        TokensRavix.spaceMd,
+        TokensRavix.spaceSm,
+        TokensRavix.spaceMd,
+        TokensRavix.spaceMd,
+      ),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: tema.resumoFundo,
+          shape: chanfro(TokensRavix.chanfroG),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Total à vista em ${mes.nome}', style: texto.bodySmall),
-            const SizedBox(height: CapraTokens.spaceXs),
-            Text(valor, style: texto.displaySmall),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(TokensRavix.spaceMd + 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Semantics(
+                container: true,
+                label: 'Total à vista em ${mes.rotulo}: $valor',
+                excludeSemantics: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total à vista em ${mes.nome}', style: apoio),
+                    const SizedBox(height: TokensRavix.spaceXs),
+                    Text(
+                      valor,
+                      style: tema.valorDestaque.copyWith(
+                        color: tema.resumoTexto,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (total != null && total > 0 && categorias.isNotEmpty) ...[
+                const SizedBox(height: TokensRavix.spaceMd),
+                _DivisaoPorCategoria(categorias, total),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Barra empilhada com a parte de cada categoria e a legenda das maiores.
+class _DivisaoPorCategoria extends StatelessWidget {
+  const new(this.categorias, this.total);
+
+  final List<TotalPorCategoria> categorias;
+  final int total;
+
+  static const _naLegenda = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = context.temaRavix;
+    final legenda = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: tema.resumoTexto);
+    final maiores = categorias.take(_naLegenda).toList();
+    final outras = categorias.skip(_naLegenda).fold(0, (s, c) => s + c.total);
+    String parte(int valor) => '${(valor * 100 / total).round()}%';
+    final partes = [
+      for (final c in categorias) '${c.categoria} ${parte(c.total)}',
+    ];
+
+    return Semantics(
+      container: true,
+      label: 'Por categoria: ${partes.join(', ')}',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 8,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 2,
+              children: [
+                for (final c in categorias)
+                  Expanded(
+                    flex: c.total,
+                    child: ColoredBox(color: corDaCategoria(c.idCategoria)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: TokensRavix.spaceSm + 4),
+          Wrap(
+            spacing: TokensRavix.spaceMd,
+            runSpacing: TokensRavix.spaceXs,
+            children: [
+              for (final c in maiores)
+                _ItemDaLegenda(
+                  cor: corDaCategoria(c.idCategoria),
+                  rotulo: '${c.categoria} ${parte(c.total)}',
+                  estilo: legenda,
+                ),
+              if (outras > 0)
+                _ItemDaLegenda(
+                  cor: tema.resumoApoio,
+                  rotulo: 'Outras ${parte(outras)}',
+                  estilo: legenda,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ItemDaLegenda extends StatelessWidget {
+  const new({required this.cor, required this.rotulo, this.estilo});
+
+  final Color cor;
+  final String rotulo;
+  final TextStyle? estilo;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      SizedBox.square(dimension: 8, child: ColoredBox(color: cor)),
+      const SizedBox(width: 6),
+      Text(rotulo, style: estilo),
+    ],
+  );
 }
 
 class _Filtros extends ConsumerWidget {
@@ -156,9 +276,9 @@ class _Filtros extends ConsumerWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: CapraTokens.spaceMd),
+      padding: const EdgeInsets.symmetric(horizontal: TokensRavix.spaceMd),
       child: Row(
-        spacing: CapraTokens.spaceSm,
+        spacing: TokensRavix.spaceSm,
         children: [
           _ChipDeFiltro(
             rotulo: 'Categoria',
@@ -243,7 +363,7 @@ class _ChipDeFiltro extends StatelessWidget {
       showCheckmark: false,
       avatar: ativo
           ? null
-          : const Icon(Icones.chevronDown, size: CapraTokens.iconSizeSm),
+          : const Icon(Icones.chevronDown, size: TokensRavix.iconSizeSm),
       onSelected: (_) => aoTocar(),
     );
   }
@@ -280,10 +400,10 @@ Future<_Escolha<T>?> _escolherNaFolha<T>(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                CapraTokens.spaceMd,
+                TokensRavix.spaceMd,
                 0,
-                CapraTokens.spaceMd,
-                CapraTokens.spaceSm,
+                TokensRavix.spaceMd,
+                TokensRavix.spaceSm,
               ),
               child: Text(
                 titulo,
@@ -305,6 +425,7 @@ sealed class _Item;
 final class _Dia extends _Item {
   new(this.data);
   final DateTime data;
+  int subtotal = 0;
 }
 
 final class _Gasto extends _Item {
@@ -319,14 +440,15 @@ class _Lista extends StatelessWidget {
 
   static List<_Item> _agrupar(List<CompraDoMes> linhas) {
     final itens = <_Item>[];
-    DateTime? diaAtual;
+    _Dia? diaAtual;
     for (final linha in linhas) {
       final momento = DateTime.parse(linha.c.timestampCompraAvista);
       final dia = DateTime(momento.year, momento.month, momento.day);
-      if (dia != diaAtual) {
-        itens.add(_Dia(dia));
-        diaAtual = dia;
+      if (dia != diaAtual?.data) {
+        diaAtual = _Dia(dia);
+        itens.add(diaAtual);
       }
+      diaAtual!.subtotal += linha.c.valorCompraAvista;
       itens.add(_Gasto(linha));
     }
     return itens;
@@ -334,25 +456,42 @@ class _Lista extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final texto = Theme.of(context).textTheme;
+    final tema = context.temaRavix;
     return SliverPadding(
       // Espaço para o botão flutuante não cobrir o último gasto.
       padding: const EdgeInsets.only(bottom: 96),
       sliver: SliverList.builder(
         itemCount: _itens.length,
         itemBuilder: (context, i) => switch (_itens[i]) {
-          _Dia(:final data) => Padding(
+          _Dia(:final data, :final subtotal) => Padding(
             padding: const EdgeInsets.fromLTRB(
-              CapraTokens.spaceMd,
-              CapraTokens.spaceLg,
-              CapraTokens.spaceMd,
-              CapraTokens.spaceXs,
+              TokensRavix.spaceMd,
+              TokensRavix.spaceLg,
+              TokensRavix.spaceMd,
+              TokensRavix.spaceXs,
             ),
             child: Semantics(
               header: true,
-              child: Text(
-                formatarDiaPorExtenso(data),
-                style: texto.labelMedium,
+              label:
+                  '${formatarDiaPorExtenso(data)}: '
+                  '${formatarCentavos(subtotal)}',
+              excludeSemantics: true,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      formatarDiaPorExtenso(data).toUpperCase(),
+                      style: tema.sobretitulo,
+                    ),
+                  ),
+                  Text(
+                    formatarCentavos(subtotal),
+                    style: tema.valorLista.copyWith(
+                      fontSize: 13,
+                      color: tema.paleta.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -371,7 +510,6 @@ class _LinhaGasto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compra = linha.c;
-    final texto = Theme.of(context).textTheme;
     final tipo = TipoPagamento.deCodigo(compra.tipoPagamento);
     final hora = formatarHora(DateTime.parse(compra.timestampCompraAvista));
     final valor = formatarCentavos(compra.valorCompraAvista);
@@ -385,19 +523,47 @@ class _LinhaGasto extends StatelessWidget {
           'Toque para editar.',
       excludeSemantics: true,
       child: ListTile(
-        minTileHeight: 72,
-        leading: Icon(iconeDoPagamento(tipo)),
+        minTileHeight: 64,
+        leading: _IconeDaCategoria(
+          icone: iconeDoPagamento(tipo),
+          cor: corDaCategoria(linha.idCategoria),
+        ),
         title: Text(
           compra.descricao,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(detalhe, maxLines: 1, overflow: TextOverflow.ellipsis),
-        trailing: Text(
-          valor,
-          style: texto.bodyLarge?.copyWith(fontFeatures: numerosTabulares),
-        ),
+        trailing: Text(valor, style: context.temaRavix.valorLista),
         onTap: () => context.push('/registro/${compra.uuidCompraAvista}'),
+      ),
+    );
+  }
+}
+
+/// Quadrado de 36 dp com chanfro de 4 dp, na cor da categoria a 20%.
+class _IconeDaCategoria extends StatelessWidget {
+  const new({required this.icone, required this.cor});
+
+  final IconData icone;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final frente = escuro
+        ? Color.lerp(cor, Colors.white, 0.35)!
+        : Color.lerp(cor, CoresRavix.tinta, 0.35)!;
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        // 15–25% da cor da categoria; mais forte no escuro, onde Floresta e
+        // Petróleo quase somem.
+        color: cor.withValues(alpha: escuro ? 0.25 : 0.18),
+        shape: chanfro(TokensRavix.chanfroP),
+      ),
+      child: SizedBox.square(
+        dimension: 36,
+        child: Icon(icone, size: TokensRavix.iconSizeMd, color: frente),
       ),
     );
   }

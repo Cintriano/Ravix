@@ -11,7 +11,7 @@ Documentação do projeto trazida do Notion (Projetos / Ravix) em 24/10/2026, ma
 | [05_decisoes.md](05_decisoes.md) | Quadro de decisões DP-1 a DP-36, com contexto e deliberação de cada card | [Decisões pendentes](https://app.notion.com/p/3f3b044db6b1811fbe7ddbcd95000cfc) |
 | [06_data_warehouse.md](06_data_warehouse.md) | Rascunho das dimensões e fatos do DW e backlog de pipelines | [Modelagem dados](https://app.notion.com/p/3deb044db6b1806cab2bcd549685da2f) · [Backlog pipelines](https://app.notion.com/p/3dfb044db6b180f68a25dd09be7ba46f) |
 | [07_dw_apolo.md](07_dw_apolo.md) | Projeto irmão DW_APOLO: esquemas bronze/silver/gold, usuários, pipelines | [DW_APOLO](https://app.notion.com/p/3e0b044db6b180289f2bfe7947ac7966) |
-| [identidade_visual/](identidade_visual/README.md) | Marca Ravix (logo filha CAPRA), tokens, guia mobile, logos e fonte | [github.com/Cintriano/Capra](https://github.com/Cintriano/Capra) |
+| [identidade_visual/](identidade_visual/README.md) | Marca Ravix: identidade v2 em `v2/` (manual, tokens, logos, ícones, fontes, tema Flutter); a CAPRA anterior fica como histórico | [github.com/Cintriano/Capra](https://github.com/Cintriano/Capra) |
 
 ## Estado em 24/10/2026
 

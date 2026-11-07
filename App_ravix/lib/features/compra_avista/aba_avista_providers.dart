@@ -50,6 +50,14 @@ final StreamProvider<int> acumuladoDoMesProvider = StreamProvider.autoDispose(
       .observarAcumulado(ref.watch(mesSelecionadoProvider)),
 );
 
+/// Divisão do mês selecionado por categoria. Ignora os filtros.
+final StreamProvider<List<TotalPorCategoria>> totaisPorCategoriaProvider =
+    StreamProvider.autoDispose(
+      (ref) => ref
+          .watch(compraAvistaRepositoryProvider)
+          .observarPorCategoria(ref.watch(mesSelecionadoProvider)),
+    );
+
 /// Gastos do mês selecionado com os filtros, mais recentes primeiro.
 final StreamProvider<List<CompraDoMes>> comprasDoMesProvider =
     StreamProvider.autoDispose(

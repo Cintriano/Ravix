@@ -51,6 +51,16 @@ SELECT COALESCE(SUM(valor_compra_avista), 0) AS total
 FROM tbl_compra_avista
 WHERE timestamp_compra_avista >= :inicio AND timestamp_compra_avista < :fim;
 
+-- Divisão do mês por categoria, para o card de resumo. Ignora os filtros.
+totaisPorCategoriaDoMes AS TotalPorCategoria:
+SELECT k.id_categoria, k.nome AS categoria, COALESCE(SUM(c.valor_compra_avista), 0) AS total
+FROM tbl_compra_avista c
+JOIN tbl_subcategoria s ON s.id_subcategoria = c.id_subcategoria
+JOIN tbl_categoria    k ON k.id_categoria    = s.id_categoria
+WHERE c.timestamp_compra_avista >= :inicio AND c.timestamp_compra_avista < :fim
+GROUP BY k.id_categoria, k.nome
+ORDER BY total DESC, k.nome;
+
 -- Tabela do mês com filtros opcionais (E01-F04-T02, T05).
 comprasDoMes(
   REQUIRED :id_categoria AS INTEGER OR NULL,

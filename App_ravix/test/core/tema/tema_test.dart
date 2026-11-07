@@ -1,96 +1,81 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
+import 'package:ravix/core/tema/marca.dart';
 import 'package:ravix/core/tema/tema.dart';
-
-import '../../../tool/gerar_tokens.dart' as gerador;
+import 'package:ravix/core/tema/tokens.dart';
 
 void main() {
-  group('tokens', () {
-    final json = File(gerador.caminhoJson).readAsStringSync();
-
-    test('capra_tokens.dart está em dia com o JSON', () {
-      expect(
-        capraTokensImpressao,
-        gerador.impressaoDigital(json),
-        reason: 'Rode: dart run tool/gerar_tokens.dart',
-      );
-    });
-
-    test('valores conferem com o JSON', () {
-      final tokens =
-          ((jsonDecode(json) as Map<String, dynamic>)['color']
-                  as Map<String, dynamic>)['tokens']
-              as List<dynamic>;
-      final cores = {
-        for (final t in tokens.cast<Map<String, dynamic>>())
-          t['name'] as String: t['value'],
-      };
-      String valor(String nome, String tema) =>
-          (cores[nome] as Map<String, dynamic>)[tema] as String;
-      String hex(Color c) =>
-          '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
-      expect(hex(CapraTokens.escuro.background), valor('background', 'dark'));
-      expect(hex(CapraTokens.claro.background), valor('background', 'light'));
-      expect(
-        hex(CapraTokens.escuro.accentFinance),
-        valor('accentFinance', 'dark'),
-      );
-      // Referência {accentAutomation} resolvida.
-      expect(CapraTokens.escuro.success, CapraTokens.escuro.accentAutomation);
-      expect(CapraTokens.radiusMd, 12);
-      expect(CapraTokens.motionScreen, const Duration(milliseconds: 300));
-      expect(CapraTokens.easeEnter, const Cubic(0.2, 0, 0, 1));
-    });
+  test('cores da marca conferem com o manual v2', () {
+    expect(CoresRavix.floresta, const Color(0xFF163730));
+    expect(CoresRavix.menta, const Color(0xFF78CFA5));
+    expect(CoresRavix.menta600, const Color(0xFF3FB282));
+    expect(CoresRavix.petroleo, const Color(0xFF22727B));
+    expect(TokensRavix.claro.background, const Color(0xFFF4F7F4));
+    expect(TokensRavix.escuro.background, const Color(0xFF0D1C19));
   });
 
   for (final (brilho, paleta) in [
-    (Brightness.dark, CapraTokens.escuro),
-    (Brightness.light, CapraTokens.claro),
+    (Brightness.dark, TokensRavix.escuro),
+    (Brightness.light, TokensRavix.claro),
   ]) {
     group('tema ${brilho.name}', () {
       final tema = temaRavix(brilho);
       final cores = tema.colorScheme;
 
-      test('mapeia os tokens para o ColorScheme do guia', () {
+      test('mapeia a paleta para o ColorScheme', () {
         expect(cores.brightness, brilho);
         expect(cores.surface, paleta.background);
         expect(tema.scaffoldBackgroundColor, paleta.background);
         expect(cores.surfaceContainer, paleta.surface);
-        expect(cores.surfaceContainerHigh, paleta.surfaceElevated);
-        expect(cores.secondaryContainer, paleta.surfaceElevated);
         expect(cores.outlineVariant, paleta.border);
-        expect(cores.outline, paleta.borderStrong);
         expect(cores.onSurface, paleta.textPrimary);
         expect(cores.onSurfaceVariant, paleta.textSecondary);
-        expect(cores.primary, paleta.accentFinance);
-        expect(cores.onPrimary, paleta.onAccent);
+        expect(cores.primary, paleta.primary);
+        expect(cores.onPrimary, paleta.onPrimary);
         expect(cores.error, paleta.danger);
-        expect(cores.onError, paleta.onAccent);
         expect(cores.surfaceTint, Colors.transparent);
       });
 
-      test('expõe a paleta e o acento de Finanças', () {
-        final extensao = tema.extension<TemaRavix>()!;
-        expect(extensao.paleta, same(paleta));
-        expect(extensao.acento, paleta.accentFinance);
+      test('botão principal: Floresta no claro, Menta no escuro', () {
+        expect(
+          paleta.primary,
+          brilho == Brightness.dark ? CoresRavix.menta : CoresRavix.floresta,
+        );
+        expect(
+          tema.floatingActionButtonTheme.backgroundColor,
+          CoresRavix.menta,
+        );
       });
 
-      test('escala tipográfica mobile em Inter', () {
+      test('componentes chanfrados', () {
+        expect(
+          tema.floatingActionButtonTheme.shape,
+          chanfro(TokensRavix.chanfroG),
+        );
+        expect(tema.chipTheme.shape, chanfro(TokensRavix.chanfroP));
+        expect(tema.inputDecorationTheme.border, isA<RavixBordaDeCampo>());
+      });
+
+      test('escala: Chakra Petch nos títulos, Archivo no texto', () {
         final t = tema.textTheme;
         expect(t.bodyLarge!.fontFamily, familiaTexto);
         expect(t.bodyLarge!.fontSize, 16);
         expect(t.bodyLarge!.height! * 16, closeTo(24, 0.01));
-        expect(t.labelLarge!.fontWeight, FontWeight.w500);
-        expect(t.titleLarge!.fontSize, 20);
-        expect(t.headlineMedium!.fontFamily, familiaTitulo);
-        expect(t.headlineMedium!.fontSize, 28);
-        expect(t.displaySmall!.fontSize, 34);
-        expect(t.displaySmall!.fontFeatures, numerosTabulares);
+        expect(t.headlineSmall!.fontFamily, familiaTitulo);
+        expect(t.headlineSmall!.fontSize, 24);
+        expect(t.titleMedium!.fontFamily, familiaTitulo);
+        expect(t.labelLarge!.fontWeight, FontWeight.w600);
         expect(t.bodySmall!.color, paleta.textSecondary);
+      });
+
+      test('valores em Ravix Valores', () {
+        final extensao = tema.extension<TemaRavix>()!;
+        expect(extensao.paleta, same(paleta));
+        expect(extensao.acento, paleta.accent);
+        expect(extensao.valorDestaque.fontFamily, familiaValores);
+        expect(extensao.valorDestaque.fontSize, 40);
+        expect(extensao.valorLista.fontFamily, familiaValores);
+        expect(extensao.resumoFundo, CoresRavix.floresta);
       });
 
       test('barras do sistema transparentes', () {
@@ -105,16 +90,26 @@ void main() {
   }
 
   test('TemaRavix: copyWith e lerp', () {
-    const escuro = TemaRavix(CapraTokens.escuro);
-    const claro = TemaRavix(CapraTokens.claro);
+    const escuro = TemaRavix(TokensRavix.escuro);
+    const claro = TemaRavix(TokensRavix.claro);
     expect(
-      escuro.copyWith(paleta: CapraTokens.claro).paleta,
-      CapraTokens.claro,
+      escuro.copyWith(paleta: TokensRavix.claro).paleta,
+      TokensRavix.claro,
     );
-    expect(escuro.copyWith().paleta, CapraTokens.escuro);
+    expect(escuro.copyWith().paleta, TokensRavix.escuro);
     expect(escuro.lerp(claro, 0.2), same(escuro));
     expect(escuro.lerp(claro, 0.8), same(claro));
     expect(escuro.lerp(null, 0.8), same(escuro));
+  });
+
+  test('RavixBordaDeCampo: chanfro nos quatro cantos', () {
+    const borda = RavixBordaDeCampo();
+    final caminho = borda.getOuterPath(const Rect.fromLTWH(0, 0, 100, 56));
+    expect(caminho.contains(const Offset(1, 1)), isFalse);
+    expect(caminho.contains(const Offset(99, 55)), isFalse);
+    expect(caminho.contains(const Offset(50, 28)), isTrue);
+    expect(borda.copyWith(corte: 4).corte, 4);
+    expect(borda, const RavixBordaDeCampo());
   });
 
   testWidgets('context.temaRavix lê a extensão', (tester) async {
@@ -130,6 +125,32 @@ void main() {
         ),
       ),
     );
-    expect(lido.paleta, same(CapraTokens.claro));
+    expect(lido.paleta, same(TokensRavix.claro));
+  });
+
+  testWidgets('marca: abertura termina e respeita reduzir movimento', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: temaRavix(Brightness.light),
+        home: const Center(child: MarcaRavix.logo(animar: true)),
+      ),
+    );
+    expect(find.bySemanticsLabel('Ravix'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: temaRavix(Brightness.dark),
+        home: const MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: Center(child: MarcaRavix.simbolo(emLaco: true)),
+        ),
+      ),
+    );
+    // Parado: com o laço rodando, o pumpAndSettle não terminaria.
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Ravix'), findsOneWidget);
   });
 }

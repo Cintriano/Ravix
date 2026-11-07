@@ -95,7 +95,7 @@ void main() {
   }
 
   Future<void> salvar(WidgetTester tester) async {
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Salvar gasto'));
     await tester.pumpAndSettle();
   }
 
@@ -140,7 +140,7 @@ void main() {
         );
         await salvar(tester);
         expect(find.text(aviso), findsOneWidget, reason: faltando);
-        expect(find.text('Salvar'), findsOneWidget, reason: faltando);
+        expect(find.text('Salvar gasto'), findsOneWidget, reason: faltando);
         expect(await gastosDe(tester, outubro), isEmpty, reason: faltando);
         await encerrarApp(tester);
       }

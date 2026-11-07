@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone adaptativo: neutro preto do Ravix e a marca (tool/gerar_icones.sh). -->
+<!-- Ícone adaptativo: Floresta do Ravix e a marca (identidade v2). -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ravix_neutro" />
+    <background android:drawable="@color/ravix_floresta" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
     <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />
 </adaptive-icon>

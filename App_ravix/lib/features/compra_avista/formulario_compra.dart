@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/datas.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/core/texto.dart';
 import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
@@ -242,7 +242,7 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: paleta.danger,
-              foregroundColor: paleta.onAccent,
+              foregroundColor: paleta.onDanger,
             ),
             onPressed: () => Navigator.of(contexto).pop(true),
             child: const Text('Excluir'),
@@ -265,7 +265,12 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
   Widget build(BuildContext context) {
     final texto = Theme.of(context).textTheme;
     final paleta = context.temaRavix.paleta;
-    const espaco = SizedBox(height: CapraTokens.spaceMd);
+    final valorDestaque = context.temaRavix.valorDestaque.copyWith(
+      color: paleta.textPrimary,
+      fontSize: 32,
+      height: 40 / 32,
+    );
+    const espaco = SizedBox(height: TokensRavix.spaceMd);
 
     return Scaffold(
       appBar: AppBar(
@@ -279,131 +284,150 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(CapraTokens.spaceMd),
-        children: [
-          TextField(
-            controller: _descricao,
-            autofocus: !_editando,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.next,
-            onChanged: _aoMudarDescricao,
-            decoration: InputDecoration(
-              labelText: 'Descrição',
-              hintText: 'Ex.: Padaria do Zé',
-              errorText: _erros[CampoCompra.descricao],
-            ),
-          ),
-          espaco,
-          TextField(
-            controller: _valor,
-            keyboardType: TextInputType.number,
-            inputFormatters: [MascaraValor()],
-            style: texto.bodyLarge?.copyWith(fontFeatures: numerosTabulares),
-            onChanged: (t) => setState(() {
-              _rascunho.valorCentavos = centavosDeDigitos(t);
-              _limparErro(CampoCompra.valor);
-            }),
-            decoration: InputDecoration(
-              labelText: 'Valor',
-              prefixText: r'R$ ',
-              hintText: '0,00',
-              errorText: _erros[CampoCompra.valor],
-            ),
-          ),
-          espaco,
-          Row(
-            children: [
-              Expanded(
-                child: _CampoDeToque(
-                  rotulo: 'Data',
-                  valor: formatarData(_rascunho.momento),
-                  icone: Icones.calendar,
-                  aoTocar: _escolherData,
+      // Formulário curto: tudo construído de uma vez, para os avisos de
+      // validação existirem mesmo fora da tela.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(TokensRavix.spaceMd),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // O valor vem primeiro e em destaque: é o que a pessoa já sabe na
+            // hora de anotar.
+            TextField(
+              controller: _valor,
+              autofocus: !_editando,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              inputFormatters: [MascaraValor()],
+              style: valorDestaque,
+              onChanged: (t) => setState(() {
+                _rascunho.valorCentavos = centavosDeDigitos(t);
+                _limparErro(CampoCompra.valor);
+              }),
+              decoration: InputDecoration(
+                labelText: 'Valor',
+                prefixText: r'R$ ',
+                prefixStyle: valorDestaque.copyWith(
+                  color: paleta.textSecondary,
+                  fontSize: 24,
+                ),
+                hintText: '0,00',
+                hintStyle: valorDestaque.copyWith(color: paleta.borderStrong),
+                errorText: _erros[CampoCompra.valor],
+                contentPadding: const EdgeInsets.fromLTRB(
+                  TokensRavix.spaceMd,
+                  14,
+                  TokensRavix.spaceMd,
+                  14,
                 ),
               ),
-              const SizedBox(width: CapraTokens.spaceMd),
-              Expanded(
-                child: _CampoDeToque(
-                  rotulo: 'Hora',
-                  valor: formatarHora(_rascunho.momento),
-                  icone: Icones.clock,
-                  aoTocar: _escolherHora,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: CapraTokens.spaceLg),
-          Text('Forma de pagamento', style: texto.labelMedium),
-          const SizedBox(height: CapraTokens.spaceSm),
-          Wrap(
-            spacing: CapraTokens.spaceSm,
-            runSpacing: CapraTokens.spaceSm,
-            children: [
-              for (final tipo in TipoPagamento.values)
-                ChoiceChip(
-                  label: Text(tipo.rotulo),
-                  selected: _rascunho.tipoPagamento == tipo,
-                  onSelected: (_) {
-                    unawaited(HapticFeedback.selectionClick());
-                    setState(() {
-                      _rascunho.tipoPagamento = tipo;
-                      _limparErro(CampoCompra.tipoPagamento);
-                    });
-                  },
-                ),
-            ],
-          ),
-          if (_erros[CampoCompra.tipoPagamento] case final erro?)
-            Padding(
-              padding: const EdgeInsets.only(top: CapraTokens.spaceSm),
-              child: Text(
-                erro,
-                style: texto.bodySmall?.copyWith(color: paleta.danger),
+            ),
+            espaco,
+            TextField(
+              controller: _descricao,
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.next,
+              onChanged: _aoMudarDescricao,
+              decoration: InputDecoration(
+                labelText: 'Descrição',
+                hintText: 'Ex.: Padaria do Zé',
+                errorText: _erros[CampoCompra.descricao],
               ),
             ),
-          const SizedBox(height: CapraTokens.spaceLg),
-          _campoCategoria(),
-          if (_sugerida)
-            Padding(
-              padding: const EdgeInsets.only(top: CapraTokens.spaceSm),
-              child: Row(
-                children: [
-                  Icon(
-                    Icones.sparkles,
-                    size: CapraTokens.iconSizeSm,
-                    color: context.temaRavix.acento,
+            espaco,
+            Row(
+              children: [
+                Expanded(
+                  child: _CampoDeToque(
+                    rotulo: 'Data',
+                    valor: formatarData(_rascunho.momento),
+                    icone: Icones.calendar,
+                    aoTocar: _escolherData,
                   ),
-                  const SizedBox(width: CapraTokens.spaceSm),
-                  Text('Sugerida pelo histórico', style: texto.bodySmall),
-                ],
+                ),
+                const SizedBox(width: TokensRavix.spaceMd),
+                Expanded(
+                  child: _CampoDeToque(
+                    rotulo: 'Hora',
+                    valor: formatarHora(_rascunho.momento),
+                    icone: Icones.clock,
+                    aoTocar: _escolherHora,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: TokensRavix.spaceLg),
+            Text('FORMA DE PAGAMENTO', style: context.temaRavix.sobretitulo),
+            const SizedBox(height: TokensRavix.spaceSm),
+            Wrap(
+              spacing: TokensRavix.spaceSm,
+              runSpacing: TokensRavix.spaceSm,
+              children: [
+                for (final tipo in TipoPagamento.values)
+                  ChoiceChip(
+                    label: Text(tipo.rotulo),
+                    selected: _rascunho.tipoPagamento == tipo,
+                    onSelected: (_) {
+                      unawaited(HapticFeedback.selectionClick());
+                      setState(() {
+                        _rascunho.tipoPagamento = tipo;
+                        _limparErro(CampoCompra.tipoPagamento);
+                      });
+                    },
+                  ),
+              ],
+            ),
+            if (_erros[CampoCompra.tipoPagamento] case final erro?)
+              Padding(
+                padding: const EdgeInsets.only(top: TokensRavix.spaceSm),
+                child: Text(
+                  erro,
+                  style: texto.bodySmall?.copyWith(color: paleta.danger),
+                ),
+              ),
+            const SizedBox(height: TokensRavix.spaceLg),
+            _campoCategoria(),
+            if (_sugerida)
+              Padding(
+                padding: const EdgeInsets.only(top: TokensRavix.spaceSm),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icones.sparkles,
+                      size: TokensRavix.iconSizeSm,
+                      color: context.temaRavix.acento,
+                    ),
+                    const SizedBox(width: TokensRavix.spaceSm),
+                    Text('Sugerida pelo histórico', style: texto.bodySmall),
+                  ],
+                ),
+              ),
+            espaco,
+            _campoSubcategoria(),
+            espaco,
+            _campoTag(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _criarTag,
+                icon: const Icon(Icones.plus, size: TokensRavix.iconSizeMd),
+                label: const Text('Nova tag'),
               ),
             ),
-          espaco,
-          _campoSubcategoria(),
-          espaco,
-          _campoTag(),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _criarTag,
-              icon: const Icon(Icones.plus, size: CapraTokens.iconSizeMd),
-              label: const Text('Nova tag'),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            CapraTokens.spaceMd,
-            CapraTokens.spaceSm,
-            CapraTokens.spaceMd,
-            CapraTokens.spaceMd,
+            TokensRavix.spaceMd,
+            TokensRavix.spaceSm,
+            TokensRavix.spaceMd,
+            TokensRavix.spaceMd,
           ),
           child: FilledButton(
             onPressed: _salvando ? null : _salvar,
-            child: const Text('Salvar'),
+            child: const Text('Salvar gasto'),
           ),
         ),
       ),
@@ -539,11 +563,11 @@ class _CampoDeToque extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: aoTocar,
-        borderRadius: BorderRadius.circular(CapraTokens.radiusSm),
+        customBorder: chanfro(TokensRavix.chanfroM),
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: rotulo,
-            suffixIcon: Icon(icone, size: CapraTokens.iconSizeMd),
+            suffixIcon: Icon(icone, size: TokensRavix.iconSizeMd),
           ),
           child: Text(
             valor,

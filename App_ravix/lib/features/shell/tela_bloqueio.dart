@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
+import 'package:ravix/core/tema/marca.dart';
 import 'package:ravix/core/tema/tema.dart';
+import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/features/shell/bloqueio.dart';
 
 /// Tela de bloqueio (E01-F01-T07). Pede a credencial do aparelho ao aparecer
@@ -42,38 +43,30 @@ class _TelaBloqueioState extends ConsumerState<TelaBloqueio> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(CapraTokens.spaceMd),
+          padding: const EdgeInsets.all(TokensRavix.spaceMd),
           child: Column(
             children: [
               const Spacer(),
-              Semantics(
-                label: 'Ravix',
-                image: true,
-                child: Image.asset(
-                  'assets/marca/ravix-marca.png',
-                  width: 96,
-                  height: 96,
-                ),
-              ),
-              const SizedBox(height: CapraTokens.spaceLg),
+              const MarcaRavix.logo(altura: 44, animar: true),
+              const SizedBox(height: TokensRavix.spaceLg),
               Text('Ravix está bloqueado', style: texto.titleLarge),
-              const SizedBox(height: CapraTokens.spaceSm),
+              const SizedBox(height: TokensRavix.spaceSm),
               Text(
                 'Use a biometria ou o PIN do aparelho.',
                 style: texto.bodyLarge?.copyWith(color: paleta.textSecondary),
                 textAlign: TextAlign.center,
               ),
               if (mensagem != null) ...[
-                const SizedBox(height: CapraTokens.spaceMd),
+                const SizedBox(height: TokensRavix.spaceMd),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icones.circleAlert,
-                      size: CapraTokens.iconSizeMd,
+                      size: TokensRavix.iconSizeMd,
                       color: paleta.danger,
                     ),
-                    const SizedBox(width: CapraTokens.spaceSm),
+                    const SizedBox(width: TokensRavix.spaceSm),
                     Flexible(
                       child: Text(
                         mensagem,

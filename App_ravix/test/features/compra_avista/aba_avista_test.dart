@@ -108,10 +108,13 @@ void main() {
       'Restaurante',
       'Padaria',
     ]);
-    expect(find.text('Segunda, 12 de outubro'), findsOneWidget);
-    expect(find.text('Sábado, 10 de outubro'), findsOneWidget);
+    expect(find.text('SEGUNDA, 12 DE OUTUBRO'), findsOneWidget);
+    expect(find.text('SÁBADO, 10 DE OUTUBRO'), findsOneWidget);
     expect(find.text('Mobilidade Urbana · 18:00 · Viagem'), findsOneWidget);
-    expect(find.text(formatarCentavos(800)), findsOneWidget);
+    // Uber é o único gasto do dia 12: a linha e o subtotal do dia.
+    expect(find.text(formatarCentavos(800)), findsNWidgets(2));
+    // Subtotal do dia 10: 1,00 + 2,00 + 4,00.
+    expect(find.text(formatarCentavos(700)), findsOneWidget);
   });
 
   testarApp('filtros afetam só a tabela, nunca o total', (tester) async {
@@ -185,8 +188,9 @@ void main() {
     await tester.tap(find.byTooltip('Mês anterior'));
     await tester.pumpAndSettle();
     expect(find.text('Total à vista em setembro'), findsOneWidget);
-    // Um gasto só: o total e a linha mostram o mesmo valor.
-    expect(find.text(formatarCentavos(1600)), findsNWidgets(2));
+    // Um gasto só: o total, o subtotal do dia e a linha mostram o mesmo
+    // valor.
+    expect(find.text(formatarCentavos(1600)), findsNWidgets(3));
     expect(descricoesNaTela(tester), ['Mercado']);
 
     await tester.tap(find.byTooltip('Próximo mês'));
@@ -209,11 +213,12 @@ void main() {
     await tester.tap(find.text('Uber'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'Valor'), '1000');
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Salvar gasto'));
     await tester.pumpAndSettle();
 
     expect(find.text('Gasto atualizado.'), findsOneWidget);
-    expect(find.text(formatarCentavos(1000)), findsOneWidget);
+    // A linha e o subtotal do dia 12.
+    expect(find.text(formatarCentavos(1000)), findsNWidgets(2));
     expect(find.text(formatarCentavos(1700)), findsOneWidget);
   });
 

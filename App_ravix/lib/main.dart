@@ -14,8 +14,13 @@ Future<void> main() async {
   // Borda a borda: as barras do sistema ficam sobre o fundo do app.
   unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   LicenseRegistry.addLicense(() async* {
-    final ofl = await rootBundle.loadString('assets/fonts/Inter-OFL.txt');
-    yield LicenseEntryWithLineBreaks(['Inter'], ofl);
+    for (final (fonte, arquivo) in [
+      ('Archivo', 'OFL-Archivo.txt'),
+      ('Chakra Petch e Ravix Valores', 'OFL-ChakraPetch.txt'),
+    ]) {
+      final ofl = await rootBundle.loadString('assets/fonts/$arquivo');
+      yield LicenseEntryWithLineBreaks([fonte], ofl);
+    }
   });
   runApp(
     ProviderScope(

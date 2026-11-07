@@ -160,6 +160,12 @@ final class CompraAvistaRepository {
       .acumuladoDoMes(inicio: mes.inicioIso, fim: mes.fimIso)
       .watchSingle();
 
+  /// Total de [mes] por categoria, da maior para a menor. Não depende dos
+  /// filtros.
+  Stream<List<TotalPorCategoria>> observarPorCategoria(Mes mes) => _banco
+      .totaisPorCategoriaDoMes(inicio: mes.inicioIso, fim: mes.fimIso)
+      .watch();
+
   /// Subcategoria mais usada nos gastos cuja descrição contém
   /// [descricaoDigitada] (desempate pela mais recente), ou `null` sem
   /// histórico ou com menos de [minimoParaSugestao] caracteres (DP-36).

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/preferencias.dart';
-import 'package:ravix/core/tema/capra_tokens.dart';
 import 'package:ravix/core/tema/icones.dart';
+import 'package:ravix/core/tema/tokens.dart';
 
 /// Configuração (E01-F07). Na v1: aparência e tags. Renda e cartões entram
 /// na v2 como novas linhas.
@@ -18,20 +18,20 @@ class TelaConfiguracao extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Configuração')),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: CapraTokens.spaceSm),
+        padding: const EdgeInsets.symmetric(vertical: TokensRavix.spaceSm),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              CapraTokens.spaceMd,
-              CapraTokens.spaceSm,
-              CapraTokens.spaceMd,
-              CapraTokens.spaceSm,
+              TokensRavix.spaceMd,
+              TokensRavix.spaceSm,
+              TokensRavix.spaceMd,
+              TokensRavix.spaceSm,
             ),
             child: Text('Aparência', style: texto.titleLarge),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: CapraTokens.spaceMd,
+              horizontal: TokensRavix.spaceMd,
             ),
             child: SegmentedButton<Aparencia>(
               showSelectedIcon: false,
@@ -40,7 +40,7 @@ class TelaConfiguracao extends ConsumerWidget {
                   ButtonSegment(
                     value: a,
                     label: Text(a.rotulo),
-                    icon: Icon(a.icone, size: CapraTokens.iconSizeMd),
+                    icon: Icon(a.icone, size: TokensRavix.iconSizeMd),
                   ),
               ],
               selected: {aparencia},
@@ -49,7 +49,7 @@ class TelaConfiguracao extends ConsumerWidget {
                   .escolher(escolha.single),
             ),
           ),
-          const SizedBox(height: CapraTokens.spaceLg),
+          const SizedBox(height: TokensRavix.spaceLg),
           const Divider(),
           ListTile(
             leading: const Icon(Icones.tag),

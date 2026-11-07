@@ -52,7 +52,7 @@ void main() {
       await tester.tap(find.text('Novo gasto'));
       await tester.pumpAndSettle();
       expect(find.text('Descrição'), findsOneWidget);
-      expect(find.text('Salvar'), findsOneWidget);
+      expect(find.text('Salvar gasto'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Voltar'));
       await tester.pumpAndSettle();
