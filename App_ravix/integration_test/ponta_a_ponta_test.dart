@@ -98,6 +98,8 @@ void main() {
     // Desbloquear.
     expect(find.text('Ravix está bloqueado'), findsOneWidget);
     await tocar(tester, find.text('Desbloquear'));
+    // O app abre na Macro; os gastos à vista ficam na aba À vista.
+    await irParaAba(tester, 'À vista');
     expect(find.text('Nenhum gasto em outubro'), findsOneWidget);
 
     // Criar.
@@ -135,6 +137,7 @@ void main() {
     tester,
   ) async {
     await abrirApp(tester, ServicoBloqueioFalso());
+    await irParaAba(tester, 'À vista');
 
     await tocar(tester, find.text('Novo gasto'));
     await preencherGasto(tester);

@@ -71,6 +71,7 @@ void main() {
     geracao.stop();
 
     // Abertura: do runApp até a tabela do mês na tela (desbloqueio na hora).
+    // O app abre na Macro; a medida inclui ir para a aba À vista.
     final abertura = Stopwatch()..start();
     await tester.pumpWidget(
       ProviderScope(
@@ -81,6 +82,12 @@ void main() {
         child: const RavixApp(),
       ),
     );
+    final abaAvista = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('À vista'),
+    );
+    await esperarAte(tester, abaAvista.hitTestable());
+    await tester.tap(abaAvista);
     await esperarAte(tester, find.byType(ListTile));
     abertura.stop();
 

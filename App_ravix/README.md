@@ -31,9 +31,9 @@ Juntos, transmitem algo como **"razão e defesa"**, **"raciocínio e proteção"
 
 | Visão | O que mostra |
 |---|---|
-| **Macro** | Consumo real do mês (faturado + à vista), timeline, filtro por forma de pagamento e farol de consumo da renda (verde, amarelo, vermelho) |
-| **Faturada** | Valor da fatura atual, timeline das faturas vigentes, indicador de consumo do limite e lista de parcelas |
-| **À vista** | Acumulado do mês por categoria/subcategoria e percentual de "queima" da renda |
+| **Macro** (inicial) | Consumo do mês (faturas + à vista) contra a renda total ou só o salário, farol pelo ritmo do mês, sobra, composição por forma de pagamento e consumo dia a dia |
+| **Faturada** | Faturas do mês por cartão (paga, a vencer ou vencida), consumo do limite, faturas mês a mês, parcelas, estornos, pagamentos e recorrências previstas |
+| **À vista** | Acumulado do mês por categoria, filtros, gastos por dia e cobranças recorrentes previstas, com Registrar |
 
 ### Registro de gastos
 
@@ -132,6 +132,8 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e identidade visual v2 (DP-39).
 
+✅ **v2 implementada** (08/11/2026): cartões, renda, compra no cartão, pagamento de fatura, estorno, recorrências, abas Macro e Faturada, gasto por categoria e visão por tag, ainda só local. Faltam as validações de uso no aparelho (E01-F14).
+
 ## Desenvolvimento
 
 Plano de implementação em [`../docs/04_plano_desenvolvimento_v1.md`](../docs/04_plano_desenvolvimento_v1.md). Requisitos: Flutter stable (3.47.8 ou mais novo) e Android SDK.
@@ -174,6 +176,8 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
 Sem o `key.properties` (como no CI), o release é assinado com a chave de debug.
+
+**Antes de instalar um build que muda o schema** (`BancoRavix.versaoAtual` sobe), exporte o backup em Configuração → Exportar backup. O app também copia o banco sozinho antes de migrar, mas essa cópia fica dentro do aparelho. Nunca desinstale o app de uso: apaga os dados.
 
 Estrutura: `lib/core` (funções puras), `lib/data` (banco e repositórios), `lib/features/<feature>` (telas e providers). A pasta `test/` espelha `lib/`; os testes ponta a ponta ficam em `integration_test/`.
 
