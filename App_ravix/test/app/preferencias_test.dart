@@ -49,6 +49,38 @@ void main() {
     });
   });
 
+  group('UltimoBackup', () {
+    ProviderContainer comPreferencias(Preferencias preferencias) {
+      final container = ProviderContainer(
+        overrides: [preferenciasProvider.overrideWithValue(preferencias)],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    test('sem backup, é nulo; valor inválido também', () {
+      expect(
+        comPreferencias(PreferenciasEmMemoria()).read(ultimoBackupProvider),
+        isNull,
+      );
+      expect(
+        comPreferencias(PreferenciasEmMemoria({chaveUltimoBackup: 'ontem'}))
+            .read(ultimoBackupProvider),
+        isNull,
+      );
+    });
+
+    test('registrar guarda e lê de volta', () async {
+      final preferencias = PreferenciasEmMemoria();
+      final container = comPreferencias(preferencias);
+      final momento = DateTime(2026, 11, 8, 15, 30);
+      await container.read(ultimoBackupProvider.notifier).registrar(momento);
+
+      expect(preferencias.texto(chaveUltimoBackup), '2026-11-08T15:30:00');
+      expect(comPreferencias(preferencias).read(ultimoBackupProvider), momento);
+    });
+  });
+
   test('PreferenciasDoAparelho grava e relê pelo shared_preferences', () async {
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();

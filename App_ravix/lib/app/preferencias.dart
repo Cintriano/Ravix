@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,9 @@ part 'preferencias.g.dart';
 
 /// Chave da aparência escolhida.
 const chaveAparencia = 'aparencia';
+
+/// Chave da data do último backup exportado (ISO local).
+const chaveUltimoBackup = 'ultimo_backup';
 
 /// Armazém de preferências simples (texto por chave).
 abstract interface class Preferencias {
@@ -30,7 +34,7 @@ final class PreferenciasDoAparelho implements Preferencias {
       PreferenciasDoAparelho._(
         await SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(
-            allowList: {chaveAparencia},
+            allowList: {chaveAparencia, chaveUltimoBackup},
           ),
         ),
       );
@@ -103,5 +107,28 @@ final class AparenciaEscolhida extends _$AparenciaEscolhida {
     await ref
         .read(preferenciasProvider)
         .gravarTexto(chaveAparencia, aparencia.name);
+  }
+}
+
+/// Data e hora do último backup exportado, ou `null` se nunca houve.
+@Riverpod(keepAlive: true)
+final class UltimoBackup extends _$UltimoBackup {
+  @override
+  DateTime? build() {
+    final guardado = ref.watch(preferenciasProvider).texto(chaveUltimoBackup);
+    if (guardado == null) return null;
+    try {
+      return deIsoLocal(guardado);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Guarda o momento de um backup exportado.
+  Future<void> registrar(DateTime momento) async {
+    state = momento;
+    await ref
+        .read(preferenciasProvider)
+        .gravarTexto(chaveUltimoBackup, paraIsoLocal(momento));
   }
 }

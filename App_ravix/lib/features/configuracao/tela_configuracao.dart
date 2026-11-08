@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/app/preferencias.dart';
+import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tokens.dart';
 
@@ -16,6 +17,7 @@ class TelaConfiguracao extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final texto = Theme.of(context).textTheme;
     final aparencia = ref.watch(aparenciaEscolhidaProvider);
+    final ultimoBackup = ref.watch(ultimoBackupProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Configuração')),
       body: ListView(
@@ -63,8 +65,11 @@ class TelaConfiguracao extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icones.backup),
             title: const Text('Exportar backup'),
-            subtitle: const Text(
-              'Cópia de todos os registros para guardar fora do aparelho',
+            subtitle: Text(
+              ultimoBackup == null
+                  ? 'Nenhum backup exportado ainda'
+                  : 'Último backup: ${formatarData(ultimoBackup)} às '
+                        '${formatarHora(ultimoBackup)}',
             ),
             onTap: () => _exportarBackup(context, ref),
           ),
@@ -79,9 +84,14 @@ Future<void> _exportarBackup(BuildContext context, WidgetRef ref) async {
   final mensagens = ScaffoldMessenger.of(context);
   try {
     final arquivo = await ref.read(backupRepositoryProvider).exportar();
-    await ref
+    final compartilhou = await ref
         .read(compartilhadorProvider)
         .compartilharArquivo(arquivo, assunto: 'Backup do Ravix');
+    if (compartilhou) {
+      await ref
+          .read(ultimoBackupProvider.notifier)
+          .registrar(ref.read(relogioProvider).agora());
+    }
   } on Exception {
     mensagens.showSnackBar(
       const SnackBar(content: Text('Não foi possível exportar o backup.')),

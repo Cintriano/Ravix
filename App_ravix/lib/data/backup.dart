@@ -46,11 +46,7 @@ File? copiarAntesDeMigrar(
 final class BackupRepository {
   /// Cria o repositório. O arquivo exportado vai para a pasta devolvida por
   /// `pastaTemporaria`.
-  new(
-    this._banco, {
-    required this._relogio,
-    required this._pastaTemporaria,
-  });
+  new(this._banco, {required this._relogio, required this._pastaTemporaria});
 
   final BancoRavix _banco;
   final Relogio _relogio;
