@@ -123,7 +123,8 @@ Componente reutilizável. Define `tipo` (à vista, faturado, pagamento de fatura
   - Mês e ano de vencimento da fatura, manuais (DP-3, DP-9)
   - Categoria, subcategoria (ver T10) e tag opcional (ver T15)
   - Quantidade de parcelas (fatura finita) **ou** recorrência (fatura de serviço), ver T08
-- **T07** Seleção de cartão `v2`; cartão sugerido pelo app (E04-F03) `v3`
+  - (F) parcelado, 08/11/2026: mês da fatura da 1ª parcela sugerido pelo fechamento do cartão (DP-28) e editável; a recorrência segue no T08.
+- **T07** Seleção de cartão `v2` (F); cartão sugerido pelo app (E04-F03) `v3`
 - **T08** Toggle **Cobrança recorrente** nos tipos faturado e à vista (DP-13) `v2`
   - No à vista, a recorrência guarda a forma de pagamento em vez do cartão (aluguel, contas de consumo, débito automático).
   - Ativo: esconde quantidade de parcelas e mostra periodicidade, dia de cobrança e data fim (opcional)
@@ -132,13 +133,13 @@ Componente reutilizável. Define `tipo` (à vista, faturado, pagamento de fatura
 - **T10** Carga inicial de categorias e subcategorias (tabela abaixo), usada nos dois tipos de registro `v1` (F)
 - **T11** Excluir registro no modo editar, com confirmação `v1` (F)
 - **T12** Editar ou excluir lançamento recorrente: escolher entre "só este" e "este e os próximos" `v2`
-- **T13** Campos do tipo **pagamento de fatura** `v2`
+- **T13** Campos do tipo **pagamento de fatura** `v2` (F)
   - UUID (sistema), data, hora, valor, forma de pagamento (Pix, débito ou boleto), cartão, mês e ano de vencimento da fatura paga
   - Não entra nas somas de consumo; marca a fatura como paga (F05-T09)
 - **T14** Validação: todos os campos são obrigatórios, exceto a tag e a data fim da recorrência (vazia = sem fim) `v1` (F)
 - **T15** Campo **tag**: opcional, uma por registro, com seletor das tags ativas e criação inline ("+ nova tag") `v1` (F)
 - **T16** Sugestão de categoria e subcategoria pela descrição: histórico que contém o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms; só preenche se o usuário ainda não escolheu (DP-36) `v1` (F)
-- **T17** Campos do tipo **estorno** `v2`
+- **T17** Campos do tipo **estorno** `v2` (F; a escolha da compra original entra com a aba faturada)
   - UUID (sistema), data, valor (maior que zero), cartão, mês e ano de vencimento da fatura que recebe o abatimento, descrição e, opcionalmente, a compra original (DP-14)
   - Abate da fatura e do consumo daquele mês
 
