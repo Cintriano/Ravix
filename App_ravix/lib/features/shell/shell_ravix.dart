@@ -3,12 +3,30 @@ import 'package:go_router/go_router.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/features/shell/seletor_mes.dart';
 
-/// Uma aba do shell.
-typedef AbaShell = ({String rotulo, IconData icone});
+/// Uma aba do shell e o novo registro que o botão flutuante abre nela.
+typedef AbaShell = ({
+  String rotulo,
+  IconData icone,
+  String rotuloNovo,
+  String rotaNovo,
+});
 
-/// Abas na ordem dos ramos do `StatefulShellRoute`. Na v1 só existe a aba À
-/// vista; Macro e Faturada entram na v2.
-const List<AbaShell> abasDoShell = [(rotulo: 'À vista', icone: Icones.wallet)];
+/// Abas na ordem dos ramos do `StatefulShellRoute`. A Macro entra na v2,
+/// junto com a visão macro (E01-F06).
+const List<AbaShell> abasDoShell = [
+  (
+    rotulo: 'À vista',
+    icone: Icones.wallet,
+    rotuloNovo: 'Novo gasto',
+    rotaNovo: '/registro/novo',
+  ),
+  (
+    rotulo: 'Faturada',
+    icone: Icones.creditCard,
+    rotuloNovo: 'Nova compra',
+    rotaNovo: '/registro/novo?tipo=faturado',
+  ),
+];
 
 /// Casca do app (E01-F02): cabeçalho com o seletor de mês, acesso à
 /// Configuração, botão flutuante de novo registro e as abas.
@@ -35,11 +53,12 @@ class ShellRavix extends StatelessWidget {
         ],
       ),
       body: navegacao,
-      // O tipo do registro é o da aba ativa (DP-16); na v1, sempre à vista.
+      // O tipo do registro é o da aba ativa (DP-16).
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/registro/novo'),
+        onPressed: () =>
+            context.push(abasDoShell[navegacao.currentIndex].rotaNovo),
         icon: const Icon(Icones.plus),
-        label: const Text('Novo gasto'),
+        label: Text(abasDoShell[navegacao.currentIndex].rotuloNovo),
       ),
       // Navegação inferior só faz sentido com duas abas ou mais.
       bottomNavigationBar: abasDoShell.length < 2

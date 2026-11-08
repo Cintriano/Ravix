@@ -10,6 +10,7 @@ import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/cartao_repository.dart';
 import 'package:ravix/data/categoria_repository.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
+import 'package:ravix/data/fatura_repository.dart';
 import 'package:ravix/data/faturado_repository.dart';
 import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/data/renda_repository.dart';
@@ -106,3 +107,8 @@ RecorrenciaRepository recorrenciaRepository(Ref ref) => RecorrenciaRepository(
   uuid: ref.watch(geradorUuidProvider),
   fuso: ref.watch(fusoProvider),
 );
+
+/// Leitura das faturas para a aba faturada.
+@Riverpod(keepAlive: true)
+FaturaRepository faturaRepository(Ref ref) =>
+    FaturaRepository(ref.watch(bancoProvider));

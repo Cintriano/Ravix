@@ -17,6 +17,11 @@ final class MesSelecionado extends _$MesSelecionado {
   /// Volta para o mês anterior.
   void voltar() => state = state.anterior;
 
+  /// Vai para [mes].
+  // Método, e não setter, como avancar e voltar.
+  // ignore: use_setters_to_change_properties
+  void ir(Mes mes) => state = mes;
+
   /// Volta para o mês atual.
   void irParaHoje() => state = Mes.de(ref.read(relogioProvider).agora());
 }

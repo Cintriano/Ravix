@@ -12,8 +12,9 @@ void main() {
       await montarApp(tester);
       expect(find.text('Outubro de 2026'), findsOneWidget);
       expect(find.text('Nenhum gasto em outubro'), findsOneWidget);
-      // Uma aba só na v1: sem barra de navegação inferior.
-      expect(find.byType(NavigationBar), findsNothing);
+      // Com duas abas ou mais, aparece a barra de navegação inferior.
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('Faturada'), findsOneWidget);
     });
 
     testarApp('o seletor troca o mês da tela inteira', (tester) async {

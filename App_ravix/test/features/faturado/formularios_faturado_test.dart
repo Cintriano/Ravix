@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ravix/app.dart';
 import 'package:ravix/app/dependencias.dart';
+import 'package:ravix/core/datas.dart';
 import 'package:ravix/data/banco.dart';
 
 import '../../helpers/app_de_teste.dart';
@@ -174,6 +175,54 @@ void main() {
       'valor_estorno': 5000,
       'id_subcategoria': 504,
       'mes_vencimento': 11,
+    });
+  });
+
+  testarApp('estorno ligado à compra original usa a categoria dela', (
+    tester,
+  ) async {
+    await abrir(tester, 'Estorno');
+    final container = containerDo(tester);
+    final banco = bancoDo(tester);
+    final cartao = (await linhas(
+      tester,
+      banco,
+      'SELECT uuid_cartao_credito FROM tbl_cartoes_credito',
+    )).single.read<String>('uuid_cartao_credito');
+    await tester.runAsync(
+      () => container.read(faturadoRepositoryProvider).criarCompra((
+        momento: DateTime(2026, 10, 10, 10),
+        descricao: 'Tênis',
+        valorTotalCentavos: 30000,
+        parcelas: 1,
+        uuidCartao: cartao,
+        vencimento: Mes(2026, 11),
+        idSubcategoria: 504,
+        uuidTag: null,
+      )),
+    );
+    await tester.enterText(campo('Valor estornado'), '30000');
+    await tester.pumpAndSettle();
+    await escolher<String>(tester, 'Cartão', 'Itaú •••• 9827');
+    await escolher<String?>(
+      tester,
+      'Compra original',
+      'Tênis · 10/10/2026 · R\$\u00a0300,00',
+    );
+    expect(find.text('Estorno Tênis'), findsOneWidget);
+    await tocar(tester, 'Salvar estorno');
+
+    final estorno = (await linhas(
+      tester,
+      banco,
+      'SELECT e.id_subcategoria, e.descricao, c.descricao AS original '
+      'FROM tbl_estorno e JOIN tbl_compra_faturada c '
+      'USING (uuid_compra_faturada)',
+    )).single;
+    expect(estorno.data, {
+      'id_subcategoria': 504,
+      'descricao': 'Estorno Tênis',
+      'original': 'Tênis',
     });
   });
 

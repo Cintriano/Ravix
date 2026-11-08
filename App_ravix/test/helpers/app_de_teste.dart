@@ -76,6 +76,11 @@ Future<void> montarApp(
   BancoRavix? banco,
   List<Override> extras = const [],
 }) async {
+  // Tela de celular (411 × 891 dp), não a de 800 × 600 do teste padrão.
+  tester.view
+    ..physicalSize = const Size(1080, 2340)
+    ..devicePixelRatio = 2.625;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
       overrides: substituicoes(

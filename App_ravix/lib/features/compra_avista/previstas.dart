@@ -86,6 +86,8 @@ class _LinhaPrevista extends StatelessWidget {
 Future<void> registrarPrevista(BuildContext context, Prevista prevista) =>
     showModalBottomSheet<void>(
       context: context,
+      // Por cima da barra de abas, não dentro da aba.
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _FolhaRegistrar(prevista: prevista),

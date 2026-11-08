@@ -22,6 +22,8 @@
 
 > **Revisão 7 (25/10/2026):** versões reorganizadas (DP-37). A **v2** passa a ser a visão faturada, a visão macro e as correções da v1 (E01-F14), ainda 100% manual e só local. Tudo que depende de backend ou de API externa vai para a **v3**: banco transacional e sincronização, login e conta, farol de conexão, última atualização, estado offline, registros pendentes, central de notificações, onboarding de permissões e todo o E04 (Pluggy).
 
+> **Revisão 9 (08/11/2026):** aba faturada (E01-F05) implementada: cartões com fatura, situação e consumo do limite, linha do tempo, categorias, pagamentos, previstos e lançamentos com estornos como crédito. Estorno com compra original (E01-F03-T17). A barra de abas aparece com À vista e Faturada; o botão flutuante abre o tipo da aba.
+
 > **Revisão 8 (08/11/2026):** decisões da v2 com base nos testes reais da Pluggy: base da visão macro (DP-1), recorrências também no à vista (DP-13), tipo estorno (DP-14), dia de fechamento só como sugestão (DP-28), farol pelo ritmo do mês (DP-10), status do cartão (DP-29), recorrência sem tag (DP-35) e gerenciar categorias adiado para a v3 (DP-12). Tags são só manuais (E01-F13-T02 removida). Schema 2 implementado (E02-F04-T01, E02-F05).
 
 ---
@@ -89,7 +91,7 @@ Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Lo
 
 ### E01-F02 — Shell (tela inicial)
 
-- **T01** Estrutura de abas: À vista `v1` (F); Macro (padrão) e Faturada `v2`
+- **T01** Estrutura de abas: À vista `v1` (F); Faturada `v2` (F); Macro (padrão) `v2`
 - **T02** Seletor de mês global: meses passados e futuros (nos futuros aparecem parcelas e recorrências previstas) `v1` (F)
 - **T03** Indicador de data da última atualização dos dados `v3`
 - **T04** Padrão de estados de tela: carregando, vazio e erro `v1` (F); offline `v3`
@@ -140,7 +142,8 @@ Componente reutilizável. Define `tipo` (à vista, faturado, pagamento de fatura
 - **T14** Validação: todos os campos são obrigatórios, exceto a tag e a data fim da recorrência (vazia = sem fim) `v1` (F)
 - **T15** Campo **tag**: opcional, uma por registro, com seletor das tags ativas e criação inline ("+ nova tag") `v1` (F)
 - **T16** Sugestão de categoria e subcategoria pela descrição: histórico que contém o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms; só preenche se o usuário ainda não escolheu (DP-36) `v1` (F)
-- **T17** Campos do tipo **estorno** `v2` (F; a escolha da compra original entra com a aba faturada)
+- **T17** Campos do tipo **estorno** `v2` (F)
+  - A compra original é opcional; ao escolher, preenche a descrição e a categoria vazias.
   - UUID (sistema), data, valor (maior que zero), cartão, mês e ano de vencimento da fatura que recebe o abatimento, descrição e, opcionalmente, a compra original (DP-14)
   - Abate da fatura e do consumo daquele mês
 
@@ -206,19 +209,25 @@ Consumo à vista (Pix, débito, dinheiro físico, voucher e, a partir da v2, bol
 
 Considera vários cartões simultaneamente.
 
-- **T01** Tabela de cartões: `nome_cartao`, `valor_fatura`, `consumo_limite` (indicador de consumo do limite integrado) `v2`
+- **T01** Tabela de cartões: `nome_cartao`, `valor_fatura`, `consumo_limite` (indicador de consumo do limite integrado) `v2` (F)
   - `consumo_limite` = soma de todas as parcelas ainda não pagas do cartão (fatura atual + faturas futuras) ÷ `limite_cartao`. Não é só a fatura do mês. Calculado sobre `tbl_parcela` (DP-27).
   - Exemplo: uma compra de R$ 1.200 em 12x consome R$ 1.200 do limite na hora e libera R$ 100 a cada fatura paga.
   - Lançamentos recorrentes previstos só entram depois de cobrados.
-- **T02** Seletor de cartão `v2`
-- **T03** Tabela de parcelas vigentes na fatura, por cartão `v2`
-- **T04** Botão de edição do registro na tabela de parcelas `v2`
-- **T05** Timeline dos valores da fatura, todos os cartões simultaneamente `v2`
-- **T06** Gráfico de gasto agregado por categoria/subcategoria, somando todos os cartões `v2`
-- **T07** Exibir lançamentos recorrentes (reais e previstos) na fatura do mês `v2`
+- **T02** Seletor de cartão `v2` (F)
+  - Tocar no cartão mostra só os lançamentos dele; tocar de novo volta para todos.
+- **T03** Tabela de parcelas vigentes na fatura, por cartão `v2` (F)
+- **T04** Botão de edição do registro na tabela de parcelas `v2` (F)
+  - Tocar na linha abre a edição, como na aba à vista.
+- **T05** Timeline dos valores da fatura, todos os cartões simultaneamente `v2` (F)
+  - Barras empilhadas por cartão, de 5 meses antes a 6 depois do mês escolhido; tocar num mês vai para ele.
+- **T06** Gráfico de gasto agregado por categoria/subcategoria, somando todos os cartões `v2` (F)
+  - Mesma barra por categoria do card da aba à vista.
+- **T07** Exibir lançamentos recorrentes (reais e previstos) na fatura do mês `v2` (F)
+  - A prevista cai na fatura pelo fechamento e vencimento do cartão; fica fora do valor da fatura, como "+ R$ X previstos".
 - **T08** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
-- **T09** Indicar fatura paga quando existir um pagamento de fatura do cartão para aquele mês de vencimento `v2`
-- **T10** Estornos abatem o valor da fatura do mês de vencimento e aparecem na tabela de parcelas como crédito (DP-14) `v2`
+- **T09** Indicar fatura paga quando existir um pagamento de fatura do cartão para aquele mês de vencimento `v2` (F)
+  - Sem pagamento: "Vence em dd/mm" ou, depois do vencimento, "Venceu em dd/mm, sem pagamento" em vermelho.
+- **T10** Estornos abatem o valor da fatura do mês de vencimento e aparecem na tabela de parcelas como crédito (DP-14) `v2` (F)
 
 *Comportamento:* o seletor de mês global afeta a tela inteira.
 

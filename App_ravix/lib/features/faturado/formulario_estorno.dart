@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show StreamProviderFamily;
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/datas.dart';
@@ -30,6 +31,13 @@ enum CampoEstorno {
   /// Subcategoria.
   subcategoria,
 }
+
+/// Compras do cartão, para escolher a original do estorno.
+final StreamProviderFamily<List<CompraFaturada>, String>
+comprasDoCartaoProvider = StreamProvider.autoDispose.family(
+  (ref, uuidCartao) =>
+      ref.watch(faturadoRepositoryProvider).observarComprasDoCartao(uuidCartao),
+);
 
 /// Estorno de cartão (E01-F03-T17, DP-14): valor positivo que abate da
 /// fatura do mês escolhido, do consumo e dos totais da categoria e da tag.
@@ -61,6 +69,7 @@ class _FormularioEstornoState extends ConsumerState<FormularioEstorno> {
       : _estorno.idSubcategoria ~/ 100;
   late int? _idSubcategoria = _estorno?.idSubcategoria;
   Tag? _tag;
+  late String? _uuidOriginal = _estorno?.uuidCompraFaturada;
   Map<CampoEstorno, String> _erros = const {};
   bool _salvando = false;
 
@@ -135,7 +144,7 @@ class _FormularioEstornoState extends ConsumerState<FormularioEstorno> {
       fatura: _mesDaFatura,
       idSubcategoria: _idSubcategoria!,
       uuidTag: _tag?.uuidTag,
-      uuidCompraOriginal: _estorno?.uuidCompraFaturada,
+      uuidCompraOriginal: _uuidOriginal,
     );
     final repositorio = ref.read(faturadoRepositoryProvider);
     final mensageiro = ScaffoldMessenger.of(context);
@@ -173,6 +182,24 @@ class _FormularioEstornoState extends ConsumerState<FormularioEstorno> {
       ..showSnackBar(const SnackBar(content: Text('Estorno excluído.')));
     if (mounted) context.pop();
   }
+
+  /// Liga o estorno à compra [compra]; sem descrição ou categoria ainda,
+  /// usa as dela.
+  void _escolherOriginal(CompraFaturada? compra) => setState(() {
+    _uuidOriginal = compra?.uuidCompraFaturada;
+    if (compra == null) return;
+    if (_descricao.trim().isEmpty) {
+      _descricao = 'Estorno ${compra.descricao}';
+      _campoDescricao.text = _descricao;
+      _limpar(CampoEstorno.descricao);
+    }
+    if (_idSubcategoria == null) {
+      _idCategoria = compra.idSubcategoria ~/ 100;
+      _idSubcategoria = compra.idSubcategoria;
+      _limpar(CampoEstorno.categoria);
+      _limpar(CampoEstorno.subcategoria);
+    }
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -225,10 +252,21 @@ class _FormularioEstornoState extends ConsumerState<FormularioEstorno> {
           cartaoAtual: _editando ? _cartao : null,
           erro: _erros[CampoEstorno.cartao],
           aoEscolher: (c) => setState(() {
+            if (c.uuidCartaoCredito != _cartao?.uuidCartaoCredito) {
+              _uuidOriginal = null;
+            }
             _cartao = c;
             _limpar(CampoEstorno.cartao);
           }),
         ),
+        if (_cartao case final cartao?) ...[
+          espaco,
+          _CampoCompraOriginal(
+            uuidCartao: cartao.uuidCartaoCredito,
+            uuidCompra: _uuidOriginal,
+            aoEscolher: _escolherOriginal,
+          ),
+        ],
         espaco,
         CampoMes(
           rotulo: 'Fatura',
@@ -258,6 +296,55 @@ class _FormularioEstornoState extends ConsumerState<FormularioEstorno> {
           aoEscolherTag: (t) => setState(() => _tag = t),
         ),
       ],
+    );
+  }
+}
+
+/// Compra original do estorno, opcional (E01-F03-T17).
+class _CampoCompraOriginal extends ConsumerWidget {
+  const new({
+    required this.uuidCartao,
+    required this.uuidCompra,
+    required this.aoEscolher,
+  });
+
+  final String uuidCartao;
+  final String? uuidCompra;
+  final ValueChanged<CompraFaturada?> aoEscolher;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final compras =
+        ref.watch(comprasDoCartaoProvider(uuidCartao)).value ??
+        const <CompraFaturada>[];
+    final escolhida = compras.any((c) => c.uuidCompraFaturada == uuidCompra)
+        ? uuidCompra
+        : null;
+    return DropdownButtonFormField<String?>(
+      key: ValueKey(('original', uuidCartao, escolhida, compras.length)),
+      initialValue: escolhida,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Compra original',
+        helperText: 'Opcional. Liga o estorno à compra devolvida.',
+      ),
+      items: [
+        const DropdownMenuItem<String?>(child: Text('Nenhuma')),
+        for (final c in compras)
+          DropdownMenuItem(
+            value: c.uuidCompraFaturada,
+            child: Text(
+              '${c.descricao} · '
+              '${formatarData(DateTime.parse(c.timestampCompraFaturada))} · '
+              '${formatarCentavos(c.valorTotal)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: (uuid) => aoEscolher(
+        compras.where((c) => c.uuidCompraFaturada == uuid).firstOrNull,
+      ),
     );
   }
 }

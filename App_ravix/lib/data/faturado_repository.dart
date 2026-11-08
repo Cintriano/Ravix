@@ -194,6 +194,21 @@ final class FaturadoRepository {
     _banco.tblCompraFaturada,
   )..where((c) => c.uuidCompraFaturada.equals(uuid))).getSingleOrNull();
 
+  /// Compras do cartão [uuidCartao], mais recentes primeiro, para
+  /// escolher a original de um estorno (E01-F03-T17).
+  Stream<List<CompraFaturada>> observarComprasDoCartao(
+    String uuidCartao, {
+    int limite = 100,
+  }) =>
+      (_banco.select(_banco.tblCompraFaturada)
+            ..where((c) => c.uuidCartaoCredito.equals(uuidCartao))
+            ..orderBy([
+              (c) => OrderingTerm.desc(c.timestampCompraFaturada),
+              (c) => OrderingTerm.desc(c.criadoEm),
+            ])
+            ..limit(limite))
+          .watch();
+
   /// Parcelas da compra [uuid], em ordem.
   Future<List<Parcela>> parcelasDe(String uuid) =>
       (_banco.select(_banco.tblParcela)

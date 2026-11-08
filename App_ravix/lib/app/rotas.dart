@@ -4,6 +4,7 @@ import 'package:ravix/features/cartoes/tela_cartoes.dart';
 import 'package:ravix/features/compra_avista/aba_avista.dart';
 import 'package:ravix/features/compra_avista/tela_registro.dart';
 import 'package:ravix/features/configuracao/tela_configuracao.dart';
+import 'package:ravix/features/faturada/aba_faturada.dart';
 import 'package:ravix/features/faturado/telas_faturado.dart';
 import 'package:ravix/features/recorrencias/tela_recorrencias.dart';
 import 'package:ravix/features/registro/tipo_registro.dart';
@@ -30,6 +31,14 @@ GoRouter rotas(Ref ref) {
               GoRoute(
                 path: '/avista',
                 builder: (context, state) => const AbaAvista(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/faturada',
+                builder: (context, state) => const AbaFaturada(),
               ),
             ],
           ),

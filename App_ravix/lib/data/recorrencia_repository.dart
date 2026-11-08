@@ -351,6 +351,58 @@ final class RecorrenciaRepository {
   Future<List<Prevista>> previstasFaturadas(Mes mes) =>
       _previstas(mes, tipo: 'faturado');
 
+  /// Cobranças do cartão ainda não lançadas que caem na fatura que vence
+  /// em [fatura] (E01-F05-T07), pelo fechamento e vencimento do cartão
+  /// (DP-28). Ficam fora do valor da fatura.
+  Future<List<Prevista>> previstasNaFatura(Mes fatura) async {
+    final regras =
+        await (_banco.select(_banco.tblRecorrencia)..where(
+              (r) =>
+                  r.tipoRegistro.equals('faturado') & r.status.equals('ativa'),
+            ))
+            .get();
+    final previstas = <Prevista>[];
+    for (final regra in regras) {
+      final cartao =
+          await (_banco.select(_banco.tblCartoesCredito)..where(
+                (c) => c.uuidCartaoCredito.equals(regra.uuidCartaoCredito!),
+              ))
+              .getSingle();
+      final ja = await _jaTratadas(regra.uuidRecorrencia);
+      // A compra cai na fatura do mês, do seguinte ou do outro.
+      for (final mes in [fatura.anterior.anterior, fatura.anterior, fatura]) {
+        for (final data in ocorrenciasNoMes(regra, mes)) {
+          final vencimento = sugerirVencimento(
+            data,
+            diaFechamento: cartao.diaFechamento,
+            diaVencimento: cartao.diaVencimento,
+          );
+          if (vencimento == fatura && !ja.contains(paraIsoData(data))) {
+            previstas.add((regra: regra, ocorrencia: data));
+          }
+        }
+      }
+    }
+    previstas.sort((a, b) => a.ocorrencia.compareTo(b.ocorrencia));
+    return previstas;
+  }
+
+  /// Igual a [previstasNaFatura], observando mudanças nas regras, nos
+  /// lançamentos, nas exceções e nos cartões.
+  Stream<List<Prevista>> observarPrevistasNaFatura(Mes fatura) async* {
+    yield await previstasNaFatura(fatura);
+    await for (final _ in _banco.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        _banco.tblRecorrencia,
+        _banco.tblCompraFaturada,
+        _banco.tblRecorrenciaExcecao,
+        _banco.tblCartoesCredito,
+      ]),
+    )) {
+      yield await previstasNaFatura(fatura);
+    }
+  }
+
   /// Registra o pagamento de uma cobrança à vista prevista: grava o
   /// lançamento ligado à ocorrência, com [momento], [valorCentavos] e
   /// [tipoPagamento] (editáveis no formulário). Devolve o UUID do gasto.

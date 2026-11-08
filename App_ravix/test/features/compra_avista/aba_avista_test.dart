@@ -74,6 +74,9 @@ void main() {
   }
 
   Future<void> filtrar(WidgetTester tester, String chip, String opcao) async {
+    // Os chips rolam na horizontal; o último pode estar fora da tela.
+    await tester.ensureVisible(find.text(chip));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(chip));
     await tester.pumpAndSettle();
     // A folha só constrói as opções que cabem na tela de teste.
