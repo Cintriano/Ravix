@@ -25,18 +25,20 @@ String resumoDoCartao(CartaoCredito cartao) => [
 
 /// Configuração > Cartões (E01-F07-T03, T08): lista os cartões ativos.
 /// Tocar abre a edição; o botão da linha remove (ou arquiva, se o cartão
-/// já tem registros).
+/// já tem registros). Os arquivados ficam no fim, com o botão Reativar.
 class TelaCartoes extends ConsumerWidget {
   /// Cria a tela.
   const new({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final arquivados =
+        ref.watch(cartoesArquivadosProvider).value ?? const <CartaoCredito>[];
     return Scaffold(
       appBar: AppBar(title: const Text('Cartões')),
       body: ConteudoAssincrono<List<CartaoCredito>>(
         valor: ref.watch(cartoesAtivosProvider),
-        estaVazio: (cartoes) => cartoes.isEmpty,
+        estaVazio: (cartoes) => cartoes.isEmpty && arquivados.isEmpty,
         aoTentarDeNovo: () => ref.invalidate(cartoesAtivosProvider),
         vazio: EstadoVazio(
           titulo: 'Nenhum cartão',
@@ -46,27 +48,49 @@ class TelaCartoes extends ConsumerWidget {
           rotuloAcao: 'Cadastrar cartão',
           aoAgir: () => context.push('/configuracao/cartoes/novo'),
         ),
-        conteudo: (cartoes) => ListView.separated(
+        conteudo: (cartoes) => ListView(
           padding: const EdgeInsets.only(bottom: 96),
-          itemCount: cartoes.length,
-          separatorBuilder: (_, _) =>
-              const Divider(indent: TokensRavix.spaceMd),
-          itemBuilder: (context, i) {
-            final cartao = cartoes[i];
-            return ListTile(
-              leading: const Icon(Icones.creditCard),
-              title: Text(nomeComFinal(cartao)),
-              subtitle: Text(resumoDoCartao(cartao)),
-              onTap: () => context.push(
-                '/configuracao/cartoes/${cartao.uuidCartaoCredito}',
+          children: [
+            for (final (i, cartao) in cartoes.indexed) ...[
+              if (i > 0) const Divider(indent: TokensRavix.spaceMd),
+              ListTile(
+                leading: const Icon(Icones.creditCard),
+                title: Text(nomeComFinal(cartao)),
+                subtitle: Text(resumoDoCartao(cartao)),
+                onTap: () => context.push(
+                  '/configuracao/cartoes/${cartao.uuidCartaoCredito}',
+                ),
+                trailing: IconButton(
+                  tooltip: 'Remover ${cartao.nomeCartao}',
+                  icon: const Icon(Icones.trash2),
+                  onPressed: () => removerCartao(context, ref, cartao),
+                ),
               ),
-              trailing: IconButton(
-                tooltip: 'Remover ${cartao.nomeCartao}',
-                icon: const Icon(Icones.trash2),
-                onPressed: () => removerCartao(context, ref, cartao),
+            ],
+            if (arquivados.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  TokensRavix.spaceMd,
+                  TokensRavix.spaceLg,
+                  TokensRavix.spaceMd,
+                  TokensRavix.spaceXs,
+                ),
+                child: Text('ARQUIVADOS', style: context.temaRavix.sobretitulo),
               ),
-            );
-          },
+              for (final cartao in arquivados)
+                ListTile(
+                  leading: const Icon(Icones.creditCard),
+                  title: Text(nomeComFinal(cartao)),
+                  subtitle: const Text(
+                    'Fora dos formulários; o histórico fica.',
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => reativarCartao(context, ref, cartao),
+                    child: const Text('Reativar'),
+                  ),
+                ),
+            ],
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -134,4 +158,19 @@ Future<bool> removerCartao(
       );
   }
   return true;
+}
+
+/// Reativa [cartao]: volta para os seletores do formulário (DP-29).
+Future<void> reativarCartao(
+  BuildContext context,
+  WidgetRef ref,
+  CartaoCredito cartao,
+) async {
+  final mensageiro = ScaffoldMessenger.of(context);
+  await ref.read(cartaoRepositoryProvider).reativar(cartao.uuidCartaoCredito);
+  mensageiro
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(content: Text('Cartão "${cartao.nomeCartao}" reativado.')),
+    );
 }

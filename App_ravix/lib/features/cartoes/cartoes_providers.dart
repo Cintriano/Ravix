@@ -10,3 +10,9 @@ final StreamProvider<List<CartaoCredito>> cartoesAtivosProvider =
     StreamProvider.autoDispose(
       (ref) => ref.watch(cartaoRepositoryProvider).observarAtivos(),
     );
+
+/// Cartões arquivados em ordem alfabética, para reativar.
+final StreamProvider<List<CartaoCredito>> cartoesArquivadosProvider =
+    StreamProvider.autoDispose(
+      (ref) => ref.watch(cartaoRepositoryProvider).observarArquivados(),
+    );

@@ -167,6 +167,18 @@ final class CartaoRepository {
     return RemocaoCartao.arquivado;
   });
 
+  /// Volta o cartão arquivado [uuid] para ativo: reaparece nos seletores
+  /// do formulário (DP-29).
+  Future<void> reativar(String uuid) =>
+      (_banco.update(
+        _banco.tblCartoesCredito,
+      )..where((c) => c.uuidCartaoCredito.equals(uuid))).write(
+        TblCartoesCreditoCompanion(
+          status: const Value('ativo'),
+          atualizadoEm: Value(paraIsoUtc(_relogio.agora())),
+        ),
+      );
+
   /// Quantos registros usam o cartão [uuid]: compras, pagamentos de
   /// fatura, estornos e recorrências.
   Future<int> contarUsos(String uuid) =>
@@ -176,6 +188,17 @@ final class CartaoRepository {
   Stream<List<CartaoCredito>> observarAtivos() =>
       (_banco.select(_banco.tblCartoesCredito)
             ..where((c) => c.status.equals('ativo'))
+            ..orderBy([
+              (c) => OrderingTerm(
+                expression: c.nomeCartao.collate(Collate.noCase),
+              ),
+            ]))
+          .watch();
+
+  /// Cartões arquivados em ordem alfabética.
+  Stream<List<CartaoCredito>> observarArquivados() =>
+      (_banco.select(_banco.tblCartoesCredito)
+            ..where((c) => c.status.equals('arquivado'))
             ..orderBy([
               (c) => OrderingTerm(
                 expression: c.nomeCartao.collate(Collate.noCase),
@@ -211,13 +234,18 @@ final class CartaoRepository {
       // O COLLATE NOCASE do banco só cobre ASCII; aqui cobre os acentos.
       final chave = normalizarTexto(nome);
       final existentes = await _banco.select(_banco.tblCartoesCredito).get();
-      final repetido = existentes.any(
-        (c) =>
-            c.uuidCartaoCredito != ignorar &&
-            normalizarTexto(c.nomeCartao) == chave,
-      );
-      if (repetido) {
-        erros[CampoCartao.nome] = 'Já existe um cartão chamado "$nome".';
+      final repetido = existentes
+          .where(
+            (c) =>
+                c.uuidCartaoCredito != ignorar &&
+                normalizarTexto(c.nomeCartao) == chave,
+          )
+          .firstOrNull;
+      if (repetido != null) {
+        erros[CampoCartao.nome] = repetido.status == 'arquivado'
+            ? 'Há um cartão arquivado chamado "$nome". Reative-o na lista '
+                  'de cartões.'
+            : 'Já existe um cartão chamado "$nome".';
       }
     }
     if (erros.isNotEmpty) throw CartaoInvalido(erros);

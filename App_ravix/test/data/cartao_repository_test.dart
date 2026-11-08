@@ -144,6 +144,35 @@ void main() {
     );
   });
 
+  test('reativar volta o arquivado para os ativos', () async {
+    final usado = await repositorio.criar(cartao());
+    await banco.customStatement(
+      'INSERT INTO tbl_compra_faturada (uuid_compra_faturada, '
+      'uuid_cartao_credito, timestamp_compra_faturada, fuso_minutos, '
+      'descricao, descricao_normalizada, valor_total, quant_parcela, '
+      'mes_vencimento, ano_vencimento, id_subcategoria, criado_em, '
+      "atualizado_em) VALUES ('f1', ?, '2026-11-08T10:00:00', -180, "
+      "'Passagem', 'passagem', 120000, 6, 12, 2026, 405, ?, ?)",
+      [usado.uuidCartaoCredito, _agora, _agora],
+    );
+    await repositorio.remover(usado.uuidCartaoCredito);
+    expect(
+      (await repositorio.observarArquivados().first).single.nomeCartao,
+      'Itaú',
+    );
+
+    // O nome continua ocupado: o aviso aponta para a reativação.
+    final erros = await errosDe(repositorio.criar(cartao(nome: 'itau')));
+    expect(erros[CampoCartao.nome], contains('arquivado'));
+
+    await repositorio.reativar(usado.uuidCartaoCredito);
+    expect(await repositorio.observarArquivados().first, isEmpty);
+    expect(
+      (await repositorio.observarAtivos().first).single.uuidCartaoCredito,
+      usado.uuidCartaoCredito,
+    );
+  });
+
   test('ativos em ordem alfabética', () async {
     await repositorio.criar(cartao(nome: 'PicPay'));
     await repositorio.criar(cartao(nome: 'itaú'));

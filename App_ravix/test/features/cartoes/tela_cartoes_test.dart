@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ravix/app.dart';
+import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/tema/icones.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 
 import '../../helpers/app_de_teste.dart';
 
@@ -98,5 +102,42 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Excluir'));
     await tester.pumpAndSettle();
     expect(find.text('Nenhum cartão'), findsOneWidget);
+  });
+
+  testarApp('arquivado aparece no fim e pode ser reativado', (tester) async {
+    await abrirCartoes(tester);
+    await cadastrar(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(RavixApp)),
+    );
+    final uuid = (await tester.runAsync(
+      () => container.read(cartaoRepositoryProvider).observarAtivos().first,
+    ))!.single.uuidCartaoCredito;
+    // Uma recorrência no cartão faz a remoção arquivar.
+    await tester.runAsync(
+      () => container.read(recorrenciaRepositoryProvider).criar((
+        descricao: 'Netflix',
+        valorCentavos: 5590,
+        idSubcategoria: 601,
+        periodicidade: Periodicidade.mensal,
+        diaCobranca: 30,
+        inicio: DateTime(2026, 10, 30),
+        fim: null,
+        uuidCartao: uuid,
+        tipoPagamento: null,
+        documentoBeneficiario: null,
+      )),
+    );
+    await tester.tap(find.byTooltip('Remover Itaú'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Arquivar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ARQUIVADOS'), findsOneWidget);
+    expect(find.byTooltip('Remover Itaú'), findsNothing);
+    await tester.tap(find.text('Reativar'));
+    await tester.pumpAndSettle();
+    expect(find.text('ARQUIVADOS'), findsNothing);
+    expect(find.byTooltip('Remover Itaú'), findsOneWidget);
   });
 }

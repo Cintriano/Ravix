@@ -279,6 +279,7 @@ Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à v
 - **T08** Remover cartão `v2` (F)
   - Com compras vinculadas: arquiva (some da seleção no formulário, histórico preservado).
   - Sem compras: exclui.
+  - Arquivados ficam no fim da lista de cartões, com o botão **Reativar** (08/11/2026). Cadastrar um cartão com o nome de um arquivado avisa para reativá-lo.
 - **T09** Aba Tags: listar, criar e renomear tags `v1` (F)
   - Renomear não afeta os registros, que guardam só o ID da tag.
 - **T10** Remover tag `v1` (F)
