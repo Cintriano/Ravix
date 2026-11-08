@@ -17,6 +17,7 @@ import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/carga_inicial.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/features/cartoes/cartoes_providers.dart';
 import 'package:ravix/features/cartoes/tela_cartoes.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
@@ -546,6 +547,137 @@ class CampoMes extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Configuração da cobrança recorrente no formulário (E01-F03-T08).
+typedef ConfigRecorrencia = ({
+  bool ativa,
+  Periodicidade periodicidade,
+  int dia,
+  DateTime? fim,
+});
+
+/// Interruptor "Cobrança recorrente" e, ligado, periodicidade, dia de
+/// cobrança e data de fim opcional (vazia = sem fim).
+class CamposRecorrencia extends StatelessWidget {
+  /// Cria os campos.
+  const new({
+    required this.config,
+    required this.aoMudar,
+    required this.explicacao,
+    super.key,
+  });
+
+  /// Estado atual.
+  final ConfigRecorrencia config;
+
+  /// Recebe o novo estado.
+  final ValueChanged<ConfigRecorrencia> aoMudar;
+
+  /// O que acontece com as cobranças (muda entre à vista e cartão).
+  final String explicacao;
+
+  ConfigRecorrencia _com({
+    bool? ativa,
+    Periodicidade? periodicidade,
+    int? dia,
+    DateTime? fim,
+    bool limparFim = false,
+  }) => (
+    ativa: ativa ?? config.ativa,
+    periodicidade: periodicidade ?? config.periodicidade,
+    dia: dia ?? config.dia,
+    fim: limparFim ? null : fim ?? config.fim,
+  );
+
+  Future<void> _escolherFim(BuildContext context) async {
+    final hoje = DateTime.now();
+    final data = await showDatePicker(
+      context: context,
+      initialDate: config.fim ?? hoje,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Última cobrança até',
+    );
+    if (data != null) aoMudar(_com(fim: data));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texto = Theme.of(context).textTheme;
+    final fim = config.fim;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Cobrança recorrente'),
+          subtitle: Text(
+            config.ativa ? explicacao : 'Aluguel, assinatura, conta de consumo',
+          ),
+          value: config.ativa,
+          onChanged: (v) => aoMudar(_com(ativa: v)),
+        ),
+        if (config.ativa) ...[
+          Wrap(
+            spacing: TokensRavix.spaceSm,
+            children: [
+              for (final p in Periodicidade.values)
+                ChoiceChip(
+                  label: Text(p == Periodicidade.mensal ? 'Mensal' : 'Anual'),
+                  selected: config.periodicidade == p,
+                  onSelected: (_) => aoMudar(_com(periodicidade: p)),
+                ),
+            ],
+          ),
+          const SizedBox(height: TokensRavix.spaceMd),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: '${config.dia}',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(2),
+                  ],
+                  onChanged: (t) {
+                    final dia = int.tryParse(t);
+                    if (dia != null && dia >= 1 && dia <= 31) {
+                      aoMudar(_com(dia: dia));
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Dia de cobrança',
+                    helperText: '29 a 31 caem no último dia nos meses curtos',
+                    helperMaxLines: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: TokensRavix.spaceMd),
+              Expanded(
+                child: CampoDeToque(
+                  rotulo: 'Termina em',
+                  valor: fim == null ? 'Sem fim' : formatarData(fim),
+                  icone: Icones.calendar,
+                  aoTocar: () => _escolherFim(context),
+                ),
+              ),
+            ],
+          ),
+          if (fim != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => aoMudar(_com(limparFim: true)),
+                child: Text('Sem fim', style: texto.labelLarge),
+              ),
+            ),
+        ],
+      ],
     );
   }
 }

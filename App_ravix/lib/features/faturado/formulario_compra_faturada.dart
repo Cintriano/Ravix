@@ -12,6 +12,7 @@ import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
 import 'package:ravix/data/faturado_repository.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/features/compra_avista/formulario_compra.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
 import 'package:ravix/features/registro/campos_registro.dart';
@@ -76,6 +77,14 @@ class _FormularioCompraFaturadaState
   Map<CampoFaturado, String> _erros = const {};
   bool _salvando = false;
   Timer? _espera;
+
+  /// Cobrança recorrente no cartão (E01-F03-T08); só ao criar.
+  late ConfigRecorrencia _recorrencia = (
+    ativa: false,
+    periodicidade: Periodicidade.mensal,
+    dia: _momento.day,
+    fim: null,
+  );
 
   late final _campoValor = TextEditingController(
     text: _valor == 0 ? '' : formatarCentavosSemSimbolo(_valor),
@@ -161,9 +170,9 @@ class _FormularioCompraFaturadaState
     if (_descricao.trim().isEmpty)
       CampoFaturado.descricao: 'Informe a descrição.',
     if (_cartao == null) CampoFaturado.cartao: 'Escolha o cartão.',
-    if (_parcelas < 1 || _parcelas > 99)
+    if (!_recorrencia.ativa && (_parcelas < 1 || _parcelas > 99))
       CampoFaturado.parcelas: 'Use de 1 a 99 parcelas.'
-    else if (_valor > 0 && _valor < _parcelas)
+    else if (!_recorrencia.ativa && _valor > 0 && _valor < _parcelas)
       CampoFaturado.parcelas: 'Valor pequeno demais para tantas parcelas.',
     if (_idCategoria == null) CampoFaturado.categoria: 'Escolha a categoria.',
     if (_idSubcategoria == null)
@@ -193,6 +202,22 @@ class _FormularioCompraFaturadaState
     try {
       if (_editando) {
         await repositorio.editarCompra(_compra!.uuidCompraFaturada, dados);
+      } else if (_recorrencia.ativa) {
+        // A regra gera os lançamentos: as cobranças até hoje entram já.
+        final recorrencias = ref.read(recorrenciaRepositoryProvider);
+        await recorrencias.criar((
+          descricao: _descricao,
+          valorCentavos: _valor,
+          idSubcategoria: _idSubcategoria!,
+          periodicidade: _recorrencia.periodicidade,
+          diaCobranca: _recorrencia.dia,
+          inicio: _momento,
+          fim: _recorrencia.fim,
+          uuidCartao: _cartao!.uuidCartaoCredito,
+          tipoPagamento: null,
+          documentoBeneficiario: null,
+        ));
+        await recorrencias.materializarFaturadas();
       } else {
         await repositorio.criarCompra(dados);
       }
@@ -204,7 +229,13 @@ class _FormularioCompraFaturadaState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(_editando ? 'Compra atualizada.' : 'Compra salva.'),
+          content: Text(
+            _editando
+                ? 'Compra atualizada.'
+                : _recorrencia.ativa
+                ? 'Cobrança recorrente criada.'
+                : 'Compra salva.',
+          ),
         ),
       );
     if (mounted) context.pop();
@@ -289,36 +320,51 @@ class _FormularioCompraFaturadaState
             _limpar(CampoFaturado.cartao);
           }),
         ),
-        espaco,
-        TextField(
-          controller: _campoParcelas,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(2),
-          ],
-          onChanged: (t) => setState(() {
-            _parcelas = int.tryParse(t) ?? 0;
-            _limpar(CampoFaturado.parcelas);
-          }),
-          decoration: InputDecoration(
-            labelText: 'Parcelas',
-            helperText: _resumoParcelas ?? '1 = à vista no cartão',
-            errorText: _erros[CampoFaturado.parcelas],
+        if (!_editando) ...[
+          espaco,
+          CamposRecorrencia(
+            config: _recorrencia,
+            explicacao:
+                'O cartão cobra sozinho: cada cobrança vira lançamento no '
+                'dia, na fatura sugerida pelo cartão.',
+            aoMudar: (c) => setState(() {
+              _recorrencia = c;
+              _limpar(CampoFaturado.parcelas);
+            }),
           ),
-        ),
-        espaco,
-        CampoMes(
-          rotulo: _parcelas > 1 ? 'Fatura da 1ª parcela' : 'Fatura',
-          mes: mes,
-          ajuda: _vencimentoManual
-              ? 'Escolhida por você.'
-              : 'Sugerida pelo fechamento do cartão; confira na fatura.',
-          aoMudar: (novo) => setState(() {
-            _vencimento = novo;
-            _vencimentoManual = true;
-          }),
-        ),
+        ],
+        if (!_recorrencia.ativa) ...[
+          espaco,
+          TextField(
+            controller: _campoParcelas,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(2),
+            ],
+            onChanged: (t) => setState(() {
+              _parcelas = int.tryParse(t) ?? 0;
+              _limpar(CampoFaturado.parcelas);
+            }),
+            decoration: InputDecoration(
+              labelText: 'Parcelas',
+              helperText: _resumoParcelas ?? '1 = à vista no cartão',
+              errorText: _erros[CampoFaturado.parcelas],
+            ),
+          ),
+          espaco,
+          CampoMes(
+            rotulo: _parcelas > 1 ? 'Fatura da 1ª parcela' : 'Fatura',
+            mes: mes,
+            ajuda: _vencimentoManual
+                ? 'Escolhida por você.'
+                : 'Sugerida pelo fechamento do cartão; confira na fatura.',
+            aoMudar: (novo) => setState(() {
+              _vencimento = novo;
+              _vencimentoManual = true;
+            }),
+          ),
+        ],
         const SizedBox(height: TokensRavix.spaceLg),
         CamposClassificacao(
           idCategoria: _idCategoria,

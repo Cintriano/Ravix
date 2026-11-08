@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/features/shell/mes_selecionado.dart';
 
 /// Filtros da tabela da aba À vista (E01-F04-T05). Valem para todos os
@@ -73,4 +74,13 @@ final StreamProvider<List<CompraDoMes>> comprasDoMesProvider =
 final StreamProvider<List<Tag>> todasAsTagsProvider =
     StreamProvider.autoDispose(
       (ref) => ref.watch(tagRepositoryProvider).observarTodas(),
+    );
+
+/// Cobranças à vista previstas no mês selecionado, ainda sem registro
+/// (E01-F04-T07, DP-25). Ficam fora do acumulado.
+final StreamProvider<List<Prevista>> previstasDoMesProvider =
+    StreamProvider.autoDispose(
+      (ref) => ref
+          .watch(recorrenciaRepositoryProvider)
+          .observarPrevistasAvista(ref.watch(mesSelecionadoProvider)),
     );

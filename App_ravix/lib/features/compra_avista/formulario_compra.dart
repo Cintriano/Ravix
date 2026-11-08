@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
+import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/core/tema/tokens.dart';
@@ -12,6 +13,7 @@ import 'package:ravix/core/texto.dart';
 import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
 import 'package:ravix/features/compra_avista/rascunho_compra.dart';
 import 'package:ravix/features/registro/campos_registro.dart';
@@ -63,6 +65,14 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
   Tag? _tagSelecionada;
 
   bool _salvando = false;
+
+  /// Cobrança recorrente (E01-F03-T08); só ao criar.
+  late ConfigRecorrencia _recorrencia = (
+    ativa: false,
+    periodicidade: Periodicidade.mensal,
+    dia: _rascunho.momento.day,
+    fim: null,
+  );
 
   bool get _editando => widget.compra != null;
 
@@ -146,7 +156,11 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
     try {
       final compra = widget.compra;
       if (compra == null) {
-        await repositorio.criar(_rascunho.paraDados());
+        if (_recorrencia.ativa) {
+          await _criarRecorrente();
+        } else {
+          await repositorio.criar(_rascunho.paraDados());
+        }
       } else {
         await repositorio.editar(
           compra.uuidCompraAvista,
@@ -161,10 +175,47 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(_editando ? 'Gasto atualizado.' : 'Gasto salvo.'),
+          content: Text(
+            _editando
+                ? 'Gasto atualizado.'
+                : _recorrencia.ativa
+                ? 'Gasto salvo e cobrança recorrente criada.'
+                : 'Gasto salvo.',
+          ),
         ),
       );
     if (mounted) context.pop();
+  }
+
+  /// Cria a regra a partir deste gasto e registra este gasto como a
+  /// cobrança do mês dele (DP-13, DP-25).
+  Future<void> _criarRecorrente() async {
+    final dados = _rascunho.paraDados();
+    final recorrencias = ref.read(recorrenciaRepositoryProvider);
+    final uuid = await recorrencias.criar((
+      descricao: dados.descricao,
+      valorCentavos: dados.valorCentavos,
+      idSubcategoria: dados.idSubcategoria,
+      periodicidade: _recorrencia.periodicidade,
+      diaCobranca: _recorrencia.dia,
+      inicio: dados.momento,
+      fim: _recorrencia.fim,
+      uuidCartao: null,
+      tipoPagamento: dados.tipoPagamento,
+      documentoBeneficiario: null,
+    ));
+    final regra = (await recorrencias.buscar(uuid))!;
+    final ocorrencias = ocorrenciasNoMes(regra, Mes.de(dados.momento));
+    if (ocorrencias.isEmpty) {
+      await ref.read(compraAvistaRepositoryProvider).criar(dados);
+      return;
+    }
+    await recorrencias.registrarAvista(
+      (regra: regra, ocorrencia: ocorrencias.single),
+      momento: dados.momento,
+      valorCentavos: dados.valorCentavos,
+      tipoPagamento: dados.tipoPagamento,
+    );
   }
 
   Future<void> _excluir() async {
@@ -285,6 +336,16 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
                   style: texto.bodySmall?.copyWith(color: paleta.danger),
                 ),
               ),
+            if (!_editando) ...[
+              espaco,
+              CamposRecorrencia(
+                config: _recorrencia,
+                explicacao:
+                    'Este gasto conta como a cobrança deste mês; as próximas '
+                    'aparecem como previstas até você registrar.',
+                aoMudar: (c) => setState(() => _recorrencia = c),
+              ),
+            ],
             const SizedBox(height: TokensRavix.spaceLg),
             CamposClassificacao(
               idCategoria: _rascunho.idCategoria,

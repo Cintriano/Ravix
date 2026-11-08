@@ -11,6 +11,7 @@ import 'package:ravix/data/compra_avista_repository.dart';
 import 'package:ravix/features/compra_avista/aba_avista_providers.dart';
 import 'package:ravix/features/compra_avista/formulario_compra.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
+import 'package:ravix/features/compra_avista/previstas.dart';
 import 'package:ravix/features/shell/estados_tela.dart';
 import 'package:ravix/features/shell/mes_selecionado.dart';
 
@@ -39,6 +40,7 @@ class AbaAvista extends ConsumerWidget {
       slivers: [
         const SliverToBoxAdapter(child: _Total()),
         const SliverToBoxAdapter(child: _Filtros()),
+        const SliverToBoxAdapter(child: SecaoPrevistas()),
         ...switch (ref.watch(comprasDoMesProvider)) {
           AsyncData(:final value) when value.isEmpty => [
             SliverFillRemaining(

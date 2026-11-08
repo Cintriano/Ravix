@@ -235,6 +235,21 @@ final class RecorrenciaRepository {
   Future<List<Prevista>> previstasAvista(Mes mes) =>
       _previstas(mes, tipo: 'avista');
 
+  /// Igual a [previstasAvista], observando mudanças nas regras, nos gastos
+  /// e nas exceções.
+  Stream<List<Prevista>> observarPrevistasAvista(Mes mes) async* {
+    yield await previstasAvista(mes);
+    await for (final _ in _banco.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        _banco.tblRecorrencia,
+        _banco.tblCompraAvista,
+        _banco.tblRecorrenciaExcecao,
+      ]),
+    )) {
+      yield await previstasAvista(mes);
+    }
+  }
+
   /// Igual a [previstasAvista], para as do cartão (aba faturada).
   Future<List<Prevista>> previstasFaturadas(Mes mes) =>
       _previstas(mes, tipo: 'faturado');
