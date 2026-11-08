@@ -89,6 +89,12 @@ void main() {
       expect(ocorrenciasNoMes(r, Mes(2026, 11)), isEmpty);
     });
 
+    test('cobrança antes do dia de início não conta', () async {
+      final r = await regra(aluguel(dia: 10, inicio: DateTime(2026, 10, 24)));
+      expect(ocorrenciasNoMes(r, Mes(2026, 10)), isEmpty);
+      expect(ocorrenciasNoMes(r, Mes(2026, 11)), [DateTime(2026, 11, 10)]);
+    });
+
     test('anual cobra só no mês de início', () async {
       final r = await regra(
         aluguel(periodicidade: Periodicidade.anual, inicio: DateTime(2026, 3)),
@@ -188,6 +194,43 @@ void main() {
     final previstas = await repositorio.previstasAvista(Mes(2026, 12));
     expect(previstas.single.regra.uuidRecorrencia, nova);
     expect(previstas.single.regra.valorRecorrencia, 160000);
+  });
+
+  test('editar daqui pra frente não duplica a cobrança do mês', () async {
+    final antiga = await repositorio.criar(aluguel(dia: 5));
+    // Hoje é 08/11: a cobrança de 05/11 ficou com a regra antiga.
+    final nova = await repositorio.editarDaquiPraFrente(
+      antiga,
+      valorCentavos: 160000,
+      diaCobranca: 5,
+      idSubcategoria: 701,
+    );
+    final novembro = await repositorio.previstasAvista(Mes(2026, 11));
+    expect(novembro.single.regra.uuidRecorrencia, antiga);
+    final dezembro = await repositorio.previstasAvista(Mes(2026, 12));
+    expect(dezembro.single.regra.uuidRecorrencia, nova);
+    expect(dezembro.single.regra.valorRecorrencia, 160000);
+  });
+
+  test('alterar desde o início atualiza a própria regra', () async {
+    final uuid = await repositorio.criar(aluguel(inicio: DateTime(2026, 9)));
+    final mesma = await repositorio.alterarDaqui(
+      uuid,
+      DateTime(2026, 9),
+      aluguel(valor: 170000, inicio: DateTime(2026, 9)),
+    );
+    expect(mesma, uuid);
+    final regra = (await repositorio.buscar(uuid))!;
+    expect(regra.valorRecorrencia, 170000);
+    expect(regra.status, 'ativa');
+    expect(await banco.select(banco.tblRecorrencia).get(), hasLength(1));
+  });
+
+  test('encerrar antes do início cancela a regra inteira', () async {
+    final uuid = await repositorio.criar(aluguel(inicio: DateTime(2026, 9)));
+    await repositorio.encerrarAntesDe(uuid, DateTime(2026, 9));
+    expect((await repositorio.buscar(uuid))!.status, 'cancelada');
+    expect(await repositorio.previstasAvista(Mes(2026, 11)), isEmpty);
   });
 
   test('remover: sem lançamentos exclui; com lançamentos cancela', () async {

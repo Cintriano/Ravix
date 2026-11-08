@@ -227,3 +227,40 @@ class _CarregarParaEditarState<T> extends ConsumerState<CarregarParaEditar<T>> {
     },
   );
 }
+
+/// Alcance de uma mudança num lançamento recorrente (E01-F03-T12).
+enum AlcanceRecorrente {
+  /// Só este lançamento.
+  soEste,
+
+  /// Este e as próximas cobranças da regra.
+  esteEProximos,
+}
+
+/// Pergunta se [acao] ("Excluir", "Salvar") vale só para este lançamento ou
+/// também para as próximas cobranças. `null` = cancelou.
+Future<AlcanceRecorrente?> perguntarAlcance(
+  BuildContext context, {
+  required String titulo,
+  required String acao,
+}) => showDialog<AlcanceRecorrente>(
+  context: context,
+  builder: (contexto) => SimpleDialog(
+    title: Text(titulo),
+    children: [
+      SimpleDialogOption(
+        onPressed: () => Navigator.of(contexto).pop(AlcanceRecorrente.soEste),
+        child: Text('$acao só este'),
+      ),
+      SimpleDialogOption(
+        onPressed: () =>
+            Navigator.of(contexto).pop(AlcanceRecorrente.esteEProximos),
+        child: Text('$acao este e os próximos'),
+      ),
+      SimpleDialogOption(
+        onPressed: () => Navigator.of(contexto).pop(),
+        child: const Text('Cancelar'),
+      ),
+    ],
+  ),
+);

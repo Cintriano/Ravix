@@ -162,10 +162,20 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
           await repositorio.criar(_rascunho.paraDados());
         }
       } else {
-        await repositorio.editar(
-          compra.uuidCompraAvista,
-          _rascunho.paraDados(),
-        );
+        final dados = _rascunho.paraDados();
+        final alcance = await _alcanceDaEdicao(compra, dados);
+        if (alcance == null) return;
+        await repositorio.editar(compra.uuidCompraAvista, dados);
+        if (alcance == AlcanceRecorrente.esteEProximos) {
+          await ref
+              .read(recorrenciaRepositoryProvider)
+              .aplicarAosProximos(
+                compra.uuidRecorrencia!,
+                ocorrencia: deIsoData(compra.ocorrencia!),
+                valorCentavos: dados.valorCentavos,
+                idSubcategoria: dados.idSubcategoria,
+              );
+        }
       }
     } finally {
       if (mounted) setState(() => _salvando = false);
@@ -218,7 +228,61 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
     );
   }
 
+  /// Num gasto de recorrência com valor ou categoria mudados, pergunta se a
+  /// mudança vale para as próximas cobranças (T12). Sem recorrência ou sem
+  /// mudança dessas, é só este. `null` = cancelou.
+  Future<AlcanceRecorrente?> _alcanceDaEdicao(
+    CompraAvista compra,
+    DadosCompraAvista dados,
+  ) async {
+    final mudouARegra =
+        dados.valorCentavos != compra.valorCompraAvista ||
+        dados.idSubcategoria != compra.idSubcategoria;
+    if (compra.uuidRecorrencia == null || !mudouARegra) {
+      return AlcanceRecorrente.soEste;
+    }
+    return await perguntarAlcance(
+      context,
+      titulo: 'Gasto recorrente',
+      acao: 'Alterar',
+    );
+  }
+
+  Future<void> _excluirRecorrente(CompraAvista compra) async {
+    final alcance = await perguntarAlcance(
+      context,
+      titulo: 'Excluir gasto recorrente?',
+      acao: 'Excluir',
+    );
+    if (alcance == null || !mounted) return;
+    final mensageiro = ScaffoldMessenger.of(context);
+    final recorrencias = ref.read(recorrenciaRepositoryProvider);
+    final ocorrencia = deIsoData(compra.ocorrencia!);
+    if (alcance == AlcanceRecorrente.soEste) {
+      await recorrencias.pular(compra.uuidRecorrencia!, ocorrencia);
+    } else {
+      await recorrencias.excluirDaqui(compra.uuidRecorrencia!, ocorrencia);
+    }
+    mensageiro
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            alcance == AlcanceRecorrente.soEste
+                ? 'Gasto excluído; a cobrança deste mês foi pulada.'
+                : 'Gasto excluído e recorrência encerrada.',
+          ),
+        ),
+      );
+    if (mounted) context.pop();
+  }
+
   Future<void> _excluir() async {
+    final compra = widget.compra!;
+    if (compra.uuidRecorrencia != null) {
+      await _excluirRecorrente(compra);
+      return;
+    }
     final paleta = context.temaRavix.paleta;
     final confirmou = await showDialog<bool>(
       context: context,

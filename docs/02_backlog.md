@@ -125,14 +125,15 @@ Componente reutilizável. Define `tipo` (à vista, faturado, pagamento de fatura
   - Quantidade de parcelas (fatura finita) **ou** recorrência (fatura de serviço), ver T08
   - (F) parcelado, 08/11/2026: mês da fatura da 1ª parcela sugerido pelo fechamento do cartão (DP-28) e editável; a recorrência segue no T08.
 - **T07** Seleção de cartão `v2` (F); cartão sugerido pelo app (E04-F03) `v3`
-- **T08** Toggle **Cobrança recorrente** nos tipos faturado e à vista (DP-13) `v2`
+- **T08** Toggle **Cobrança recorrente** nos tipos faturado e à vista (DP-13) `v2` (F)
   - No à vista, a recorrência guarda a forma de pagamento em vez do cartão (aluguel, contas de consumo, débito automático).
   - Ativo: esconde quantidade de parcelas e mostra periodicidade, dia de cobrança e data fim (opcional)
   - Depende de `tbl_recorrencia` (ver [modelagem banco](03_modelo_de_dados.md))
 - **T09** Modo completar pendência `v3`
 - **T10** Carga inicial de categorias e subcategorias (tabela abaixo), usada nos dois tipos de registro `v1` (F)
 - **T11** Excluir registro no modo editar, com confirmação `v1` (F)
-- **T12** Editar ou excluir lançamento recorrente: escolher entre "só este" e "este e os próximos" `v2`
+- **T12** Editar ou excluir lançamento recorrente: escolher entre "só este" e "este e os próximos" `v2` (F)
+  - Ao editar, só pergunta se o valor ou a subcategoria mudaram.
 - **T13** Campos do tipo **pagamento de fatura** `v2` (F)
   - UUID (sistema), data, hora, valor, forma de pagamento (Pix, débito ou boleto), cartão, mês e ano de vencimento da fatura paga
   - Não entra nas somas de consumo; marca a fatura como paga (F05-T09)
@@ -196,7 +197,8 @@ Consumo à vista (Pix, débito, dinheiro físico, voucher e, a partir da v2, bol
 - **T04** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
 - **T05** Filtro de categoria/subcategoria e tag `v1` (F)
 - **T06** Gráfico de gasto agregado por categoria/subcategoria, com seletor de visão `v2`
-- **T07** Recorrências à vista do mês aparecem pré-registradas na tabela, marcadas como previstas e fora do acumulado, com o botão **Registrar**: grava o lançamento com a data do toque, permitindo ajustar valor e forma de pagamento antes de salvar. Data passada sem registro mostra aviso de atraso (DP-25) `v2`
+- **T07** Recorrências à vista do mês aparecem pré-registradas na tabela, marcadas como previstas e fora do acumulado, com o botão **Registrar**: grava o lançamento com a data do toque, permitindo ajustar valor e forma de pagamento antes de salvar. Data passada sem registro mostra aviso de atraso (DP-25) `v2` (F)
+  - Também dá para pular a cobrança do mês.
 
 *Comportamento dos filtros:* o mês (global) afeta a tela inteira; categoria/subcategoria e tag filtram apenas a tabela.
 
@@ -297,9 +299,10 @@ Tela de retorno do sistema.
 
 Lista as cobranças de `tbl_recorrencia`. Acesso pela Configuração.
 
-- **T01** Lista de recorrências por status (ativa, pausada, cancelada), com cartão ou forma de pagamento, valor e dia de cobrança `v2`
-- **T02** Ações de pausar, retomar e cancelar; cancelar altera só `status` e `data_fim`, preservando o histórico `v2`
-- **T03** Editar recorrência (valor, dia de cobrança, categoria), aplicando apenas aos lançamentos previstos `v2`
+- **T01** Lista de recorrências por status (ativa, pausada, cancelada), com cartão ou forma de pagamento, valor e dia de cobrança `v2` (F)
+- **T02** Ações de pausar, retomar e cancelar; cancelar altera só `status` e `data_fim`, preservando o histórico `v2` (F)
+  - Também excluir: sem lançamentos apaga; com lançamentos cancela.
+- **T03** Editar recorrência (valor, dia de cobrança, categoria), aplicando apenas aos lançamentos previstos `v2` (F)
 
 ### E01-F13 — Visão por tag `v2`
 
@@ -359,7 +362,7 @@ Foco analítico, esquema financeiro.
 ### E02-F04 — Recorrências `v2`
 
 - **T01** Criar `tbl_recorrencia` e FK em `tbl_compra_faturada` e `tbl_compra_avista`; cartão opcional (obrigatório só no faturado) e forma de pagamento para o à vista (DP-13); sem tag na recorrência, a tag vai no lançamento (DP-35) (F)
-- **T02** Lançamentos previstos calculados na consulta, a partir da regra em `tbl_recorrencia`, sem gravar linhas futuras. No faturado, o previsto vira lançamento real sozinho no dia da cobrança. No à vista, fica pré-registrado até o usuário tocar em Registrar ao pagar (E01-F04-T07); na v3, o pagamento ao `documento_beneficiario` da regra registra sozinho. "Este e os próximos" altera a regra; cancelar só muda `status` e `data_fim` (DP-25)
+- **T02** Lançamentos previstos calculados na consulta, a partir da regra em `tbl_recorrencia`, sem gravar linhas futuras. No faturado, o previsto vira lançamento real sozinho no dia da cobrança. No à vista, fica pré-registrado até o usuário tocar em Registrar ao pagar (E01-F04-T07); na v3, o pagamento ao `documento_beneficiario` da regra registra sozinho. "Este e os próximos" altera a regra; cancelar só muda `status` e `data_fim` (DP-25) (F)
 
 ### E02-F05 — Modelo do faturado e da renda `v2`
 

@@ -81,6 +81,13 @@ class TelaConfiguracao extends ConsumerWidget {
             onTap: () => context.push('/configuracao/cartoes'),
           ),
           ListTile(
+            leading: const Icon(Icones.refreshCw),
+            title: const Text('Recorrências'),
+            subtitle: const Text('Aluguel, assinaturas e contas fixas'),
+            trailing: const Icon(Icones.chevronRight),
+            onTap: () => context.push('/configuracao/recorrencias'),
+          ),
+          ListTile(
             leading: const Icon(Icones.tag),
             title: const Text('Tags'),
             subtitle: const Text('Contexto dos gastos, como viagem ou rolê'),

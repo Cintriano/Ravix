@@ -201,7 +201,31 @@ class _FormularioCompraFaturadaState
     final mensageiro = ScaffoldMessenger.of(context);
     try {
       if (_editando) {
-        await repositorio.editarCompra(_compra!.uuidCompraFaturada, dados);
+        final compra = _compra!;
+        final mudouARegra =
+            dados.valorTotalCentavos != compra.valorTotal ||
+            dados.idSubcategoria != compra.idSubcategoria;
+        var alcance = AlcanceRecorrente.soEste;
+        if (compra.uuidRecorrencia != null && mudouARegra) {
+          final escolha = await perguntarAlcance(
+            context,
+            titulo: 'Cobrança recorrente',
+            acao: 'Alterar',
+          );
+          if (escolha == null) return;
+          alcance = escolha;
+        }
+        await repositorio.editarCompra(compra.uuidCompraFaturada, dados);
+        if (alcance == AlcanceRecorrente.esteEProximos) {
+          await ref
+              .read(recorrenciaRepositoryProvider)
+              .aplicarAosProximos(
+                compra.uuidRecorrencia!,
+                ocorrencia: deIsoData(compra.ocorrencia!),
+                valorCentavos: dados.valorTotalCentavos,
+                idSubcategoria: dados.idSubcategoria,
+              );
+        }
       } else if (_recorrencia.ativa) {
         // A regra gera os lançamentos: as cobranças até hoje entram já.
         final recorrencias = ref.read(recorrenciaRepositoryProvider);
@@ -242,6 +266,29 @@ class _FormularioCompraFaturadaState
   }
 
   Future<void> _excluir() async {
+    final compra = _compra!;
+    final uuidRecorrencia = compra.uuidRecorrencia;
+    if (uuidRecorrencia != null) {
+      final alcance = await perguntarAlcance(
+        context,
+        titulo: 'Excluir cobrança recorrente?',
+        acao: 'Excluir',
+      );
+      if (alcance == null || !mounted) return;
+      final mensageiro = ScaffoldMessenger.of(context);
+      final recorrencias = ref.read(recorrenciaRepositoryProvider);
+      final ocorrencia = deIsoData(compra.ocorrencia!);
+      if (alcance == AlcanceRecorrente.soEste) {
+        await recorrencias.pular(uuidRecorrencia, ocorrencia);
+      } else {
+        await recorrencias.excluirDaqui(uuidRecorrencia, ocorrencia);
+      }
+      mensageiro
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Compra excluída.')));
+      if (mounted) context.pop();
+      return;
+    }
     if (!await confirmarExclusao(context, titulo: 'Excluir esta compra?')) {
       return;
     }
@@ -249,7 +296,7 @@ class _FormularioCompraFaturadaState
     final mensageiro = ScaffoldMessenger.of(context);
     await ref
         .read(faturadoRepositoryProvider)
-        .excluirCompra(_compra!.uuidCompraFaturada);
+        .excluirCompra(compra.uuidCompraFaturada);
     mensageiro
       ..hideCurrentSnackBar()
       ..showSnackBar(const SnackBar(content: Text('Compra excluída.')));

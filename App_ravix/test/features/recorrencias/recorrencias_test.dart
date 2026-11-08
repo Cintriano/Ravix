@@ -164,4 +164,111 @@ void main() {
       'mes_vencimento': 11,
     });
   });
+
+  Future<void> abrirGasto(WidgetTester tester) async {
+    await tester.tap(find.text('Aluguel').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Editar gasto'), findsOneWidget);
+  }
+
+  testarApp('excluir só este pula o mês e mantém as próximas', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await abrirGasto(tester);
+    await tester.tap(find.byTooltip('Excluir gasto'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Excluir só este');
+
+    expect(await linhas(tester, 'SELECT * FROM tbl_compra_avista'), isEmpty);
+    expect(find.text('PREVISTOS'), findsNothing);
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+    expect(find.text('PREVISTOS'), findsOneWidget);
+  });
+
+  testarApp('excluir este e os próximos encerra a recorrência', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await abrirGasto(tester);
+    await tester.tap(find.byTooltip('Excluir gasto'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Excluir este e os próximos');
+
+    expect(await linhas(tester, 'SELECT * FROM tbl_compra_avista'), isEmpty);
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+    expect(find.text('PREVISTOS'), findsNothing);
+  });
+
+  testarApp('alterar o valor deste e dos próximos', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await abrirGasto(tester);
+    await tester.enterText(campo('Valor'), '160000');
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Salvar gasto');
+    await tocar(tester, 'Alterar este e os próximos');
+
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(r'Previsto para 24/11/2026 · R$ 1.600,00'),
+      findsOneWidget,
+    );
+  });
+
+  testarApp('alterar só este não muda as próximas', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await abrirGasto(tester);
+    await tester.enterText(campo('Valor'), '160000');
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Salvar gasto');
+    await tocar(tester, 'Alterar só este');
+
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(r'Previsto para 24/11/2026 · R$ 1.500,00'),
+      findsOneWidget,
+    );
+  });
+
+  testarApp('gerenciar: pausar e retomar', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await tester.tap(find.byTooltip('Configuração'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Recorrências');
+    expect(find.text('ATIVA'), findsOneWidget);
+    expect(find.text(r'R$ 1.500,00 · dia 24 · Pix'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Ações de Aluguel'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Pausar');
+    expect(find.text('PAUSADA'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Ações de Aluguel'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Retomar');
+    expect(find.text('ATIVA'), findsOneWidget);
+  });
+
+  testarApp('gerenciar: editar daqui pra frente', (tester) async {
+    await montarApp(tester);
+    await criarAluguel(tester);
+    await tester.tap(find.byTooltip('Configuração'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Recorrências');
+    await tester.tap(find.byTooltip('Ações de Aluguel'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Editar');
+    await tester.enterText(campo('Valor'), '170000');
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Salvar');
+
+    // A regra antiga fica até ontem; a nova vale a partir de hoje.
+    expect(find.text('CANCELADA'), findsNothing);
+    expect(find.textContaining(r'R$ 1.700,00 · dia 24 · Pix'), findsOneWidget);
+  });
 }

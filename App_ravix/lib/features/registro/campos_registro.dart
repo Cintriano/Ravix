@@ -240,6 +240,7 @@ class CamposClassificacao extends ConsumerWidget {
     this.erroCategoria,
     this.erroSubcategoria,
     this.sugerida = false,
+    this.comTag = true,
     super.key,
   });
 
@@ -270,6 +271,9 @@ class CamposClassificacao extends ConsumerWidget {
   /// A categoria atual veio da sugestão pelo histórico.
   final bool sugerida;
 
+  /// Mostra a tag (as recorrências não têm tag, DP-35).
+  final bool comTag;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final texto = Theme.of(context).textTheme;
@@ -295,23 +299,25 @@ class CamposClassificacao extends ConsumerWidget {
           ),
         espaco,
         _subcategoria(ref),
-        espaco,
-        _tag(ref),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => mostrarDialogoNomeTag(
-              context,
-              titulo: 'Nova tag',
-              rotuloSalvar: 'Criar',
-              aoSalvar: (nome) async => aoEscolherTag(
-                await ref.read(tagRepositoryProvider).criar(nome),
+        if (comTag) ...[
+          espaco,
+          _tag(ref),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => mostrarDialogoNomeTag(
+                context,
+                titulo: 'Nova tag',
+                rotuloSalvar: 'Criar',
+                aoSalvar: (nome) async => aoEscolherTag(
+                  await ref.read(tagRepositoryProvider).criar(nome),
+                ),
               ),
+              icon: const Icon(Icones.plus, size: TokensRavix.iconSizeMd),
+              label: const Text('Nova tag'),
             ),
-            icon: const Icon(Icones.plus, size: TokensRavix.iconSizeMd),
-            label: const Text('Nova tag'),
           ),
-        ),
+        ],
       ],
     );
   }

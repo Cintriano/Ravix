@@ -5,6 +5,7 @@ import 'package:ravix/features/compra_avista/aba_avista.dart';
 import 'package:ravix/features/compra_avista/tela_registro.dart';
 import 'package:ravix/features/configuracao/tela_configuracao.dart';
 import 'package:ravix/features/faturado/telas_faturado.dart';
+import 'package:ravix/features/recorrencias/tela_recorrencias.dart';
 import 'package:ravix/features/registro/tipo_registro.dart';
 import 'package:ravix/features/renda/tela_renda.dart';
 import 'package:ravix/features/shell/shell_ravix.dart';
@@ -69,6 +70,10 @@ GoRouter rotas(Ref ref) {
         builder: (context, state) => const TelaConfiguracao(),
         routes: [
           GoRoute(path: 'tags', builder: (context, state) => const TelaTags()),
+          GoRoute(
+            path: 'recorrencias',
+            builder: (context, state) => const TelaRecorrencias(),
+          ),
           GoRoute(
             path: 'renda',
             builder: (context, state) => const TelaRenda(),

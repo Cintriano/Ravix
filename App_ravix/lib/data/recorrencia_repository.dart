@@ -64,7 +64,8 @@ typedef DadosRecorrencia = ({
 typedef Prevista = ({Recorrencia regra, DateTime ocorrencia});
 
 /// Datas em que [regra] cobra dentro de [mes], respeitando início, fim e
-/// periodicidade. Dia 29 a 31 em mês mais curto cai no último dia.
+/// periodicidade. Dia 29 a 31 em mês mais curto cai no último dia. Uma
+/// cobrança antes do dia de início não conta: a regra ainda não existia.
 List<DateTime> ocorrenciasNoMes(Recorrencia regra, Mes mes) {
   final inicio = deIsoData(regra.dataInicio);
   if (regra.periodicidade == Periodicidade.anual.codigo &&
@@ -74,8 +75,9 @@ List<DateTime> ocorrenciasNoMes(Recorrencia regra, Mes mes) {
   final dia = regra.diaCobranca.clamp(1, ultimoDiaDo(mes));
   final data = DateTime(mes.ano, mes.mes, dia);
   final fim = regra.dataFim == null ? null : deIsoData(regra.dataFim!);
-  final antesDoInicio = Mes.de(data).compareTo(Mes.de(inicio)) < 0;
-  if (antesDoInicio || (fim != null && data.isAfter(fim))) return const [];
+  if (data.isBefore(inicio) || (fim != null && data.isAfter(fim))) {
+    return const [];
+  }
   return [data];
 }
 
@@ -160,41 +162,42 @@ final class RecorrenciaRepository {
 
   /// "Este e os próximos" (DP-25): encerra a regra [uuid] na véspera de
   /// [aPartirDe] e cria uma regra nova com [dados] começando nela. Os
-  /// lançamentos anteriores não mudam. Devolve o UUID da regra nova.
+  /// lançamentos anteriores não mudam. Devolve o UUID da regra que vale a
+  /// partir de [aPartirDe].
+  ///
+  /// Se [aPartirDe] é o dia de início (ou antes), não há passado a
+  /// preservar na regra: ela é atualizada no lugar, e os lançamentos já
+  /// feitos continuam com os valores deles.
   Future<String> alterarDaqui(
     String uuid,
     DateTime aPartirDe,
     DadosRecorrencia dados,
   ) => _banco.transaction(() async {
-    final vespera = DateTime(
-      aPartirDe.year,
-      aPartirDe.month,
-      aPartirDe.day - 1,
-    );
     final atual = await buscar(uuid);
     if (atual == null) throw StateError('Recorrência $uuid não existe');
-    final inicioAtual = deIsoData(atual.dataInicio);
-    if (vespera.isBefore(inicioAtual)) {
-      // A partir do primeiro mês: é a regra inteira que muda.
+    final desdeOInicio = !DateTime(
+      aPartirDe.year,
+      aPartirDe.month,
+      aPartirDe.day,
+    ).isAfter(deIsoData(atual.dataInicio));
+    if (desdeOInicio) {
       await (_banco.update(
         _banco.tblRecorrencia,
       )..where((r) => r.uuidRecorrencia.equals(uuid))).write(
         TblRecorrenciaCompanion(
-          status: const Value('cancelada'),
-          dataFim: Value(atual.dataInicio),
+          descricao: Value(dados.descricao.trim()),
+          descricaoNormalizada: Value(normalizarTexto(dados.descricao)),
+          valorRecorrencia: Value(dados.valorCentavos),
+          idSubcategoria: Value(dados.idSubcategoria),
+          periodicidade: Value(dados.periodicidade.codigo),
+          diaCobranca: Value(dados.diaCobranca),
+          dataFim: Value(dados.fim == null ? null : paraIsoData(dados.fim!)),
           atualizadoEm: Value(paraIsoUtc(_relogio.agora())),
         ),
       );
-    } else {
-      await (_banco.update(
-        _banco.tblRecorrencia,
-      )..where((r) => r.uuidRecorrencia.equals(uuid))).write(
-        TblRecorrenciaCompanion(
-          dataFim: Value(paraIsoData(vespera)),
-          atualizadoEm: Value(paraIsoUtc(_relogio.agora())),
-        ),
-      );
+      return uuid;
     }
+    await encerrarAntesDe(uuid, aPartirDe);
     return await criar((
       descricao: dados.descricao,
       valorCentavos: dados.valorCentavos,
@@ -208,6 +211,100 @@ final class RecorrenciaRepository {
       documentoBeneficiario: dados.documentoBeneficiario,
     ));
   });
+
+  /// Encerra a regra [uuid] na véspera de [data]: as cobranças a partir dela
+  /// deixam de existir; as anteriores ficam. Se [data] é o início (ou
+  /// antes), a regra é cancelada inteira.
+  Future<void> encerrarAntesDe(String uuid, DateTime data) async {
+    final atual = await buscar(uuid);
+    if (atual == null) throw StateError('Recorrência $uuid não existe');
+    final vespera = DateTime(data.year, data.month, data.day - 1);
+    final agora = Value(paraIsoUtc(_relogio.agora()));
+    final antesDoInicio = vespera.isBefore(deIsoData(atual.dataInicio));
+    await (_banco.update(
+      _banco.tblRecorrencia,
+    )..where((r) => r.uuidRecorrencia.equals(uuid))).write(
+      antesDoInicio
+          ? TblRecorrenciaCompanion(
+              status: const Value('cancelada'),
+              dataFim: Value(atual.dataInicio),
+              atualizadoEm: agora,
+            )
+          : TblRecorrenciaCompanion(
+              dataFim: Value(paraIsoData(vespera)),
+              atualizadoEm: agora,
+            ),
+    );
+  }
+
+  /// Muda a regra [uuid] a partir de hoje (E01-F12-T03): valor, dia de
+  /// cobrança e subcategoria valem para as próximas cobranças; as já
+  /// lançadas ficam como estão. Devolve o UUID da regra que vale agora.
+  Future<String> editarDaquiPraFrente(
+    String uuid, {
+    required int valorCentavos,
+    required int diaCobranca,
+    required int idSubcategoria,
+  }) async {
+    final atual = await buscar(uuid);
+    if (atual == null) throw StateError('Recorrência $uuid não existe');
+    final agora = _relogio.agora();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    return await alterarDaqui(uuid, hoje, (
+      descricao: atual.descricao,
+      valorCentavos: valorCentavos,
+      idSubcategoria: idSubcategoria,
+      periodicidade: Periodicidade.deCodigo(atual.periodicidade),
+      diaCobranca: diaCobranca,
+      inicio: hoje,
+      fim: atual.dataFim == null ? null : deIsoData(atual.dataFim!),
+      uuidCartao: atual.uuidCartaoCredito,
+      tipoPagamento: atual.tipoPagamento == null
+          ? null
+          : TipoPagamento.deCodigo(atual.tipoPagamento!),
+      documentoBeneficiario: atual.documentoBeneficiario,
+    ));
+  }
+
+  /// "Este e os próximos" ao editar um lançamento (E01-F03-T12): as
+  /// cobranças depois de [ocorrencia] passam a usar [valorCentavos] e
+  /// [idSubcategoria]. O lançamento editado já tem os valores novos.
+  Future<String> aplicarAosProximos(
+    String uuid, {
+    required DateTime ocorrencia,
+    required int valorCentavos,
+    required int idSubcategoria,
+  }) async {
+    final atual = await buscar(uuid);
+    if (atual == null) throw StateError('Recorrência $uuid não existe');
+    final seguinte = DateTime(
+      ocorrencia.year,
+      ocorrencia.month,
+      ocorrencia.day + 1,
+    );
+    return await alterarDaqui(uuid, seguinte, (
+      descricao: atual.descricao,
+      valorCentavos: valorCentavos,
+      idSubcategoria: idSubcategoria,
+      periodicidade: Periodicidade.deCodigo(atual.periodicidade),
+      diaCobranca: atual.diaCobranca,
+      inicio: seguinte,
+      fim: atual.dataFim == null ? null : deIsoData(atual.dataFim!),
+      uuidCartao: atual.uuidCartaoCredito,
+      tipoPagamento: atual.tipoPagamento == null
+          ? null
+          : TipoPagamento.deCodigo(atual.tipoPagamento!),
+      documentoBeneficiario: atual.documentoBeneficiario,
+    ));
+  }
+
+  /// "Este e os próximos" ao excluir (E01-F03-T12): apaga o lançamento de
+  /// [ocorrencia] e encerra a regra antes dela.
+  Future<void> excluirDaqui(String uuid, DateTime ocorrencia) =>
+      _banco.transaction(() async {
+        await pular(uuid, ocorrencia);
+        await encerrarAntesDe(uuid, ocorrencia);
+      });
 
   /// Exclui a regra se nenhum lançamento a usa; senão, cancela. Devolve
   /// `true` se excluiu.
