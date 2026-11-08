@@ -22,6 +22,8 @@
 
 > **Revisão 7 (25/10/2026):** versões reorganizadas (DP-37). A **v2** passa a ser a visão faturada, a visão macro e as correções da v1 (E01-F14), ainda 100% manual e só local. Tudo que depende de backend ou de API externa vai para a **v3**: banco transacional e sincronização, login e conta, farol de conexão, última atualização, estado offline, registros pendentes, central de notificações, onboarding de permissões e todo o E04 (Pluggy).
 
+> **Revisão 10 (08/11/2026):** visão macro (E01-F06) implementada e aba inicial: consumo contra a base escolhida, farol pelo ritmo, sobra, composição por forma de pagamento, consumo dia a dia e barra 100% em mês fechado. Na Macro, o botão flutuante pergunta o tipo do registro (DP-16).
+
 > **Revisão 9 (08/11/2026):** aba faturada (E01-F05) implementada: cartões com fatura, situação e consumo do limite, linha do tempo, categorias, pagamentos, previstos e lançamentos com estornos como crédito. Estorno com compra original (E01-F03-T17). A barra de abas aparece com À vista e Faturada; o botão flutuante abre o tipo da aba.
 
 > **Revisão 8 (08/11/2026):** decisões da v2 com base nos testes reais da Pluggy: base da visão macro (DP-1), recorrências também no à vista (DP-13), tipo estorno (DP-14), dia de fechamento só como sugestão (DP-28), farol pelo ritmo do mês (DP-10), status do cartão (DP-29), recorrência sem tag (DP-35) e gerenciar categorias adiado para a v3 (DP-12). Tags são só manuais (E01-F13-T02 removida). Schema 2 implementado (E02-F04-T01, E02-F05).
@@ -91,7 +93,7 @@ Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Lo
 
 ### E01-F02 — Shell (tela inicial)
 
-- **T01** Estrutura de abas: À vista `v1` (F); Faturada `v2` (F); Macro (padrão) `v2`
+- **T01** Estrutura de abas: À vista `v1` (F); Faturada e Macro (padrão) `v2` (F)
 - **T02** Seletor de mês global: meses passados e futuros (nos futuros aparecem parcelas e recorrências previstas) `v1` (F)
 - **T03** Indicador de data da última atualização dos dados `v3`
 - **T04** Padrão de estados de tela: carregando, vazio e erro `v1` (F); offline `v3`
@@ -235,21 +237,25 @@ Considera vários cartões simultaneamente.
 
 Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à vista (agregado por forma de pagamento). Visão sempre mensal. Segue o seletor de mês global, como as outras abas (08/11/2026): no mês atual mostra o parcial com o farol pelo ritmo e os previstos à parte; em mês passado, o resultado fechado (total, % da renda vigente no mês, superávit realizado, barras faturado/à vista e farol contra 100%); em mês futuro, só o já comprometido (parcelas que vencem no mês), sem farol. Entra inteira na v2, junto com o faturado. Pagamentos de fatura não entram nas somas.
 
-- **T01** Valor acumulado do mês (soma total: faturado + à vista) `v2`
+- **T01** Valor acumulado do mês (soma total: faturado + à vista) `v2` (F)
+  - No mês atual, a fatura entra no total no dia do vencimento (ou do pagamento, se antes), o mesmo degrau do T05; até lá aparece à parte como "+ R$ X em faturas a vencer". Sem dia de vencimento, entra no último dia do mês.
   - Só o que já foi pago entra no total e no farol; recorrências previstas aparecem à parte, como "+ R$ X previstos até o fim do mês" (08/11/2026).
-- **T02** Seletor de base de comparação: **só salário** ou **renda total** (salário + voucher + ganhos extras) `v2`
+- **T02** Seletor de base de comparação: **só salário** ou **renda total** (salário + voucher + ganhos extras) `v2` (F)
   - O faturado entra nas duas bases.
   - Só salário = (faturado + à vista sem voucher) ÷ salário. Renda total = tudo ÷ (salário + voucher + ganhos extras) (DP-1).
   - Base padrão ao abrir: **renda total** (DP-1).
   - Na v2, a renda total é salário + voucher; os ganhos extras entram com o E04-F06, na v3 (DP-37).
   - Substitui o antigo "filtro por forma de pagamento".
-- **T03** Cálculo do superávit `v2`
-- **T04** Farol consumo × base de comparação: porcentagem e cor (verde, amarelo, vermelho) `v2`
+- **T03** Cálculo do superávit `v2` (F)
+  - Base − consumo: "Sobram R$ X" no mês atual e no futuro; "Superávit" ou "Déficit" em mês fechado.
+- **T04** Farol consumo × base de comparação: porcentagem e cor (verde, amarelo, vermelho) `v2` (F)
+  - A barra do consumo mostra a marca do ritmo.
   - Segue a base escolhida no seletor (DP-1).
   - Cor pelo ritmo do mês (DP-10): ritmo = dia atual ÷ dias do mês. Verde: % consumido ≤ ritmo; amarelo: até 10 pontos acima; vermelho: mais de 10 pontos acima. Em meses fechados o ritmo é 100%.
-- **T05** Gráfico de linha do consumo dia a dia (fatura atual com cartões somados + acumulado à vista do dia) `v2`
+- **T05** Gráfico de linha do consumo dia a dia (fatura atual com cartões somados + acumulado à vista do dia) `v2` (F)
+  - Com a linha tracejada do ritmo até a base no fim do mês.
   - A fatura entra como degrau no dia do vencimento (DP-9).
-- **T06** Gráfico de barras 100% com a proporção faturado/à vista, apenas em meses fechados `v2`
+- **T06** Gráfico de barras 100% com a proporção faturado/à vista, apenas em meses fechados `v2` (F)
 
 ### E01-F07 — Configuração
 

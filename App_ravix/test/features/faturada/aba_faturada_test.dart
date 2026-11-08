@@ -1,30 +1,41 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ravix/app.dart';
-import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/datas.dart';
+import 'package:ravix/data/cartao_repository.dart';
 import 'package:ravix/data/faturado_repository.dart';
 
+import '../../helpers/ambiente_falso.dart';
 import '../../helpers/app_de_teste.dart';
+import '../../helpers/banco_de_teste.dart';
 
 void main() {
-  ProviderContainer containerDo(WidgetTester tester) =>
-      ProviderScope.containerOf(tester.element(find.byType(RavixApp)));
-
-  Future<void> abrirAba(WidgetTester tester) async {
-    await tester.tap(find.text('Faturada'));
-    await tester.pumpAndSettle();
-  }
+  Future<void> abrirAba(WidgetTester tester) => irParaAba(tester, 'Faturada');
 
   /// Cria o Itaú (fecha 29, vence 5) e o Nubank, com uma geladeira em 6x
-  /// no Itaú a partir da fatura de outubro e um livro no Nubank.
+  /// no Itaú a partir da fatura de outubro e um livro no Nubank, mais o que
+  /// [extra] gravar, e monta o app sobre esse banco.
+  ///
+  /// Grava antes de montar: com as abas observando o banco no relógio falso
+  /// do teste, uma transação gravada depois pode não terminar.
   Future<({String itau, String nubank, String geladeira})> semear(
-    WidgetTester tester,
-  ) async {
-    final container = containerDo(tester);
-    final cartoes = container.read(cartaoRepositoryProvider);
-    final faturado = container.read(faturadoRepositoryProvider);
-    return (await tester.runAsync(() async {
+    WidgetTester tester, {
+    Future<void> Function(
+      FaturadoRepository faturado,
+      ({String itau, String nubank, String geladeira}) ids,
+    )?
+    extra,
+  }) async {
+    final banco = bancoEmMemoria();
+    addTearDown(banco.close);
+    final relogio = RelogioFixo(agoraDosTestes);
+    final uuid = GeradorUuidSequencial();
+    final cartoes = CartaoRepository(banco, relogio: relogio, uuid: uuid);
+    final faturado = FaturadoRepository(
+      banco,
+      relogio: relogio,
+      uuid: uuid,
+      fuso: FusoFixo(-180),
+    );
+    final ids = (await tester.runAsync(() async {
       final itau = (await cartoes.criar((
         nome: 'Itaú',
         limiteCentavos: 590000,
@@ -61,8 +72,12 @@ void main() {
         idSubcategoria: 506,
         uuidTag: null,
       ));
-      return (itau: itau, nubank: nubank, geladeira: geladeira);
+      final ids = (itau: itau, nubank: nubank, geladeira: geladeira);
+      await extra?.call(faturado, ids);
+      return ids;
     }))!;
+    await montarApp(tester, banco: banco);
+    return ids;
   }
 
   testarApp('sem cartões, a aba oferece o cadastro', (tester) async {
@@ -75,7 +90,6 @@ void main() {
   });
 
   testarApp('mostra as faturas, o limite e as parcelas', (tester) async {
-    await montarApp(tester);
     await semear(tester);
     await abrirAba(tester);
 
@@ -98,17 +112,15 @@ void main() {
   testarApp('pagamento marca a fatura como paga e libera o limite', (
     tester,
   ) async {
-    await montarApp(tester);
-    final s = await semear(tester);
-    await tester.runAsync(
-      () =>
-          containerDo(tester).read(faturadoRepositoryProvider).criarPagamento((
-            momento: DateTime(2026, 10, 5, 9),
-            valorCentavos: 20000,
-            forma: FormaPagamentoFatura.pix,
-            uuidCartao: s.itau,
-            fatura: Mes(2026, 10),
-          )),
+    await semear(
+      tester,
+      extra: (faturado, s) => faturado.criarPagamento((
+        momento: DateTime(2026, 10, 5, 9),
+        valorCentavos: 20000,
+        forma: FormaPagamentoFatura.pix,
+        uuidCartao: s.itau,
+        fatura: Mes(2026, 10),
+      )),
     );
     await abrirAba(tester);
 
@@ -125,10 +137,9 @@ void main() {
   });
 
   testarApp('estorno aparece como crédito e abate a fatura', (tester) async {
-    await montarApp(tester);
-    final s = await semear(tester);
-    await tester.runAsync(
-      () => containerDo(tester).read(faturadoRepositoryProvider).criarEstorno((
+    await semear(
+      tester,
+      extra: (faturado, s) => faturado.criarEstorno((
         momento: DateTime(2026, 9, 30),
         descricao: 'Devolução',
         valorCentavos: 5000,
@@ -149,7 +160,6 @@ void main() {
   });
 
   testarApp('tocar no cartão mostra só os lançamentos dele', (tester) async {
-    await montarApp(tester);
     await semear(tester);
     await abrirAba(tester);
     await tester.scrollUntilVisible(find.text('Livro'), 200);
@@ -168,7 +178,6 @@ void main() {
   });
 
   testarApp('tocar na parcela abre a edição da compra', (tester) async {
-    await montarApp(tester);
     await semear(tester);
     await abrirAba(tester);
     await tester.scrollUntilVisible(find.text('Geladeira'), 200);
@@ -186,7 +195,6 @@ void main() {
   });
 
   testarApp('tocar num mês da linha do tempo vai para ele', (tester) async {
-    await montarApp(tester);
     await semear(tester);
     await abrirAba(tester);
     await tester.tap(find.bySemanticsLabel(RegExp('^novembro de 2026: ')));

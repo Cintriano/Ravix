@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/core/tema/icones.dart';
+import 'package:ravix/features/registro/tipo_registro.dart';
 import 'package:ravix/features/shell/seletor_mes.dart';
 
 /// Uma aba do shell e o novo registro que o botão flutuante abre nela.
+/// Sem `rotaNovo`, o botão pergunta o tipo (DP-16).
 typedef AbaShell = ({
   String rotulo,
   IconData icone,
   String rotuloNovo,
-  String rotaNovo,
+  String? rotaNovo,
 });
 
-/// Abas na ordem dos ramos do `StatefulShellRoute`. A Macro entra na v2,
-/// junto com a visão macro (E01-F06).
+/// Abas na ordem dos ramos do `StatefulShellRoute`. A Macro é a inicial.
 const List<AbaShell> abasDoShell = [
   (
-    rotulo: 'À vista',
-    icone: Icones.wallet,
-    rotuloNovo: 'Novo gasto',
-    rotaNovo: '/registro/novo',
+    rotulo: 'Macro',
+    icone: Icones.macro,
+    rotuloNovo: 'Novo registro',
+    rotaNovo: null,
   ),
   (
     rotulo: 'Faturada',
@@ -26,7 +27,45 @@ const List<AbaShell> abasDoShell = [
     rotuloNovo: 'Nova compra',
     rotaNovo: '/registro/novo?tipo=faturado',
   ),
+  (
+    rotulo: 'À vista',
+    icone: Icones.wallet,
+    rotuloNovo: 'Novo gasto',
+    rotaNovo: '/registro/novo',
+  ),
 ];
+
+/// Pergunta o tipo do novo registro e abre o formulário nele.
+Future<void> escolherTipoDoRegistro(BuildContext context) async {
+  final tipo = await showModalBottomSheet<TipoRegistro>(
+    context: context,
+    useRootNavigator: true,
+    showDragHandle: true,
+    builder: (contexto) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              'Novo registro',
+              style: Theme.of(contexto).textTheme.titleLarge,
+            ),
+          ),
+          for (final t in TipoRegistro.values)
+            ListTile(
+              title: Text(t.rotulo),
+              onTap: () => Navigator.of(contexto).pop(t),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (tipo != null && context.mounted) {
+    await context.push('/registro/novo?tipo=${tipo.codigo}');
+  }
+}
 
 /// Casca do app (E01-F02): cabeçalho com o seletor de mês, acesso à
 /// Configuração, botão flutuante de novo registro e as abas.
@@ -55,8 +94,10 @@ class ShellRavix extends StatelessWidget {
       body: navegacao,
       // O tipo do registro é o da aba ativa (DP-16).
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () =>
-            context.push(abasDoShell[navegacao.currentIndex].rotaNovo),
+        onPressed: () => switch (abasDoShell[navegacao.currentIndex].rotaNovo) {
+          final rota? => context.push(rota),
+          null => escolherTipoDoRegistro(context),
+        },
         icon: const Icon(Icones.plus),
         label: Text(abasDoShell[navegacao.currentIndex].rotuloNovo),
       ),

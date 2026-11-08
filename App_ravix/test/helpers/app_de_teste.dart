@@ -68,9 +68,12 @@ List<Override> substituicoes({
   servicoBloqueioProvider.overrideWithValue(bloqueio ?? ServicoBloqueioFalso()),
 ];
 
-/// Monta o app inteiro e espera o desbloqueio inicial.
+/// Monta o app inteiro, espera o desbloqueio inicial e vai para a [aba]
+/// (À vista, por padrão, onde estão a maioria dos testes; `null` fica na
+/// aba inicial, a Macro).
 Future<void> montarApp(
   WidgetTester tester, {
+  String? aba = 'À vista',
   RelogioFixo? relogio,
   ServicoBloqueio? bloqueio,
   BancoRavix? banco,
@@ -90,6 +93,24 @@ Future<void> montarApp(
         extras: extras,
       ),
       child: const RavixApp(),
+    ),
+  );
+  await tester.pumpAndSettle();
+  // Com o app bloqueado, a barra fica escondida: continua na inicial.
+  final destino = find
+      .descendant(of: find.byType(NavigationBar), matching: find.text('$aba'))
+      .hitTestable();
+  if (aba != null && destino.evaluate().isNotEmpty) {
+    await irParaAba(tester, aba);
+  }
+}
+
+/// Toca na aba [rotulo] da barra de navegação.
+Future<void> irParaAba(WidgetTester tester, String rotulo) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(rotulo),
     ),
   );
   await tester.pumpAndSettle();

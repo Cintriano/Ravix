@@ -6,6 +6,7 @@ import 'package:ravix/features/compra_avista/tela_registro.dart';
 import 'package:ravix/features/configuracao/tela_configuracao.dart';
 import 'package:ravix/features/faturada/aba_faturada.dart';
 import 'package:ravix/features/faturado/telas_faturado.dart';
+import 'package:ravix/features/macro/aba_macro.dart';
 import 'package:ravix/features/recorrencias/tela_recorrencias.dart';
 import 'package:ravix/features/registro/tipo_registro.dart';
 import 'package:ravix/features/renda/tela_renda.dart';
@@ -20,7 +21,7 @@ part 'rotas.g.dart';
 @Riverpod(keepAlive: true)
 GoRouter rotas(Ref ref) {
   final rotas = GoRouter(
-    initialLocation: '/avista',
+    initialLocation: '/macro',
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navegacao) =>
@@ -29,8 +30,8 @@ GoRouter rotas(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/avista',
-                builder: (context, state) => const AbaAvista(),
+                path: '/macro',
+                builder: (context, state) => const AbaMacro(),
               ),
             ],
           ),
@@ -39,6 +40,14 @@ GoRouter rotas(Ref ref) {
               GoRoute(
                 path: '/faturada',
                 builder: (context, state) => const AbaFaturada(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/avista',
+                builder: (context, state) => const AbaAvista(),
               ),
             ],
           ),

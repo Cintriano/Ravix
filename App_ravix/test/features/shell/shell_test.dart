@@ -17,6 +17,12 @@ void main() {
       expect(find.text('Faturada'), findsOneWidget);
     });
 
+    testarApp('o app abre na aba Macro', (tester) async {
+      await montarApp(tester, aba: null);
+      expect(find.text('Consumo de outubro até agora'), findsOneWidget);
+      expect(find.text('Novo registro'), findsOneWidget);
+    });
+
     testarApp('o seletor troca o mês da tela inteira', (tester) async {
       await montarApp(tester);
 

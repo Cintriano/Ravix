@@ -19,6 +19,7 @@ abstract final class Icones {
   static const IconData clock = Icons.schedule_sharp;
   static const IconData creditCard = Icons.credit_card_sharp;
   static const IconData fingerprint = Icons.fingerprint_sharp;
+  static const IconData macro = Icons.insights_sharp;
   static const IconData moon = Icons.dark_mode_sharp;
   static const IconData plus = Icons.add_sharp;
   static const IconData qrCode = Icons.pix_sharp;

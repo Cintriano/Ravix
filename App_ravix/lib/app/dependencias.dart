@@ -12,6 +12,7 @@ import 'package:ravix/data/categoria_repository.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
 import 'package:ravix/data/fatura_repository.dart';
 import 'package:ravix/data/faturado_repository.dart';
+import 'package:ravix/data/macro_repository.dart';
 import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/data/renda_repository.dart';
 import 'package:ravix/data/tag_repository.dart';
@@ -112,3 +113,8 @@ RecorrenciaRepository recorrenciaRepository(Ref ref) => RecorrenciaRepository(
 @Riverpod(keepAlive: true)
 FaturaRepository faturaRepository(Ref ref) =>
     FaturaRepository(ref.watch(bancoProvider));
+
+/// Leitura do à vista para a visão macro.
+@Riverpod(keepAlive: true)
+MacroRepository macroRepository(Ref ref) =>
+    MacroRepository(ref.watch(bancoProvider));
