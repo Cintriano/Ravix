@@ -11,6 +11,7 @@ import 'package:ravix/data/cartao_repository.dart';
 import 'package:ravix/data/categoria_repository.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
 import 'package:ravix/data/faturado_repository.dart';
+import 'package:ravix/data/recorrencia_repository.dart';
 import 'package:ravix/data/renda_repository.dart';
 import 'package:ravix/data/tag_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -91,6 +92,15 @@ RendaRepository rendaRepository(Ref ref) => RendaRepository(
 /// Repositório do faturado: compras no cartão, pagamentos e estornos.
 @Riverpod(keepAlive: true)
 FaturadoRepository faturadoRepository(Ref ref) => FaturadoRepository(
+  ref.watch(bancoProvider),
+  relogio: ref.watch(relogioProvider),
+  uuid: ref.watch(geradorUuidProvider),
+  fuso: ref.watch(fusoProvider),
+);
+
+/// Repositório das recorrências.
+@Riverpod(keepAlive: true)
+RecorrenciaRepository recorrenciaRepository(Ref ref) => RecorrenciaRepository(
   ref.watch(bancoProvider),
   relogio: ref.watch(relogioProvider),
   uuid: ref.watch(geradorUuidProvider),

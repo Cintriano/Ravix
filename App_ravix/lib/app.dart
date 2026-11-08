@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/app/preferencias.dart';
 import 'package:ravix/app/rotas.dart';
 import 'package:ravix/core/tema/tema.dart';
@@ -26,8 +29,23 @@ class _RavixAppState extends ConsumerState<RavixApp> {
     final bloqueio = ref.read(bloqueioProvider.notifier);
     _ciclo = AppLifecycleListener(
       onHide: bloqueio.aoSair,
-      onShow: bloqueio.aoVoltar,
+      onShow: () {
+        bloqueio.aoVoltar();
+        unawaited(_lancarRecorrencias());
+      },
     );
+    unawaited(_lancarRecorrencias());
+  }
+
+  /// As cobranças recorrentes do cartão viram lançamento sozinhas no dia
+  /// (DP-25). Roda ao abrir e ao voltar para o app; uma falha aqui não pode
+  /// impedir o uso, então só tenta de novo na próxima vez.
+  Future<void> _lancarRecorrencias() async {
+    try {
+      await ref.read(recorrenciaRepositoryProvider).materializarFaturadas();
+    } on Exception catch (erro) {
+      debugPrint('Recorrências do cartão não lançadas: $erro');
+    }
   }
 
   @override

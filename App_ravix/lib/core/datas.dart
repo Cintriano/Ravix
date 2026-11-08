@@ -148,3 +148,17 @@ final class Mes implements Comparable<Mes> {
   @override
   String toString() => '${ano.toString().padLeft(4, '0')}-${_doisDigitos(mes)}';
 }
+
+/// Data sem hora como `YYYY-MM-DD` (início e fim de recorrência, ocorrência).
+String paraIsoData(DateTime data) =>
+    '${data.year.toString().padLeft(4, '0')}-${_doisDigitos(data.month)}'
+    '-${_doisDigitos(data.day)}';
+
+/// Lê uma data `YYYY-MM-DD` como `DateTime` local à meia-noite.
+DateTime deIsoData(String texto) {
+  final partes = texto.split('-').map(int.parse).toList();
+  return DateTime(partes[0], partes[1], partes[2]);
+}
+
+/// Último dia de [mes] (28 a 31).
+int ultimoDiaDo(Mes mes) => DateTime(mes.ano, mes.mes + 1, 0).day;
