@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:ravix/features/analise/tela_por_categoria.dart';
 import 'package:ravix/features/cartoes/tela_cartao.dart';
 import 'package:ravix/features/cartoes/tela_cartoes.dart';
 import 'package:ravix/features/compra_avista/aba_avista.dart';
@@ -11,6 +12,7 @@ import 'package:ravix/features/recorrencias/tela_recorrencias.dart';
 import 'package:ravix/features/registro/tipo_registro.dart';
 import 'package:ravix/features/renda/tela_renda.dart';
 import 'package:ravix/features/shell/shell_ravix.dart';
+import 'package:ravix/features/tags/tela_tag.dart';
 import 'package:ravix/features/tags/tela_tags.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -84,10 +86,26 @@ GoRouter rotas(Ref ref) {
             TelaRegistro(uuid: state.pathParameters['uuid']),
       ),
       GoRoute(
+        path: '/categorias/:origem',
+        builder: (context, state) => TelaPorCategoria(
+          origem: OrigemAnalise.deCodigo(state.pathParameters['origem']),
+        ),
+      ),
+      GoRoute(
         path: '/configuracao',
         builder: (context, state) => const TelaConfiguracao(),
         routes: [
-          GoRoute(path: 'tags', builder: (context, state) => const TelaTags()),
+          GoRoute(
+            path: 'tags',
+            builder: (context, state) => const TelaTags(),
+            routes: [
+              GoRoute(
+                path: ':uuid',
+                builder: (context, state) =>
+                    TelaTag(uuid: state.pathParameters['uuid']!),
+              ),
+            ],
+          ),
           GoRoute(
             path: 'recorrencias',
             builder: (context, state) => const TelaRecorrencias(),

@@ -85,11 +85,14 @@ void main() {
     expect(find.text('O nome da tag não pode ficar vazio.'), findsOneWidget);
   });
 
-  testarApp('tocar na tag renomeia', (tester) async {
+  testarApp('tocar na tag abre a visão, que renomeia', (tester) async {
     await abrirTags(tester);
     await criarPelaTela(tester, 'Viajem');
 
     await tester.tap(find.text('Viajem'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nada com esta tag'), findsOneWidget);
+    await tester.tap(find.byTooltip('Renomear Viajem'));
     await tester.pumpAndSettle();
     expect(find.text('Renomear tag'), findsOneWidget);
     expect(
@@ -98,6 +101,7 @@ void main() {
     );
     await digitarESalvar(tester, 'Viagem', 'Salvar');
 
+    // O título da visão acompanha o nome novo.
     expect(find.text('Viagem'), findsOneWidget);
     expect(find.text('Viajem'), findsNothing);
   });

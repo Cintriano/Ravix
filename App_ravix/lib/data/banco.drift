@@ -270,7 +270,9 @@ SELECT * FROM tbl_tag WHERE status = 'ativa' ORDER BY nome COLLATE NOCASE;
 
 -- Quantos registros usam a tag; decide entre excluir e arquivar.
 contarComprasDaTag(REQUIRED :uuid_tag AS TEXT):
-SELECT COUNT(*) FROM tbl_compra_avista WHERE uuid_tag = :uuid_tag;
+SELECT (SELECT COUNT(*) FROM tbl_compra_avista   WHERE uuid_tag = :uuid_tag)
+     + (SELECT COUNT(*) FROM tbl_compra_faturada WHERE uuid_tag = :uuid_tag)
+     + (SELECT COUNT(*) FROM tbl_estorno         WHERE uuid_tag = :uuid_tag) AS usos;
 
 -- Quantos registros usam o cartão; decide entre excluir e arquivar (DP-29).
 contarUsosDoCartao(REQUIRED :uuid AS TEXT):

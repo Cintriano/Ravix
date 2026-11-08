@@ -22,6 +22,8 @@
 
 > **Revisão 7 (25/10/2026):** versões reorganizadas (DP-37). A **v2** passa a ser a visão faturada, a visão macro e as correções da v1 (E01-F14), ainda 100% manual e só local. Tudo que depende de backend ou de API externa vai para a **v3**: banco transacional e sincronização, login e conta, farol de conexão, última atualização, estado offline, registros pendentes, central de notificações, onboarding de permissões e todo o E04 (Pluggy).
 
+> **Revisão 11 (08/11/2026):** gráfico por categoria/subcategoria do à vista e das faturas (E01-F04-T06, E01-F05-T06) e visão por tag com pago até agora e total do parcelamento (E01-F13-T01). Correção: remover tag usada só em compra no cartão ou estorno agora arquiva, em vez de falhar.
+
 > **Revisão 10 (08/11/2026):** visão macro (E01-F06) implementada e aba inicial: consumo contra a base escolhida, farol pelo ritmo, sobra, composição por forma de pagamento, consumo dia a dia e barra 100% em mês fechado. Na Macro, o botão flutuante pergunta o tipo do registro (DP-16).
 
 > **Revisão 9 (08/11/2026):** aba faturada (E01-F05) implementada: cartões com fatura, situação e consumo do limite, linha do tempo, categorias, pagamentos, previstos e lançamentos com estornos como crédito. Estorno com compra original (E01-F03-T17). A barra de abas aparece com À vista e Faturada; o botão flutuante abre o tipo da aba.
@@ -201,7 +203,8 @@ Consumo à vista (Pix, débito, dinheiro físico, voucher e, a partir da v2, bol
 - **T03** Botão de edição do registro na tabela `v1` (F)
 - **T04** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
 - **T05** Filtro de categoria/subcategoria e tag `v1` (F)
-- **T06** Gráfico de gasto agregado por categoria/subcategoria, com seletor de visão `v2`
+- **T06** Gráfico de gasto agregado por categoria/subcategoria, com seletor de visão `v2` (F)
+  - Tocar na barra por categoria do card abre a tela: barras por categoria (tocar abre as subcategorias) ou por subcategoria. A aba faturada usa a mesma tela.
 - **T07** Recorrências à vista do mês aparecem pré-registradas na tabela, marcadas como previstas e fora do acumulado, com o botão **Registrar**: grava o lançamento com a data do toque, permitindo ajustar valor e forma de pagamento antes de salvar. Data passada sem registro mostra aviso de atraso (DP-25) `v2` (F)
   - Também dá para pular a cobrança do mês.
 
@@ -223,7 +226,7 @@ Considera vários cartões simultaneamente.
 - **T05** Timeline dos valores da fatura, todos os cartões simultaneamente `v2` (F)
   - Barras empilhadas por cartão, de 5 meses antes a 6 depois do mês escolhido; tocar num mês vai para ele.
 - **T06** Gráfico de gasto agregado por categoria/subcategoria, somando todos os cartões `v2` (F)
-  - Mesma barra por categoria do card da aba à vista.
+  - Mesma barra por categoria do card da aba à vista, que abre a mesma tela por categoria/subcategoria do F04-T06.
 - **T07** Exibir lançamentos recorrentes (reais e previstos) na fatura do mês `v2` (F)
   - A prevista cai na fatura pelo fechamento e vencimento do cartão; fica fora do valor da fatura, como "+ R$ X previstos".
 - **T08** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
@@ -323,7 +326,8 @@ Lista as cobranças de `tbl_recorrencia`. Acesso pela Configuração.
 
 Recorte dos registros por contexto (viagem, rolê etc.). Não soma nada ao consumo (DP-32).
 
-- **T01** Visão de uma tag: total e quebra por categoria/subcategoria
+- **T01** Visão de uma tag: total e quebra por categoria/subcategoria (F)
+  - Abre ao tocar na tag em Configuração > Tags (renomear passou para a visão). Tags arquivadas aparecem no fim da lista, só para consulta.
 - ~~**T02** Atribuição em lote: escolher um período e marcar a tag nos registros sem tag~~ removida: tags são só manuais, registro a registro (08/11/2026)
 
 *Decidido (08/11/2026):* compras parceladas aparecem nas duas medidas, lado a lado: **pago até agora** (parcelas cujas faturas já venceram, até o mês atual) e **total do parcelamento** (valor total da compra). Ex.: passagem de R$ 1.200 em 6x, na 2ª fatura: R$ 400 pagos de R$ 1.200. Compras à vista e estornos entram igual nas duas.

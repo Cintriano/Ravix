@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/tag_repository.dart';
+import 'package:ravix/features/compra_avista/aba_avista_providers.dart';
 import 'package:ravix/features/shell/estados_tela.dart';
 import 'package:ravix/features/tags/dialogo_nome_tag.dart';
 import 'package:ravix/features/tags/tags_providers.dart';
@@ -19,8 +21,10 @@ Future<void> criarTag(BuildContext context, WidgetRef ref) =>
       aoSalvar: (nome) => ref.read(tagRepositoryProvider).criar(nome),
     );
 
-/// Aba Tags da Configuração (E01-F07-T09, T10): listar, criar, renomear e
-/// remover. Tocar na tag renomeia; o botão da linha ou deslizar remove.
+/// Aba Tags da Configuração (E01-F07-T09, T10): listar, criar e remover.
+/// Tocar na tag abre a visão dela (E01-F13-T01), onde também se renomeia; o
+/// botão da linha ou deslizar remove. As arquivadas ficam no fim, só para
+/// consulta.
 class AbaTags extends ConsumerWidget {
   /// Cria a aba.
   const new({super.key});
@@ -38,13 +42,40 @@ class AbaTags extends ConsumerWidget {
         rotuloAcao: 'Criar tag',
         aoAgir: () => criarTag(context, ref),
       ),
-      conteudo: (tags) => ListView.separated(
-        // Espaço para o botão flutuante não cobrir a última tag.
-        padding: const EdgeInsets.only(bottom: 96),
-        itemCount: tags.length,
-        separatorBuilder: (_, _) => const Divider(indent: TokensRavix.spaceMd),
-        itemBuilder: (context, i) => _LinhaTag(tag: tags[i]),
-      ),
+      conteudo: (tags) {
+        final arquivadas = [
+          for (final t in ref.watch(todasAsTagsProvider).value ?? const <Tag>[])
+            if (t.status == 'arquivada') t,
+        ];
+        return ListView(
+          // Espaço para o botão flutuante não cobrir a última tag.
+          padding: const EdgeInsets.only(bottom: 96),
+          children: [
+            for (final (i, tag) in tags.indexed) ...[
+              if (i > 0) const Divider(indent: TokensRavix.spaceMd),
+              _LinhaTag(tag: tag),
+            ],
+            if (arquivadas.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  TokensRavix.spaceMd,
+                  TokensRavix.spaceLg,
+                  TokensRavix.spaceMd,
+                  TokensRavix.spaceXs,
+                ),
+                child: Text('ARQUIVADAS', style: context.temaRavix.sobretitulo),
+              ),
+              for (final tag in arquivadas)
+                ListTile(
+                  leading: const Icon(Icones.tag),
+                  title: Text(tag.nome),
+                  onTap: () =>
+                      context.push('/configuracao/tags/${tag.uuidTag}'),
+                ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -53,16 +84,6 @@ class _LinhaTag extends ConsumerWidget {
   const new({required this.tag});
 
   final Tag tag;
-
-  Future<void> _renomear(BuildContext context, WidgetRef ref) =>
-      mostrarDialogoNomeTag(
-        context,
-        titulo: 'Renomear tag',
-        rotuloSalvar: 'Salvar',
-        nomeInicial: tag.nome,
-        aoSalvar: (nome) =>
-            ref.read(tagRepositoryProvider).renomear(tag.uuidTag, nome),
-      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,7 +105,7 @@ class _LinhaTag extends ConsumerWidget {
       child: ListTile(
         leading: const Icon(Icones.tag),
         title: Text(tag.nome),
-        onTap: () => _renomear(context, ref),
+        onTap: () => context.push('/configuracao/tags/${tag.uuidTag}'),
         trailing: IconButton(
           tooltip: 'Remover ${tag.nome}',
           icon: const Icon(Icones.trash2),

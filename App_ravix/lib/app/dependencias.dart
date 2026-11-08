@@ -5,6 +5,7 @@ library;
 import 'package:path_provider/path_provider.dart';
 import 'package:ravix/app/compartilhar.dart';
 import 'package:ravix/core/ambiente.dart';
+import 'package:ravix/data/analise_repository.dart';
 import 'package:ravix/data/backup.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/cartao_repository.dart';
@@ -118,3 +119,8 @@ FaturaRepository faturaRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 MacroRepository macroRepository(Ref ref) =>
     MacroRepository(ref.watch(bancoProvider));
+
+/// Recortes por categoria e visão por tag.
+@Riverpod(keepAlive: true)
+AnaliseRepository analiseRepository(Ref ref) =>
+    AnaliseRepository(ref.watch(bancoProvider));

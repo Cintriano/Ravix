@@ -276,6 +276,7 @@ class _Resumo extends ConsumerWidget {
                 DivisaoPorCategoria(
                   categorias,
                   categorias.fold(0, (s, c) => s + c.total),
+                  aoTocar: () => context.push('/categorias/faturada'),
                 ),
               ],
             ],

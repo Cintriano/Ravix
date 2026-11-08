@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/data/banco.dart';
@@ -12,11 +13,13 @@ Color corDaCategoria(int idCategoria) =>
 /// Barra empilhada com a parte de cada categoria e a legenda das maiores.
 class DivisaoPorCategoria extends StatelessWidget {
   /// Cria a divisão de [total] entre [categorias].
-  const new(this.categorias, this.total, {super.key});
+  const new(this.categorias, this.total, {this.aoTocar, super.key});
 
   /// Totais por categoria, do maior para o menor.
-
   final List<TotalPorCategoria> categorias;
+
+  /// Abre o detalhe por categoria; sem ele, a barra não é tocável.
+  final VoidCallback? aoTocar;
 
   /// Total que as partes dividem.
   final int total;
@@ -35,9 +38,13 @@ class DivisaoPorCategoria extends StatelessWidget {
       for (final c in categorias) '${c.categoria} ${parte(c.total)}',
     ];
 
-    return Semantics(
+    final divisao = Semantics(
       container: true,
-      label: 'Por categoria: ${partes.join(', ')}',
+      button: aoTocar != null,
+      label: [
+        'Por categoria: ${partes.join(', ')}',
+        if (aoTocar != null) 'Toque para ver por categoria',
+      ].join('. '),
       excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,11 +80,29 @@ class DivisaoPorCategoria extends StatelessWidget {
                   rotulo: 'Outras ${parte(outras)}',
                   estilo: legenda,
                 ),
+              if (aoTocar != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Ver por categoria',
+                      style: legenda?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    Icon(
+                      Icones.chevronRight,
+                      size: 16,
+                      color: tema.resumoTexto,
+                    ),
+                  ],
+                ),
             ],
           ),
         ],
       ),
     );
+    final tocar = aoTocar;
+    if (tocar == null) return divisao;
+    return InkWell(onTap: tocar, child: divisao);
   }
 }
 

@@ -136,7 +136,11 @@ class _Total extends ConsumerWidget {
               ),
               if (total != null && total > 0 && categorias.isNotEmpty) ...[
                 const SizedBox(height: TokensRavix.spaceMd),
-                DivisaoPorCategoria(categorias, total),
+                DivisaoPorCategoria(
+                  categorias,
+                  total,
+                  aoTocar: () => context.push('/categorias/avista'),
+                ),
               ],
             ],
           ),

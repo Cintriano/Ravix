@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ravix/core/datas.dart';
 import 'package:ravix/data/cartao_repository.dart';
@@ -154,6 +155,12 @@ void main() {
     expect(find.text(r'R$ 200,00'), findsWidgets);
     await tester.scrollUntilVisible(find.text('Devolução'), 200);
     expect(find.text(r'− R$ 50,00'), findsOneWidget);
+    // Sobe mais um pouco, para o botão flutuante não cobrir a linha.
+    await tester.drag(
+      find.byType(CustomScrollView).hitTestable().first,
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Devolução'));
     await tester.pumpAndSettle();
     expect(find.text('Editar estorno'), findsOneWidget);
