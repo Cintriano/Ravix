@@ -7,8 +7,10 @@ import 'package:ravix/app/compartilhar.dart';
 import 'package:ravix/core/ambiente.dart';
 import 'package:ravix/data/backup.dart';
 import 'package:ravix/data/banco.dart';
+import 'package:ravix/data/cartao_repository.dart';
 import 'package:ravix/data/categoria_repository.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
+import 'package:ravix/data/renda_repository.dart';
 import 'package:ravix/data/tag_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -68,3 +70,19 @@ BackupRepository backupRepository(Ref ref) => BackupRepository(
 /// Compartilhamento de arquivos do sistema.
 @Riverpod(keepAlive: true)
 Compartilhador compartilhador(Ref ref) => const CompartilhadorSistema();
+
+/// Repositório de cartões de crédito.
+@Riverpod(keepAlive: true)
+CartaoRepository cartaoRepository(Ref ref) => CartaoRepository(
+  ref.watch(bancoProvider),
+  relogio: ref.watch(relogioProvider),
+  uuid: ref.watch(geradorUuidProvider),
+);
+
+/// Repositório da renda por vigência.
+@Riverpod(keepAlive: true)
+RendaRepository rendaRepository(Ref ref) => RendaRepository(
+  ref.watch(bancoProvider),
+  relogio: ref.watch(relogioProvider),
+  uuid: ref.watch(geradorUuidProvider),
+);

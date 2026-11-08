@@ -6,9 +6,12 @@ import 'package:ravix/app/preferencias.dart';
 import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tokens.dart';
+import 'package:ravix/features/cartoes/cartoes_providers.dart';
+import 'package:ravix/features/renda/renda_providers.dart';
+import 'package:ravix/features/renda/tela_renda.dart';
 
-/// Configuração (E01-F07). Aparência, tags e exportação do backup. Renda e
-/// cartões entram na v2 como novas linhas.
+/// Configuração (E01-F07): aparência, renda, cartões, tags e exportação do
+/// backup. É o único ponto de entrada da renda.
 class TelaConfiguracao extends ConsumerWidget {
   /// Cria a tela.
   const new({super.key});
@@ -18,6 +21,9 @@ class TelaConfiguracao extends ConsumerWidget {
     final texto = Theme.of(context).textTheme;
     final aparencia = ref.watch(aparenciaEscolhidaProvider);
     final ultimoBackup = ref.watch(ultimoBackupProvider);
+    final renda = ref.watch(rendaDoMesAtualProvider).value;
+    final cartoes = ref.watch(cartoesAtivosProvider).value;
+    final totalCartoes = cartoes?.length ?? 0;
     return Scaffold(
       appBar: AppBar(title: const Text('Configuração')),
       body: ListView(
@@ -54,6 +60,26 @@ class TelaConfiguracao extends ConsumerWidget {
           ),
           const SizedBox(height: TokensRavix.spaceLg),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icones.wallet),
+            title: const Text('Renda'),
+            subtitle: Text(
+              renda == null ? 'Salário e voucher' : resumoDaRenda(renda),
+            ),
+            trailing: const Icon(Icones.chevronRight),
+            onTap: () => context.push('/configuracao/renda'),
+          ),
+          ListTile(
+            leading: const Icon(Icones.creditCard),
+            title: const Text('Cartões'),
+            subtitle: Text(switch (totalCartoes) {
+              0 => 'Cartões de crédito',
+              1 => '1 cartão',
+              _ => '$totalCartoes cartões',
+            }),
+            trailing: const Icon(Icones.chevronRight),
+            onTap: () => context.push('/configuracao/cartoes'),
+          ),
           ListTile(
             leading: const Icon(Icones.tag),
             title: const Text('Tags'),

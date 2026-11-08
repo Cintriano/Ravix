@@ -243,17 +243,19 @@ Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à v
 
 Único ponto de entrada da renda. Na v1 a tela existe só com a aba Tags (T09, T10); renda e cartões entram na v2 (DP-8).
 
-- **T01** Campo editável de salário `v2`
-- **T02** Campo editável de voucher/benefícios `v2`
+- **T01** Campo editável de salário `v2` (F)
+- **T02** Campo editável de voucher/benefícios `v2` (F)
   - Renda por vigência (DP-6): ao alterar salário ou voucher, o app pergunta a partir de qual mês o valor vale; os meses anteriores não mudam.
-- **T03** Cards de cartões, com menu (…) para editar (T07) ou remover (T08) `v2`
+- **T03** Cards de cartões, com menu (…) para editar (T07) ou remover (T08) `v2` (F)
+  - Feito como lista: tocar edita; o botão da linha remove.
 - **T04** Cartões cadastrados automaticamente quando detectados na API (ver E04-F03) `v3`
 - **T05** Fatias do superávit: valor fixo destinado à reserva, gerando superávit **absoluto** (total) e **efetivo** (com as fatias descontadas) `v3`
   - A tela deve reservar espaço para isso desde a v2.
-- **T06** Cadastro manual de cartão: nome, limite e dia de fechamento `v2`
+- **T06** Cadastro manual de cartão: nome, limite e dia de fechamento `v2` (F)
+  - Também, opcionais: dia de vencimento, final do cartão (4 dígitos) e CNPJ do emissor (com dígitos verificadores).
   - O dia de fechamento só sugere o mês de vencimento no formulário; o que vale é o mês gravado em cada parcela, porque o dia real varia mês a mês (DP-28).
-- **T07** Edição de cartão: nome, limite e dia de fechamento `v2`
-- **T08** Remover cartão `v2`
+- **T07** Edição de cartão: nome, limite e dia de fechamento `v2` (F)
+- **T08** Remover cartão `v2` (F)
   - Com compras vinculadas: arquiva (some da seleção no formulário, histórico preservado).
   - Sem compras: exclui.
 - **T09** Aba Tags: listar, criar e renomear tags `v1` (F)
