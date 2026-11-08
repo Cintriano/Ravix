@@ -248,12 +248,20 @@ WHERE c.timestamp_compra_avista >= :inicio AND c.timestamp_compra_avista < :fim
 ORDER BY c.timestamp_compra_avista DESC, c.criado_em DESC;
 
 -- Sugestão pela descrição (E01-F03-T16, DP-36). :texto já normalizado.
+-- Olha o à vista e o faturado: o histórico das duas formas vale para as duas.
 sugestaoDeSubcategoria:
 SELECT id_subcategoria
-FROM tbl_compra_avista
-WHERE descricao_normalizada LIKE '%' || :texto || '%'
+FROM (
+  SELECT id_subcategoria, timestamp_compra_avista AS momento
+  FROM tbl_compra_avista
+  WHERE descricao_normalizada LIKE '%' || :texto || '%'
+  UNION ALL
+  SELECT id_subcategoria, timestamp_compra_faturada AS momento
+  FROM tbl_compra_faturada
+  WHERE descricao_normalizada LIKE '%' || :texto || '%'
+)
 GROUP BY id_subcategoria
-ORDER BY COUNT(*) DESC, MAX(timestamp_compra_avista) DESC
+ORDER BY COUNT(*) DESC, MAX(momento) DESC
 LIMIT 1;
 
 -- Tags que aparecem nos seletores do formulário e do filtro.

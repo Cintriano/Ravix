@@ -5,20 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ravix/app/dependencias.dart';
-import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/tema/icones.dart';
 import 'package:ravix/core/tema/tema.dart';
 import 'package:ravix/core/tema/tokens.dart';
 import 'package:ravix/core/texto.dart';
 import 'package:ravix/core/valor.dart';
 import 'package:ravix/data/banco.dart';
-import 'package:ravix/data/carga_inicial.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
 import 'package:ravix/features/compra_avista/formulario_providers.dart';
-import 'package:ravix/features/compra_avista/mascara_valor.dart';
 import 'package:ravix/features/compra_avista/rascunho_compra.dart';
-import 'package:ravix/features/tags/dialogo_nome_tag.dart';
-import 'package:ravix/features/tags/tags_providers.dart';
+import 'package:ravix/features/registro/campos_registro.dart';
+import 'package:ravix/features/registro/tipo_registro.dart';
 
 /// Espera depois da última tecla antes de consultar a sugestão (DP-36).
 const esperaDaSugestao = Duration(milliseconds: 300);
@@ -34,10 +31,6 @@ extension RotuloTipoPagamento on TipoPagamento {
     TipoPagamento.boleto => 'Boleto',
   };
 }
-
-final Map<int, String> _descricoesDasSubcategorias = {
-  for (final s in subcategoriasIniciais) s.id: s.descricao,
-};
 
 /// Formulário de gasto à vista (E01-F03), nos modos criar e editar.
 /// [compra] nula = criar.
@@ -139,60 +132,6 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
     });
   }
 
-  Future<void> _escolherData() async {
-    final atual = _rascunho.momento;
-    final data = await showDatePicker(
-      context: context,
-      initialDate: atual,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      helpText: 'Data do gasto',
-    );
-    if (data == null || !mounted) return;
-    setState(
-      () => _rascunho.momento = DateTime(
-        data.year,
-        data.month,
-        data.day,
-        atual.hour,
-        atual.minute,
-      ),
-    );
-  }
-
-  Future<void> _escolherHora() async {
-    final atual = _rascunho.momento;
-    final hora = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(atual),
-      helpText: 'Hora do gasto',
-    );
-    if (hora == null || !mounted) return;
-    setState(
-      () => _rascunho.momento = DateTime(
-        atual.year,
-        atual.month,
-        atual.day,
-        hora.hour,
-        hora.minute,
-      ),
-    );
-  }
-
-  Future<void> _criarTag() => mostrarDialogoNomeTag(
-    context,
-    titulo: 'Nova tag',
-    rotuloSalvar: 'Criar',
-    aoSalvar: (nome) async {
-      final tag = await ref.read(tagRepositoryProvider).criar(nome);
-      if (!mounted) return;
-      setState(() {
-        _tagSelecionada = tag;
-        _rascunho.uuidTag = tag.uuidTag;
-      });
-    },
-  );
-
   Future<void> _salvar() async {
     if (_salvando) return;
     final erros = _rascunho.validar();
@@ -266,16 +205,13 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
   Widget build(BuildContext context) {
     final texto = Theme.of(context).textTheme;
     final paleta = context.temaRavix.paleta;
-    final valorDestaque = context.temaRavix.valorDestaque.copyWith(
-      color: paleta.textPrimary,
-      fontSize: 32,
-      height: 40 / 32,
-    );
     const espaco = SizedBox(height: TokensRavix.spaceMd);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_editando ? 'Editar gasto' : 'Novo gasto'),
+        title: _editando
+            ? const Text('Editar gasto')
+            : const TituloNovoRegistro(TipoRegistro.avista),
         actions: [
           if (_editando)
             IconButton(
@@ -292,36 +228,14 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // O valor vem primeiro e em destaque: é o que a pessoa já sabe na
-            // hora de anotar.
-            TextField(
-              controller: _valor,
-              autofocus: !_editando,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.next,
-              inputFormatters: [MascaraValor()],
-              style: valorDestaque,
-              onChanged: (t) => setState(() {
-                _rascunho.valorCentavos = centavosDeDigitos(t);
+            CampoValorDestaque(
+              controle: _valor,
+              autofoco: !_editando,
+              erro: _erros[CampoCompra.valor],
+              aoMudar: (centavos) => setState(() {
+                _rascunho.valorCentavos = centavos;
                 _limparErro(CampoCompra.valor);
               }),
-              decoration: InputDecoration(
-                labelText: 'Valor',
-                prefixText: r'R$ ',
-                prefixStyle: valorDestaque.copyWith(
-                  color: paleta.textSecondary,
-                  fontSize: 24,
-                ),
-                hintText: '0,00',
-                hintStyle: valorDestaque.copyWith(color: paleta.borderStrong),
-                errorText: _erros[CampoCompra.valor],
-                contentPadding: const EdgeInsets.fromLTRB(
-                  TokensRavix.spaceMd,
-                  14,
-                  TokensRavix.spaceMd,
-                  14,
-                ),
-              ),
             ),
             espaco,
             TextField(
@@ -336,26 +250,11 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
               ),
             ),
             espaco,
-            Row(
-              children: [
-                Expanded(
-                  child: _CampoDeToque(
-                    rotulo: 'Data',
-                    valor: formatarData(_rascunho.momento),
-                    icone: Icones.calendar,
-                    aoTocar: _escolherData,
-                  ),
-                ),
-                const SizedBox(width: TokensRavix.spaceMd),
-                Expanded(
-                  child: _CampoDeToque(
-                    rotulo: 'Hora',
-                    valor: formatarHora(_rascunho.momento),
-                    icone: Icones.clock,
-                    aoTocar: _escolherHora,
-                  ),
-                ),
-              ],
+            CamposDataHora(
+              momento: _rascunho.momento,
+              ajudaData: 'Data do gasto',
+              ajudaHora: 'Hora do gasto',
+              aoMudar: (m) => setState(() => _rascunho.momento = m),
             ),
             const SizedBox(height: TokensRavix.spaceLg),
             Text('FORMA DE PAGAMENTO', style: context.temaRavix.sobretitulo),
@@ -387,33 +286,32 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
                 ),
               ),
             const SizedBox(height: TokensRavix.spaceLg),
-            _campoCategoria(),
-            if (_sugerida)
-              Padding(
-                padding: const EdgeInsets.only(top: TokensRavix.spaceSm),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icones.sparkles,
-                      size: TokensRavix.iconSizeSm,
-                      color: context.temaRavix.acento,
-                    ),
-                    const SizedBox(width: TokensRavix.spaceSm),
-                    Text('Sugerida pelo histórico', style: texto.bodySmall),
-                  ],
-                ),
-              ),
-            espaco,
-            _campoSubcategoria(),
-            espaco,
-            _campoTag(),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _criarTag,
-                icon: const Icon(Icones.plus, size: TokensRavix.iconSizeMd),
-                label: const Text('Nova tag'),
-              ),
+            CamposClassificacao(
+              idCategoria: _rascunho.idCategoria,
+              idSubcategoria: _rascunho.idSubcategoria,
+              tag: _tagSelecionada,
+              sugerida: _sugerida,
+              erroCategoria: _erros[CampoCompra.categoria],
+              erroSubcategoria: _erros[CampoCompra.subcategoria],
+              aoEscolherCategoria: (id) => setState(() {
+                _categoriaManual = true;
+                _sugerida = false;
+                if (id != _rascunho.idCategoria) {
+                  _rascunho.idSubcategoria = null;
+                }
+                _rascunho.idCategoria = id;
+                _limparErro(CampoCompra.categoria);
+              }),
+              aoEscolherSubcategoria: (id) => setState(() {
+                _categoriaManual = true;
+                _sugerida = false;
+                _rascunho.idSubcategoria = id;
+                _limparErro(CampoCompra.subcategoria);
+              }),
+              aoEscolherTag: (tag) => setState(() {
+                _tagSelecionada = tag;
+                _rascunho.uuidTag = tag?.uuidTag;
+              }),
             ),
           ],
         ),
@@ -429,151 +327,6 @@ class _FormularioCompraState extends ConsumerState<FormularioCompra> {
           child: FilledButton(
             onPressed: _salvando ? null : _salvar,
             child: const Text('Salvar gasto'),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _campoCategoria() {
-    final categorias = ref.watch(categoriasProvider).value ?? const [];
-    return DropdownButtonFormField<int>(
-      key: ValueKey(('categoria', _rascunho.idCategoria, categorias.length)),
-      initialValue:
-          categorias.any((c) => c.idCategoria == _rascunho.idCategoria)
-          ? _rascunho.idCategoria
-          : null,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: 'Categoria',
-        errorText: _erros[CampoCompra.categoria],
-      ),
-      items: [
-        for (final c in categorias)
-          DropdownMenuItem(value: c.idCategoria, child: Text(c.nome)),
-      ],
-      onChanged: (id) => setState(() {
-        _categoriaManual = true;
-        _sugerida = false;
-        if (id != _rascunho.idCategoria) _rascunho.idSubcategoria = null;
-        _rascunho.idCategoria = id;
-        _limparErro(CampoCompra.categoria);
-      }),
-    );
-  }
-
-  Widget _campoSubcategoria() {
-    final idCategoria = _rascunho.idCategoria;
-    final subcategorias = idCategoria == null
-        ? const <Subcategoria>[]
-        : ref.watch(subcategoriasProvider(idCategoria)).value ?? const [];
-    final escolhida =
-        subcategorias.any((s) => s.idSubcategoria == _rascunho.idSubcategoria)
-        ? _rascunho.idSubcategoria
-        : null;
-    return DropdownButtonFormField<int>(
-      key: ValueKey((
-        'subcategoria',
-        idCategoria,
-        escolhida,
-        subcategorias.length,
-      )),
-      initialValue: escolhida,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: 'Subcategoria',
-        helperText: escolhida == null
-            ? null
-            : _descricoesDasSubcategorias[escolhida],
-        helperMaxLines: 2,
-        errorText: _erros[CampoCompra.subcategoria],
-      ),
-      items: [
-        for (final s in subcategorias)
-          DropdownMenuItem(value: s.idSubcategoria, child: Text(s.nome)),
-      ],
-      onChanged: idCategoria == null
-          ? null
-          : (id) => setState(() {
-              _categoriaManual = true;
-              _sugerida = false;
-              _rascunho.idSubcategoria = id;
-              _limparErro(CampoCompra.subcategoria);
-            }),
-    );
-  }
-
-  Widget _campoTag() {
-    final ativas = ref.watch(tagsAtivasProvider).value ?? const <Tag>[];
-    final selecionada = _tagSelecionada;
-    final opcoes = [
-      ...ativas,
-      if (selecionada != null &&
-          !ativas.any((t) => t.uuidTag == selecionada.uuidTag))
-        selecionada,
-    ];
-    final uuid = opcoes.any((t) => t.uuidTag == _rascunho.uuidTag)
-        ? _rascunho.uuidTag
-        : null;
-    return DropdownButtonFormField<String?>(
-      key: ValueKey(('tag', uuid, opcoes.length)),
-      initialValue: uuid,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Tag (opcional)',
-        helperText: 'Contexto do gasto, como viagem ou rolê',
-      ),
-      items: [
-        const DropdownMenuItem(child: Text('Sem tag')),
-        for (final t in opcoes)
-          DropdownMenuItem(
-            value: t.uuidTag,
-            child: Text(
-              t.status == 'arquivada' ? '${t.nome} (arquivada)' : t.nome,
-            ),
-          ),
-      ],
-      onChanged: (valor) => setState(() {
-        _rascunho.uuidTag = valor;
-        _tagSelecionada = valor == null
-            ? null
-            : opcoes.firstWhere((t) => t.uuidTag == valor);
-      }),
-    );
-  }
-}
-
-class _CampoDeToque extends StatelessWidget {
-  const new({
-    required this.rotulo,
-    required this.valor,
-    required this.icone,
-    required this.aoTocar,
-  });
-
-  final String rotulo;
-  final String valor;
-  final IconData icone;
-  final VoidCallback aoTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: '$rotulo: $valor',
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: aoTocar,
-        customBorder: chanfro(TokensRavix.chanfroM),
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: rotulo,
-            suffixIcon: Icon(icone, size: TokensRavix.iconSizeMd),
-          ),
-          child: Text(
-            valor,
-            style: Theme.of(context).textTheme.bodyLarge
-                ?.copyWith(fontFeatures: numerosTabulares),
           ),
         ),
       ),
