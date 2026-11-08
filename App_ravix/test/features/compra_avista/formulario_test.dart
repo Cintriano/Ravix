@@ -415,6 +415,7 @@ void main() {
       'Débito',
       'Dinheiro',
       'Voucher',
+      'Boleto',
     ]);
   });
 

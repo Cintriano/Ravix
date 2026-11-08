@@ -1,6 +1,6 @@
 # Ravix — Backlog
 
-> Exportado do Notion (Projetos / Ravix / Backlog app) em 24/10/2026.
+> Exportado do Notion (Projetos / Ravix / Backlog app) em 08/11/2026.
 > Fonte: https://app.notion.com/p/3dfb044db6b180628983e3c499af7208
 
 **Documentos relacionados:** [01_visao_geral_e_arquitetura.md](01_visao_geral_e_arquitetura.md) · [03_modelo_de_dados.md](03_modelo_de_dados.md)
@@ -20,6 +20,10 @@
 
 > **Revisão 6 (24/10/2026):** v1 implementada e instalada ([Plano de desenvolvimento — v1](04_plano_desenvolvimento_v1.md), M0 a M7). Todas as tasks `v1` marcadas como (F). Além do backlog: escolha de aparência (Sistema, Escuro, Claro) na Configuração, que virou uma lista com Aparência e Tags; filtro de tag inclui as arquivadas. Na v1 o app abre na aba à vista sem barra de abas, que aparece quando houver duas ou mais.
 
+> **Revisão 7 (25/10/2026):** versões reorganizadas (DP-37). A **v2** passa a ser a visão faturada, a visão macro e as correções da v1 (E01-F14), ainda 100% manual e só local. Tudo que depende de backend ou de API externa vai para a **v3**: banco transacional e sincronização, login e conta, farol de conexão, última atualização, estado offline, registros pendentes, central de notificações, onboarding de permissões e todo o E04 (Pluggy).
+
+> **Revisão 8 (08/11/2026):** decisões da v2 com base nos testes reais da Pluggy: base da visão macro (DP-1), recorrências também no à vista (DP-13), tipo estorno (DP-14), dia de fechamento só como sugestão (DP-28), farol pelo ritmo do mês (DP-10), status do cartão (DP-29), recorrência sem tag (DP-35) e gerenciar categorias adiado para a v3 (DP-12). Tags são só manuais (E01-F13-T02 removida). Schema 2 implementado (E02-F04-T01, E02-F05).
+
 ---
 
 ## E01 — Front-end
@@ -30,16 +34,16 @@
 App
 ├─ Autenticação
 │   ├─ Bloqueio local ao abrir o app (v1)
-│   ├─ Login (e-mail + senha, biometria após 1ª sessão) (v2, com o backend)
-│   └─ Cadastro (nome, e-mail, senha) (v2, com o backend)
+│   ├─ Login (e-mail + senha, biometria após 1ª sessão) (v3, com o backend)
+│   └─ Cadastro (nome, e-mail, senha) (v3, com o backend)
 ├─ Shell
-│   ├─ Cabeçalho: seletor de mês global (passados e futuros) + última atualização (v2) + farol de conexão (v2)
+│   ├─ Cabeçalho: seletor de mês global (passados e futuros) + última atualização (v3) + farol de conexão (v3)
 │   ├─ Botão flutuante de novo registro (tipo da aba ativa)
 │   ├─ Aba Visão macro (v2; aba padrão a partir da v2)
 │   ├─ Aba Visão faturada (v2)
 │   └─ Aba Visão à vista (v1)
 ├─ Formulário de registro (único, parametrizado)
-│   ├─ tipo: à vista | faturado (parcelado ou recorrente) | pagamento de fatura (v2)
+│   ├─ tipo: à vista (avulso ou recorrente) | faturado (parcelado ou recorrente) | pagamento de fatura (v2) | estorno (v2)
 │   ├─ modo: criar | editar | completar pendência
 │   ├─ classificação: categoria → subcategoria + tag opcional (DP-32)
 │   └─ excluir registro (no modo editar)
@@ -48,9 +52,9 @@ App
 │   ├─ Cadastro e edição de cartão (v2)
 │   └─ Gerenciar recorrências (v2)
 ├─ Visão por tag (v2)
-├─ Registros pendentes (também recebe capturas para aprovação)
-├─ Central de notificações do sistema
-└─ Onboarding de permissões
+├─ Registros pendentes (v3; também recebe capturas para aprovação)
+├─ Central de notificações do sistema (v3)
+└─ Onboarding de permissões (v3)
 ```
 
 ### Decisões de projeto que valem para todo o E01
@@ -58,26 +62,28 @@ App
 - **Seletor de mês global** no Shell. As três abas leem esse estado; nenhuma tem filtro de mês próprio.
 - **Formulário único** parametrizado por `tipo` e `modo`. Botões de edição (abas e pendências) chamam o mesmo componente.
 - **Renda** é editada só na Configuração.
-- **Estados de tela padrão** (carregando, vazio, erro e, a partir da v2, offline) em todas as telas que consultam dados.
+- **Estados de tela padrão** (carregando, vazio, erro e, a partir da v3, offline) em todas as telas que consultam dados.
 - O faturado **sempre** entra na visão macro.
 - A **visão macro** entra na v2, junto com o faturado. Na v1, o app abre na aba à vista.
-- A **v1 é só local** (SQLite), sem backend. Login com conta, sincronização, indicador de última atualização e estado offline entram com o backend, na v2 (DP-7).
+- A **v1 e a v2 são só locais** (SQLite), sem backend. Login com conta, sincronização, indicador de última atualização e estado offline entram com o backend, na v3 (DP-7, DP-37).
 - **Regime de caixa:** o mês de um gasto faturado é o mês de vencimento da fatura; o à vista conta pela data da compra (DP-9).
 - **Pagamento de fatura** é um tipo de registro próprio e não entra nas somas de consumo (DP-14).
+- **Estorno** de cartão é um tipo de registro próprio, com valor positivo, que abate da fatura do mês de vencimento e do consumo (DP-14).
+- **Tags são só manuais**, registro a registro. Não há atribuição por período (08/11/2026).
 - **Classificação em três níveis** (DP-32): categoria e subcategoria descrevem a natureza do gasto e são obrigatórias; a tag descreve o contexto (viagem, rolê etc.), é opcional e única por registro. A tag é um recorte dos mesmos registros e não soma nada ao consumo.
 
 ---
 
 ### E01-F01 — Autenticação
 
-Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Login, cadastro e logout entram com o backend (DP-7).
+Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Login, cadastro e logout entram com o backend, na v3 (DP-7, DP-37).
 
-- **T01** Tela de login: logo centralizada, e-mail e senha `v2`
-- **T02** Tela de cadastro: nome, e-mail, senha `v2`
-- **T03** Logout `v2`
-- **T04** Autenticação biométrica, oferecida após o primeiro login válido `v2`
-- **T05** Recuperação de senha `v2`
-- **T06** Tratamento de sessão expirada `v2`
+- **T01** Tela de login: logo centralizada, e-mail e senha `v3`
+- **T02** Tela de cadastro: nome, e-mail, senha `v3`
+- **T03** Logout `v3`
+- **T04** Autenticação biométrica, oferecida após o primeiro login válido `v3`
+- **T05** Recuperação de senha `v3`
+- **T06** Tratamento de sessão expirada `v3`
 - **T07** Bloqueio local ao abrir o app `v1` (F)
   - PIN ou padrão do próprio Android, via `local_auth`; o app não guarda PIN próprio (DP-31).
 
@@ -85,11 +91,11 @@ Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Lo
 
 - **T01** Estrutura de abas: À vista `v1` (F); Macro (padrão) e Faturada `v2`
 - **T02** Seletor de mês global: meses passados e futuros (nos futuros aparecem parcelas e recorrências previstas) `v1` (F)
-- **T03** Indicador de data da última atualização dos dados `v2`
-- **T04** Padrão de estados de tela: carregando, vazio e erro `v1` (F); offline `v2`
-- **T05** Navegação para Configuração `v1` (F); Registros pendentes e Central de notificações `v2`
-  - Na v1 a Configuração tem só a aba Tags (F07-T09); renda, cartões, pendências e notificações são v2.
-- **T06** Farol de conexão do app com a API `v2`
+- **T03** Indicador de data da última atualização dos dados `v3`
+- **T04** Padrão de estados de tela: carregando, vazio e erro `v1` (F); offline `v3`
+- **T05** Navegação para Configuração `v1` (F); Registros pendentes e Central de notificações `v3`
+  - Na v1 a Configuração tem só a aba Tags (F07-T09); renda e cartões entram na v2, pendências e notificações na v3.
+- **T06** Farol de conexão do app com a API `v3`
   - 🟢 conectado e sincronizado
   - 🟡 sincronizando ou dados desatualizados além do limite (limite a definir)
   - 🔴 falha, com a causa na mensagem: sem internet, API própria indisponível ou conexão bancária expirada
@@ -99,7 +105,7 @@ Na v1 o app é só local: a autenticação se resume ao bloqueio local (T07). Lo
 
 ### E01-F03 — Formulário de registro (único)
 
-Componente reutilizável. Define `tipo` (à vista, faturado ou pagamento de fatura) e `modo` (criar | editar | completar pendência).
+Componente reutilizável. Define `tipo` (à vista, faturado, pagamento de fatura ou estorno) e `modo` (criar \| editar \| completar pendência).
 
 - **T01** Estrutura base parametrizada por tipo e modo `v1` (F)
 - **T02** Data e hora automáticas e editáveis `v1` (F)
@@ -108,7 +114,7 @@ Componente reutilizável. Define `tipo` (à vista, faturado ou pagamento de fatu
 - **T03** Campo de valor com máscara monetária de até duas casas decimais, sempre maior que zero `v1` (F)
 - **T04** Campos do tipo **à vista** `v1` (F)
   - UUID (sistema), data, hora, descrição, valor
-  - Forma de pagamento: Pix, débito, dinheiro, voucher
+  - Forma de pagamento: Pix, débito, dinheiro, voucher; boleto a partir da v2
   - Categoria, subcategoria (ver T10) e tag opcional (ver T15)
 - **T05** Modo editar (acionado pelos botões de edição das abas) `v1` (F)
 - **T06** Campos do tipo **faturado** `v2`
@@ -117,20 +123,24 @@ Componente reutilizável. Define `tipo` (à vista, faturado ou pagamento de fatu
   - Mês e ano de vencimento da fatura, manuais (DP-3, DP-9)
   - Categoria, subcategoria (ver T10) e tag opcional (ver T15)
   - Quantidade de parcelas (fatura finita) **ou** recorrência (fatura de serviço), ver T08
-- **T07** Seleção de cartão, incluindo cartão sugerido pelo app (ver E04-F03) `v2`
-- **T08** Toggle **Cobrança recorrente** (somente tipo faturado) `v2`
+- **T07** Seleção de cartão `v2`; cartão sugerido pelo app (E04-F03) `v3`
+- **T08** Toggle **Cobrança recorrente** nos tipos faturado e à vista (DP-13) `v2`
+  - No à vista, a recorrência guarda a forma de pagamento em vez do cartão (aluguel, contas de consumo, débito automático).
   - Ativo: esconde quantidade de parcelas e mostra periodicidade, dia de cobrança e data fim (opcional)
-  - Depende de `tbl_recorrencia` (ver modelagem banco)
-- **T09** Modo completar pendência `v2`
+  - Depende de `tbl_recorrencia` (ver [modelagem banco](03_modelo_de_dados.md))
+- **T09** Modo completar pendência `v3`
 - **T10** Carga inicial de categorias e subcategorias (tabela abaixo), usada nos dois tipos de registro `v1` (F)
 - **T11** Excluir registro no modo editar, com confirmação `v1` (F)
 - **T12** Editar ou excluir lançamento recorrente: escolher entre "só este" e "este e os próximos" `v2`
 - **T13** Campos do tipo **pagamento de fatura** `v2`
-  - UUID (sistema), data, hora, valor, forma de pagamento (Pix ou débito), cartão, mês e ano de vencimento da fatura paga
+  - UUID (sistema), data, hora, valor, forma de pagamento (Pix, débito ou boleto), cartão, mês e ano de vencimento da fatura paga
   - Não entra nas somas de consumo; marca a fatura como paga (F05-T09)
 - **T14** Validação: todos os campos são obrigatórios, exceto a tag e a data fim da recorrência (vazia = sem fim) `v1` (F)
 - **T15** Campo **tag**: opcional, uma por registro, com seletor das tags ativas e criação inline ("+ nova tag") `v1` (F)
 - **T16** Sugestão de categoria e subcategoria pela descrição: histórico que contém o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms; só preenche se o usuário ainda não escolheu (DP-36) `v1` (F)
+- **T17** Campos do tipo **estorno** `v2`
+  - UUID (sistema), data, valor (maior que zero), cartão, mês e ano de vencimento da fatura que recebe o abatimento, descrição e, opcionalmente, a compra original (DP-14)
+  - Abate da fatura e do consumo daquele mês
 
 *Decidido:* mês e ano de vencimento são preenchidos só pelo formulário (DP-3). Compras faturadas vindas da API ou de notificações chegam sem esse campo e entram em Registros pendentes para completar.
 
@@ -177,7 +187,7 @@ Fonte: planilha `App_Gestão_Financeira.xlsx`, aba Categorias, ajustada pelo DP-
 
 ### E01-F04 — Aba visão à vista
 
-Consumo à vista (Pix, débito, dinheiro físico, voucher). Dinheiro físico e voucher são registrados manualmente.
+Consumo à vista (Pix, débito, dinheiro físico, voucher e, a partir da v2, boleto). Dinheiro físico e voucher são registrados manualmente.
 
 - **T01** Acumulado de gastos do mês `v1` (F)
 - **T02** Tabela de histórico de consumo (somente o mês selecionado) `v1` (F)
@@ -185,6 +195,7 @@ Consumo à vista (Pix, débito, dinheiro físico, voucher). Dinheiro físico e v
 - **T04** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
 - **T05** Filtro de categoria/subcategoria e tag `v1` (F)
 - **T06** Gráfico de gasto agregado por categoria/subcategoria, com seletor de visão `v2`
+- **T07** Recorrências à vista do mês aparecem pré-registradas na tabela, marcadas como previstas e fora do acumulado, com o botão **Registrar**: grava o lançamento com a data do toque, permitindo ajustar valor e forma de pagamento antes de salvar. Data passada sem registro mostra aviso de atraso (DP-25) `v2`
 
 *Comportamento dos filtros:* o mês (global) afeta a tela inteira; categoria/subcategoria e tag filtram apenas a tabela.
 
@@ -204,19 +215,26 @@ Considera vários cartões simultaneamente.
 - **T07** Exibir lançamentos recorrentes (reais e previstos) na fatura do mês `v2`
 - **T08** ~~Botão de novo registro na aba~~ substituído pelo botão flutuante do Shell (F02-T07)
 - **T09** Indicar fatura paga quando existir um pagamento de fatura do cartão para aquele mês de vencimento `v2`
+- **T10** Estornos abatem o valor da fatura do mês de vencimento e aparecem na tabela de parcelas como crédito (DP-14) `v2`
 
 *Comportamento:* o seletor de mês global afeta a tela inteira.
 
 ### E01-F06 — Aba visão macro
 
-Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à vista (agregado por forma de pagamento). Visão sempre mensal. Entra inteira na v2, junto com o faturado. Pagamentos de fatura não entram nas somas.
+Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à vista (agregado por forma de pagamento). Visão sempre mensal. Segue o seletor de mês global, como as outras abas (08/11/2026): no mês atual mostra o parcial com o farol pelo ritmo e os previstos à parte; em mês passado, o resultado fechado (total, % da renda vigente no mês, superávit realizado, barras faturado/à vista e farol contra 100%); em mês futuro, só o já comprometido (parcelas que vencem no mês), sem farol. Entra inteira na v2, junto com o faturado. Pagamentos de fatura não entram nas somas.
 
 - **T01** Valor acumulado do mês (soma total: faturado + à vista) `v2`
-- **T02** Seletor de base de comparação: **só salário** ou **renda total** (salário + voucher + ganhos extras) ⚠ `v2`
+  - Só o que já foi pago entra no total e no farol; recorrências previstas aparecem à parte, como "+ R$ X previstos até o fim do mês" (08/11/2026).
+- **T02** Seletor de base de comparação: **só salário** ou **renda total** (salário + voucher + ganhos extras) `v2`
   - O faturado entra nas duas bases.
+  - Só salário = (faturado + à vista sem voucher) ÷ salário. Renda total = tudo ÷ (salário + voucher + ganhos extras) (DP-1).
+  - Base padrão ao abrir: **renda total** (DP-1).
+  - Na v2, a renda total é salário + voucher; os ganhos extras entram com o E04-F06, na v3 (DP-37).
   - Substitui o antigo "filtro por forma de pagamento".
 - **T03** Cálculo do superávit `v2`
 - **T04** Farol consumo × base de comparação: porcentagem e cor (verde, amarelo, vermelho) `v2`
+  - Segue a base escolhida no seletor (DP-1).
+  - Cor pelo ritmo do mês (DP-10): ritmo = dia atual ÷ dias do mês. Verde: % consumido ≤ ritmo; amarelo: até 10 pontos acima; vermelho: mais de 10 pontos acima. Em meses fechados o ritmo é 100%.
 - **T05** Gráfico de linha do consumo dia a dia (fatura atual com cartões somados + acumulado à vista do dia) `v2`
   - A fatura entra como degrau no dia do vencimento (DP-9).
 - **T06** Gráfico de barras 100% com a proporção faturado/à vista, apenas em meses fechados `v2`
@@ -229,10 +247,11 @@ Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à v
 - **T02** Campo editável de voucher/benefícios `v2`
   - Renda por vigência (DP-6): ao alterar salário ou voucher, o app pergunta a partir de qual mês o valor vale; os meses anteriores não mudam.
 - **T03** Cards de cartões, com menu (…) para editar (T07) ou remover (T08) `v2`
-- **T04** Cartões cadastrados automaticamente quando detectados na API (ver E04-F03) `v2`
+- **T04** Cartões cadastrados automaticamente quando detectados na API (ver E04-F03) `v3`
 - **T05** Fatias do superávit: valor fixo destinado à reserva, gerando superávit **absoluto** (total) e **efetivo** (com as fatias descontadas) `v3`
   - A tela deve reservar espaço para isso desde a v2.
 - **T06** Cadastro manual de cartão: nome, limite e dia de fechamento `v2`
+  - O dia de fechamento só sugere o mês de vencimento no formulário; o que vale é o mês gravado em cada parcela, porque o dia real varia mês a mês (DP-28).
 - **T07** Edição de cartão: nome, limite e dia de fechamento `v2`
 - **T08** Remover cartão `v2`
   - Com compras vinculadas: arquiva (some da seleção no formulário, histórico preservado).
@@ -249,18 +268,18 @@ Mescla faturado (faturas que vencem no mês selecionado, regime de caixa) e à v
 
 Abriga registros com cadastro incompleto (limitação da API, categoria não mapeada, cartão não cadastrado) e capturas aguardando aprovação ⚠.
 
-- **T01** Tabela de registros pendentes por tipo de pendência `v2`
-  - Tipos: categoria desconhecida, cartão não cadastrado, mês de vencimento ausente, baixa confiança (v3, com E04-F05), aguardando aprovação (v3, com E03)
-- **T02** Botão de edição, abrindo o formulário no modo completar pendência `v2`
+- **T01** Tabela de registros pendentes por tipo de pendência `v3`
+  - Tipos: categoria desconhecida, cartão não cadastrado, mês de vencimento ausente, aguardando aprovação (v3, com E03); baixa confiança só quando o E04-F05 existir (versão futura)
+- **T02** Botão de edição, abrindo o formulário no modo completar pendência `v3`
 - **T03** Ação de aprovar/rejeitar captura (E03-F02-T03) `v3`
 
 ### E01-F09 — Central de notificações do sistema
 
 Tela de retorno do sistema.
 
-- **T01** Log resumido de erros `v2`
-- **T02** Alerta de cartão novo cadastrado `v2`
-- **T03** Aviso de consulta na API bem-sucedida `v2`
+- **T01** Log resumido de erros `v3`
+- **T02** Alerta de cartão novo cadastrado `v3`
+- **T03** Aviso de consulta na API bem-sucedida `v3`
 
 ### E01-F10 — Notificação de reconhecimento de pagamento
 
@@ -268,14 +287,14 @@ Tela de retorno do sistema.
 
 ### E01-F11 — Onboarding de permissões
 
-- **T01** Orientação para conceder acesso a notificações do Android `v2`
-- **T02** Solicitação de permissão de biometria `v2`
+- **T01** Orientação para conceder acesso a notificações do Android `v3`
+- **T02** Solicitação de permissão de biometria `v3`
 
 ### E01-F12 — Gerenciar recorrências
 
 Lista as cobranças de `tbl_recorrencia`. Acesso pela Configuração.
 
-- **T01** Lista de recorrências por status (ativa, pausada, cancelada), com cartão, valor e dia de cobrança `v2`
+- **T01** Lista de recorrências por status (ativa, pausada, cancelada), com cartão ou forma de pagamento, valor e dia de cobrança `v2`
 - **T02** Ações de pausar, retomar e cancelar; cancelar altera só `status` e `data_fim`, preservando o histórico `v2`
 - **T03** Editar recorrência (valor, dia de cobrança, categoria), aplicando apenas aos lançamentos previstos `v2`
 
@@ -284,9 +303,17 @@ Lista as cobranças de `tbl_recorrencia`. Acesso pela Configuração.
 Recorte dos registros por contexto (viagem, rolê etc.). Não soma nada ao consumo (DP-32).
 
 - **T01** Visão de uma tag: total e quebra por categoria/subcategoria
-- **T02** Atribuição em lote: escolher um período e marcar a tag nos registros sem tag
+- ~~**T02** Atribuição em lote: escolher um período e marcar a tag nos registros sem tag~~ removida: tags são só manuais, registro a registro (08/11/2026)
 
-*A definir:* se compras parceladas entram na visão pelo valor total da compra ou pelas parcelas.
+*Decidido (08/11/2026):* compras parceladas aparecem nas duas medidas, lado a lado: **pago até agora** (parcelas cujas faturas já venceram, até o mês atual) e **total do parcelamento** (valor total da compra). Ex.: passagem de R$ 1.200 em 6x, na 2ª fatura: R$ 400 pagos de R$ 1.200. Compras à vista e estornos entram igual nas duas.
+
+### E01-F14 — Correções da v1 `v2`
+
+Ajustes encontrados no uso da v1. Os itens entram aqui conforme aparecerem nos testes no aparelho.
+
+- **T01** Validar no uso: cadastrar um gasto em menos de 10 s (meta do DP-36)
+- **T02** Validar no uso: aba à vista com dados reais
+- **T03** Validar no uso: falha do bloqueio no aparelho (cancelar e ver a mensagem)
 
 ### Fora do escopo (E01)
 
@@ -310,9 +337,9 @@ Detalhes em [modelagem banco](03_modelo_de_dados.md).
 - **T06** Detalhar o esquema da v1: tipos, constraints, índices, DDL e carga inicial; sem `uuid_usuario` local, datas em horário local e `fuso_minutos` (DP-33, DP-34) `v1` (F)
 - **T07** Coluna `descricao_normalizada` e configuração de desempenho do banco (DP-36) `v1` (F)
 
-### E02-F02 — Banco transacional `v2`
+### E02-F02 — Banco transacional `v3`
 
-Atende o app, foco em performance. A v1 é só local (DP-7).
+Atende o app, foco em performance. A v1 e a v2 são só locais (DP-7, DP-37).
 
 - **T01** Definir esquema transacional
 - **T02** Remover `importancia` do esquema
@@ -326,17 +353,19 @@ Foco analítico, esquema financeiro.
 - **T02** Documentar pipelines `DW_APOLO` (e "Backlog pipelines")
 - **T03** Remover `importancia` das dimensões e fatos
 
-### E02-F04 — Recorrências
+### E02-F04 — Recorrências `v2`
 
-- **T01** Criar `tbl_recorrencia` e FK em `tbl_compra_faturada`
-- **T02** Definir geração de lançamentos previstos e projeção de meses futuros
+- **T01** Criar `tbl_recorrencia` e FK em `tbl_compra_faturada` e `tbl_compra_avista`; cartão opcional (obrigatório só no faturado) e forma de pagamento para o à vista (DP-13); sem tag na recorrência, a tag vai no lançamento (DP-35) (F)
+- **T02** Lançamentos previstos calculados na consulta, a partir da regra em `tbl_recorrencia`, sem gravar linhas futuras. No faturado, o previsto vira lançamento real sozinho no dia da cobrança. No à vista, fica pré-registrado até o usuário tocar em Registrar ao pagar (E01-F04-T07); na v3, o pagamento ao `documento_beneficiario` da regra registra sozinho. "Este e os próximos" altera a regra; cancelar só muda `status` e `data_fim` (DP-25)
 
 ### E02-F05 — Modelo do faturado e da renda `v2`
 
-- **T01** Criar `tbl_parcela` (uma linha por parcela) e mover `valor_parcela` para ela (DP-27)
-- **T02** Criar `tbl_pagamento_fatura` e `cnpj_emissor` em `tbl_cartoes_credito` (DP-14)
-- **T03** Renomear `mes_exercicio`/`ano_exercicio` para `mes_vencimento`/`ano_vencimento` (DP-9)
-- **T04** Renda por vigência: `mes_referencia` e `ano_referencia` em `tbl_renda` (DP-6)
+- **T01** Criar `tbl_parcela` (uma linha por parcela) e mover `valor_parcela` para ela (DP-27) (F)
+- **T02** Criar `tbl_pagamento_fatura`, o registro de estorno e `cnpj_emissor` em `tbl_cartoes_credito` (DP-14) (F)
+- **T03** Renomear `mes_exercicio`/`ano_exercicio` para `mes_vencimento`/`ano_vencimento` (DP-9) (F)
+- **T04** Renda por vigência: `mes_referencia` e `ano_referencia` em `tbl_renda` (DP-6) (F)
+- **T05** Status ativo/arquivado em `tbl_cartoes_credito` (DP-29) (F)
+- **T06** Migração do schema 1 para o 2, com teste de migração (seção 4.5 da [modelagem](03_modelo_de_dados.md)) (F)
 
 ---
 
@@ -359,52 +388,73 @@ Extrair o máximo de informações dos pagamentos por notificação, pré-preenc
 
 ## E04 — Integração Pluggy e classificação
 
-Acesso centralizado e normalizado aos dados via Pluggy (Open Finance). Contexto técnico em [01_visao_geral_e_arquitetura.md](01_visao_geral_e_arquitetura.md), seção 4.
+Acesso centralizado e normalizado aos dados via Pluggy (Open Finance). Contexto técnico em [01_visao_geral_e_arquitetura.md](01_visao_geral_e_arquitetura.md), seção 4. Todo o épico fica na v3 (DP-37).
 
 https://www.pluggy.ai/
 
-### E04-F01 — Validação da API (testes) `v2`
+### E04-F01 — Validação da API (testes) `v3`
 
-- **T01** Executar o checklist de testes da seção 4.5 da arquitetura
+- **T01** Executar o checklist de testes da seção 4.5 da arquitetura (feito em grande parte com dados reais em 07/11/2026, seções 4.7 e 4.8; faltam fechamento de fatura, latência do webhook e limites/custos)
 - **T02** Decidir como derivar mês/ano de exercício (F): manual, só pelo formulário (DP-3)
-- **T03** Verificar se o plano gratuito expõe o CNPJ de quem recebe o pagamento, para reconhecer pagamentos de fatura (DP-14)
+- **T03** Verificar se o plano gratuito expõe o CNPJ de quem recebe o pagamento, para reconhecer pagamentos de fatura (DP-14) (F): expõe, em `paymentData.receiver` e `merchant.cnpj`
 
-### E04-F02 — API própria `v2`
+### E04-F02 — API própria `v3`
 
 Camada intermediária para não ficar preso a uma fonte de dados.
 
 - **T01** Definir contrato independente da Pluggy
 - **T02** Receber webhooks e repassar ao app
-- **T03** Reconciliação de transações (data + valor + descrição)
-- **T04** Pagamentos à vista para empresas com cartão cadastrado não somam no consumo e confirmam a fatura como paga (depende de E04-F01-T03, DP-14)
+- **T03** Reconciliação de transações pelo `providerId` (veio em todas as transações reais), com data + valor + descrição como alternativa
+- **T04** Pagamentos à vista para empresas com cartão cadastrado não somam no consumo e confirmam a fatura como paga (DP-14): casar `cnpj_emissor` + valor igual ao total de uma fatura em aberto
 
-### E04-F03 — Cartão não cadastrado `v2`
+### E04-F03 — Cartão não cadastrado `v3`
 
 - **T01** App detecta cartão desconhecido e sugere o cadastro
 - **T02** Cartão aparece como opção selecionável no formulário
 
-### E04-F04 — Mapeamento de categorias `v2`
+### E04-F04 — Mapeamento de categorias `v3`
+
+Confirmado em 08/11/2026: nos primeiros pagamentos de cada origem, o usuário escolhe categoria e subcategoria; depois o app segue o mapeamento salvo.
 
 - **T01** Perguntar ao usuário na primeira ocorrência
 - **T02** Guardar mapeamento em tabela fixa do app
 - **T03** Classificar sozinho nas ocorrências seguintes
 
-### E04-F05 — Classificação automática com confiança `v3`
+### E04-F05 — Classificação automática com confiança `versão futura, a decidir`
+
+Fora da v3 (08/11/2026). Inicialmente a classificação é só o mapeamento manual do E04-F04; o modelo de previsão entra numa versão futura ainda não decidida.
 
 - **T01** Modelo que usa os dados do registro para sugerir categoria e índice de confiança
 - **T02** Confiança ≥ 90: automático; abaixo: validação do usuário
 - **T03** Avaliar uso da categoria da Pluggy como entrada
 
-### E04-F06 — Ganhos e superávit `v2`
+### E04-F06 — Ganhos e superávit `v3`
 
 Considerar entradas (PIX) durante o mês para calcular o superávit com mais precisão.
 
 - **T01** Capturar ganhos via API e/ou formulário
 - **T02** Classificar ganho: salário ou ganho extra
 
-### E04-F07 — Tabela temporária de pendências `v2`
+### E04-F07 — Tabela temporária de pendências `v3`
 
 - **T01** Guardar registros que precisam de intervenção (cartão não cadastrado, categoria desconhecida, baixa confiança)
+
+---
+
+## Ideias futuras (fora do escopo)
+
+Ideias registradas para avaliação futura. Não entram em nenhuma versão por enquanto.
+
+### IF-01 — Contas vinculadas (plano família, nome a definir)
+
+Hoje o modelo é uma conta por usuário e um usuário por aparelho. A ideia é permitir vincular as contas de várias pessoas da mesma casa num grupo, como um plano família.
+
+- Um ou mais membros do grupo são eleitos administradores (gestores).
+- Os administradores têm visão de todos os gastos do grupo, centralizados numa única plataforma.
+- Objetivo: saber quem está gastando o quê dentro da família.
+- Em aberto: como seria a visão de "com o que" cada membro gasta (nível de detalhe, privacidade entre membros).
+- Em aberto: nome do recurso (plano família, grupo, casa etc.).
+- Depende de conta e backend, que só entram na v3 (DP-7, DP-37).
 
 ---
 
@@ -425,7 +475,7 @@ Considerar entradas (PIX) durante o mês para calcular o superávit com mais pre
 
 ### Premissas a confirmar (⚠)
 
-1. O filtro por forma de pagamento da visão macro virou um seletor de base de comparação (só salário | renda total).
+1. ~~O filtro por forma de pagamento da visão macro virou um seletor de base de comparação (só salário \| renda total).~~ Confirmada (DP-1).
 2. A confirmação de capturas do E03 reutiliza a tela de Registros pendentes.
 
 ---

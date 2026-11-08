@@ -16,7 +16,10 @@ enum TipoPagamento {
   dinheiro('dinheiro'),
 
   /// Voucher (benefícios).
-  voucher('voucher');
+  voucher('voucher'),
+
+  /// Boleto (schema 2).
+  boleto('boleto');
 
   new(this.codigo);
 

@@ -31,6 +31,7 @@ extension RotuloTipoPagamento on TipoPagamento {
     TipoPagamento.debito => 'Débito',
     TipoPagamento.dinheiro => 'Dinheiro',
     TipoPagamento.voucher => 'Voucher',
+    TipoPagamento.boleto => 'Boleto',
   };
 }
 

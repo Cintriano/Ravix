@@ -1,6 +1,6 @@
 # Ravix — Identidade visual
 
-> **A identidade atual é a v2**, em [`v2/README.md`](v2/README.md) (06/11/2026): Floresta e Menta, Chakra Petch e Archivo, cantos chanfrados. Decisão em [DP-37](../05_decisoes.md).
+> **A identidade atual é a v2**, em [`v2/README.md`](v2/README.md) (06/11/2026): Floresta e Menta, Chakra Petch e Archivo, cantos chanfrados. Decisão em [DP-39](../05_decisoes.md).
 >
 > O restante deste arquivo e os arquivos `capra-*` descrevem a identidade anterior (logo filha CAPRA) e ficam só como histórico.
 

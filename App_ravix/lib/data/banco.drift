@@ -1,6 +1,7 @@
--- Esquema da v1 (docs/03_modelo_de_dados.md, seção 3).
+-- Esquema 2 (docs/03_modelo_de_dados.md, seções 3 e 4).
 -- Valores em centavos; datas do evento em ISO local com fuso_minutos;
--- criado_em e atualizado_em em ISO UTC com Z (DP-33).
+-- criado_em e atualizado_em em ISO UTC com Z (DP-33). Meses de vencimento e
+-- de referência em INTEGER (1 a 12) com o ano separado.
 
 CREATE TABLE tbl_categoria (
   id_categoria INTEGER NOT NULL PRIMARY KEY,
@@ -24,6 +25,65 @@ CREATE TABLE tbl_tag (
   atualizado_em TEXT NOT NULL
 ) AS Tag;
 
+-- Cartões (E01-F07, DP-14, DP-28, DP-29). Os dias são só sugestão do mês
+-- de vencimento; o que vale é o mês gravado em cada parcela.
+CREATE TABLE tbl_cartoes_credito (
+  uuid_cartao_credito TEXT    NOT NULL PRIMARY KEY,
+  nome_cartao         TEXT    NOT NULL UNIQUE COLLATE NOCASE
+                      CHECK (length(trim(nome_cartao)) > 0),
+  final_cartao        TEXT    NULL CHECK (final_cartao GLOB '[0-9][0-9][0-9][0-9]'),
+  limite_cartao       INTEGER NOT NULL CHECK (limite_cartao > 0),
+  dia_fechamento      INTEGER NULL CHECK (dia_fechamento BETWEEN 1 AND 31),
+  dia_vencimento      INTEGER NULL CHECK (dia_vencimento BETWEEN 1 AND 31),
+  cnpj_emissor        TEXT    NULL
+                      CHECK (length(cnpj_emissor) = 14 AND cnpj_emissor NOT GLOB '*[^0-9]*'),
+  status              TEXT    NOT NULL DEFAULT 'ativo'
+                      CHECK (status IN ('ativo', 'arquivado')),
+  criado_em           TEXT    NOT NULL,
+  atualizado_em       TEXT    NOT NULL
+) AS CartaoCredito;
+
+-- Regra de cobrança recorrente, à vista ou faturada (DP-13, DP-25). Os
+-- previstos são calculados na consulta; só os lançamentos reais são gravados.
+-- Sem tag: a tag vai no lançamento (DP-35).
+CREATE TABLE tbl_recorrencia (
+  uuid_recorrencia       TEXT    NOT NULL PRIMARY KEY,
+  tipo_registro          TEXT    NOT NULL CHECK (tipo_registro IN ('avista', 'faturado')),
+  uuid_cartao_credito    TEXT    NULL
+                         REFERENCES tbl_cartoes_credito (uuid_cartao_credito) ON DELETE RESTRICT,
+  tipo_pagamento         TEXT    NULL
+                         CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher', 'boleto')),
+  documento_beneficiario TEXT    NULL
+                         CHECK (length(documento_beneficiario) IN (11, 14)
+                                AND documento_beneficiario NOT GLOB '*[^0-9]*'),
+  descricao              TEXT    NOT NULL CHECK (length(trim(descricao)) > 0),
+  descricao_normalizada  TEXT    NOT NULL,
+  valor_recorrencia      INTEGER NOT NULL CHECK (valor_recorrencia > 0),
+  id_subcategoria        INTEGER NOT NULL
+                         REFERENCES tbl_subcategoria (id_subcategoria),
+  periodicidade          TEXT    NOT NULL CHECK (periodicidade IN ('mensal', 'anual')),
+  dia_cobranca           INTEGER NOT NULL CHECK (dia_cobranca BETWEEN 1 AND 31),
+  data_inicio            TEXT    NOT NULL,
+  data_fim               TEXT    NULL,
+  status                 TEXT    NOT NULL DEFAULT 'ativa'
+                         CHECK (status IN ('ativa', 'pausada', 'cancelada')),
+  criado_em              TEXT    NOT NULL,
+  atualizado_em          TEXT    NOT NULL,
+  CHECK ((tipo_registro = 'faturado' AND uuid_cartao_credito IS NOT NULL AND tipo_pagamento IS NULL)
+      OR (tipo_registro = 'avista' AND uuid_cartao_credito IS NULL AND tipo_pagamento IS NOT NULL)),
+  CHECK (data_fim IS NULL OR data_fim >= data_inicio)
+) AS Recorrencia;
+
+-- Ocorrências puladas ("excluir só este").
+CREATE TABLE tbl_recorrencia_excecao (
+  uuid_recorrencia TEXT NOT NULL
+                   REFERENCES tbl_recorrencia (uuid_recorrencia) ON DELETE CASCADE,
+  ocorrencia       TEXT NOT NULL,
+  criado_em        TEXT NOT NULL,
+  PRIMARY KEY (uuid_recorrencia, ocorrencia)
+) AS RecorrenciaExcecao;
+
+-- Reconstruída no schema 2: boleto e as colunas da recorrência.
 CREATE TABLE tbl_compra_avista (
   uuid_compra_avista      TEXT    NOT NULL PRIMARY KEY,
   timestamp_compra_avista TEXT    NOT NULL,
@@ -32,18 +92,127 @@ CREATE TABLE tbl_compra_avista (
   descricao_normalizada   TEXT    NOT NULL,
   valor_compra_avista     INTEGER NOT NULL CHECK (valor_compra_avista > 0),
   tipo_pagamento          TEXT    NOT NULL
-                          CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher')),
+                          CHECK (tipo_pagamento IN ('pix', 'debito', 'dinheiro', 'voucher', 'boleto')),
   id_subcategoria         INTEGER NOT NULL
                           REFERENCES tbl_subcategoria (id_subcategoria),
   uuid_tag                TEXT    NULL
                           REFERENCES tbl_tag (uuid_tag) ON DELETE RESTRICT,
+  uuid_recorrencia        TEXT    NULL
+                          REFERENCES tbl_recorrencia (uuid_recorrencia) ON DELETE RESTRICT,
+  ocorrencia              TEXT    NULL,
   criado_em               TEXT    NOT NULL,
-  atualizado_em           TEXT    NOT NULL
+  atualizado_em           TEXT    NOT NULL,
+  CHECK ((uuid_recorrencia IS NULL) = (ocorrencia IS NULL))
 ) AS CompraAvista;
 
 CREATE INDEX idx_compra_avista_timestamp    ON tbl_compra_avista (timestamp_compra_avista);
 CREATE INDEX idx_compra_avista_subcategoria ON tbl_compra_avista (id_subcategoria);
 CREATE INDEX idx_compra_avista_tag          ON tbl_compra_avista (uuid_tag);
+CREATE UNIQUE INDEX ux_compra_avista_ocorrencia
+  ON tbl_compra_avista (uuid_recorrencia, ocorrencia) WHERE uuid_recorrencia IS NOT NULL;
+
+-- Compra no cartão, parcelada ou lançamento de recorrência (E01-F03-T06).
+-- mes/ano_vencimento são da fatura da 1ª parcela (DP-3, DP-9).
+CREATE TABLE tbl_compra_faturada (
+  uuid_compra_faturada      TEXT    NOT NULL PRIMARY KEY,
+  uuid_cartao_credito       TEXT    NOT NULL
+                            REFERENCES tbl_cartoes_credito (uuid_cartao_credito) ON DELETE RESTRICT,
+  uuid_recorrencia          TEXT    NULL
+                            REFERENCES tbl_recorrencia (uuid_recorrencia) ON DELETE RESTRICT,
+  ocorrencia                TEXT    NULL,
+  timestamp_compra_faturada TEXT    NOT NULL,
+  fuso_minutos              INTEGER NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840),
+  descricao                 TEXT    NOT NULL CHECK (length(trim(descricao)) > 0),
+  descricao_normalizada     TEXT    NOT NULL,
+  valor_total               INTEGER NOT NULL CHECK (valor_total > 0),
+  quant_parcela             INTEGER NOT NULL CHECK (quant_parcela BETWEEN 1 AND 99),
+  mes_vencimento            INTEGER NOT NULL CHECK (mes_vencimento BETWEEN 1 AND 12),
+  ano_vencimento            INTEGER NOT NULL CHECK (ano_vencimento BETWEEN 2000 AND 2100),
+  id_subcategoria           INTEGER NOT NULL
+                            REFERENCES tbl_subcategoria (id_subcategoria),
+  uuid_tag                  TEXT    NULL
+                            REFERENCES tbl_tag (uuid_tag) ON DELETE RESTRICT,
+  criado_em                 TEXT    NOT NULL,
+  atualizado_em             TEXT    NOT NULL,
+  CHECK ((uuid_recorrencia IS NULL) = (ocorrencia IS NULL)),
+  CHECK (uuid_recorrencia IS NULL OR quant_parcela = 1),
+  CHECK (valor_total >= quant_parcela)
+) AS CompraFaturada;
+
+CREATE INDEX idx_compra_faturada_cartao       ON tbl_compra_faturada (uuid_cartao_credito);
+CREATE INDEX idx_compra_faturada_timestamp    ON tbl_compra_faturada (timestamp_compra_faturada);
+CREATE INDEX idx_compra_faturada_subcategoria ON tbl_compra_faturada (id_subcategoria);
+CREATE INDEX idx_compra_faturada_tag          ON tbl_compra_faturada (uuid_tag);
+CREATE UNIQUE INDEX ux_compra_faturada_ocorrencia
+  ON tbl_compra_faturada (uuid_recorrencia, ocorrencia) WHERE uuid_recorrencia IS NOT NULL;
+
+-- Uma linha por parcela (DP-27). O resto da divisão vai na 1ª parcela.
+CREATE TABLE tbl_parcela (
+  uuid_parcela         TEXT    NOT NULL PRIMARY KEY,
+  uuid_compra_faturada TEXT    NOT NULL
+                       REFERENCES tbl_compra_faturada (uuid_compra_faturada) ON DELETE CASCADE,
+  numero_parcela       INTEGER NOT NULL CHECK (numero_parcela >= 1),
+  valor_parcela        INTEGER NOT NULL CHECK (valor_parcela > 0),
+  mes_vencimento       INTEGER NOT NULL CHECK (mes_vencimento BETWEEN 1 AND 12),
+  ano_vencimento       INTEGER NOT NULL CHECK (ano_vencimento BETWEEN 2000 AND 2100),
+  UNIQUE (uuid_compra_faturada, numero_parcela)
+) AS Parcela;
+
+CREATE INDEX idx_parcela_vencimento ON tbl_parcela (ano_vencimento, mes_vencimento);
+
+-- Pagamento de fatura: não soma no consumo (DP-14).
+CREATE TABLE tbl_pagamento_fatura (
+  uuid_pagamento_fatura TEXT    NOT NULL PRIMARY KEY,
+  uuid_cartao_credito   TEXT    NOT NULL
+                        REFERENCES tbl_cartoes_credito (uuid_cartao_credito) ON DELETE RESTRICT,
+  mes_vencimento        INTEGER NOT NULL CHECK (mes_vencimento BETWEEN 1 AND 12),
+  ano_vencimento        INTEGER NOT NULL CHECK (ano_vencimento BETWEEN 2000 AND 2100),
+  timestamp_pagamento   TEXT    NOT NULL,
+  fuso_minutos          INTEGER NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840),
+  valor_pagamento       INTEGER NOT NULL CHECK (valor_pagamento > 0),
+  tipo_pagamento        TEXT    NOT NULL CHECK (tipo_pagamento IN ('pix', 'debito', 'boleto')),
+  criado_em             TEXT    NOT NULL,
+  atualizado_em         TEXT    NOT NULL
+) AS PagamentoFatura;
+
+CREATE INDEX idx_pagamento_fatura_fatura
+  ON tbl_pagamento_fatura (uuid_cartao_credito, ano_vencimento, mes_vencimento);
+
+-- Estorno de cartão: abate da fatura e do consumo (DP-14).
+CREATE TABLE tbl_estorno (
+  uuid_estorno         TEXT    NOT NULL PRIMARY KEY,
+  uuid_cartao_credito  TEXT    NOT NULL
+                       REFERENCES tbl_cartoes_credito (uuid_cartao_credito) ON DELETE RESTRICT,
+  uuid_compra_faturada TEXT    NULL
+                       REFERENCES tbl_compra_faturada (uuid_compra_faturada) ON DELETE SET NULL,
+  timestamp_estorno    TEXT    NOT NULL,
+  fuso_minutos         INTEGER NOT NULL CHECK (fuso_minutos BETWEEN -720 AND 840),
+  descricao            TEXT    NOT NULL CHECK (length(trim(descricao)) > 0),
+  valor_estorno        INTEGER NOT NULL CHECK (valor_estorno > 0),
+  mes_vencimento       INTEGER NOT NULL CHECK (mes_vencimento BETWEEN 1 AND 12),
+  ano_vencimento       INTEGER NOT NULL CHECK (ano_vencimento BETWEEN 2000 AND 2100),
+  id_subcategoria      INTEGER NOT NULL
+                       REFERENCES tbl_subcategoria (id_subcategoria),
+  uuid_tag             TEXT    NULL
+                       REFERENCES tbl_tag (uuid_tag) ON DELETE RESTRICT,
+  criado_em            TEXT    NOT NULL,
+  atualizado_em        TEXT    NOT NULL
+) AS Estorno;
+
+CREATE INDEX idx_estorno_fatura ON tbl_estorno (uuid_cartao_credito, ano_vencimento, mes_vencimento);
+
+-- Salário e voucher por vigência (DP-6): cada linha vale a partir do mês de
+-- referência até a próxima.
+CREATE TABLE tbl_renda (
+  uuid_renda     TEXT    NOT NULL PRIMARY KEY,
+  salario        INTEGER NOT NULL CHECK (salario >= 0),
+  voucher        INTEGER NOT NULL CHECK (voucher >= 0),
+  mes_referencia INTEGER NOT NULL CHECK (mes_referencia BETWEEN 1 AND 12),
+  ano_referencia INTEGER NOT NULL CHECK (ano_referencia BETWEEN 2000 AND 2100),
+  criado_em      TEXT    NOT NULL,
+  atualizado_em  TEXT    NOT NULL,
+  UNIQUE (ano_referencia, mes_referencia)
+) AS Renda;
 
 -- Acumulado do mês (E01-F04-T01). Ignora os filtros da tabela.
 acumuladoDoMes:

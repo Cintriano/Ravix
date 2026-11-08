@@ -21,6 +21,7 @@ abstract final class Icones {
   static const IconData moon = Icons.dark_mode_sharp;
   static const IconData plus = Icons.add_sharp;
   static const IconData qrCode = Icons.pix_sharp;
+  static const IconData receipt = Icons.receipt_long_sharp;
   static const IconData refreshCw = Icons.refresh_sharp;
   static const IconData settings = Icons.settings_sharp;
   static const IconData smartphone = Icons.smartphone_sharp;

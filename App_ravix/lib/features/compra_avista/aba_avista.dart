@@ -20,6 +20,7 @@ IconData iconeDoPagamento(TipoPagamento tipo) => switch (tipo) {
   TipoPagamento.debito => Icones.creditCard,
   TipoPagamento.dinheiro => Icones.banknote,
   TipoPagamento.voucher => Icones.ticket,
+  TipoPagamento.boleto => Icones.receipt,
 };
 
 /// Aba À vista (E01-F04): total do mês, filtros e gastos agrupados por dia.

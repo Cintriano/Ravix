@@ -130,7 +130,7 @@ App (SQLite local) ──► API própria ◄── Pluggy (Open Finance)
 
 ## Status
 
-✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e identidade visual v2 (DP-37).
+✅ **v1 concluída** (M0 a M7): app local de gastos à vista, com tags, bloqueio pelo PIN do aparelho e identidade visual v2 (DP-39).
 
 ## Desenvolvimento
 
