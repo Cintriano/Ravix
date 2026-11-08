@@ -3,7 +3,7 @@
 > Exportado do Notion (Projetos / Ravix / Backlog app / modelagem banco) em 08/11/2026.
 > Fonte: https://app.notion.com/p/3dfb044db6b1802a803bcebfcef7233f
 
-> **Status:** esquema da v1 implementado (seção 3, Revisão 7). Esquema 2 implementado (seção 4, Revisão 8), com a migração 1 → 2 testada; as telas da v2 ainda não o usam. A v2 continua só local, e a sincronização com o banco transacional fica na v3 (DP-37).
+> **Status:** esquema da v1 implementado (seção 3, Revisão 7). Esquema 2 implementado (seção 4, Revisão 8), com a migração 1 → 2 testada; as telas da v2 já o usam (08/11/2026). A v2 continua só local, e a sincronização com o banco transacional fica na v3 (DP-37).
 
 > **Revisão 8 (08/11/2026):** esquema da v2 detalhado (DDL, regras, consultas e migração 1 → 2), com as decisões DP-1, 10, 13, 14, 25, 28, 29 e 35 e os testes reais da Pluggy. Novas tabelas `tbl_estorno` e `tbl_recorrencia_excecao`; recorrência também no à vista; previstos calculados, sem `status_lancamento`.
 
