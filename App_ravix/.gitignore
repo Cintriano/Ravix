@@ -49,3 +49,9 @@ app.*.map.json
 
 # Código gerado pelo build_runner (make gen)
 *.g.dart
+
+# Bancos e backups com dados reais: nunca versionar
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+Backup do Ravix*

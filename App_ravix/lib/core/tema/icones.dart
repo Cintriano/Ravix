@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 ///
 /// Trocar um ícone aqui troca o app inteiro.
 abstract final class Icones {
+  static const IconData backup = Icons.backup_sharp;
   static const IconData banknote = Icons.payments_sharp;
   static const IconData calendar = Icons.calendar_today_sharp;
   static const IconData check = Icons.check_sharp;

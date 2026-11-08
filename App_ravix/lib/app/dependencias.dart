@@ -2,7 +2,10 @@
 /// uma delas com `overrides`.
 library;
 
+import 'package:path_provider/path_provider.dart';
+import 'package:ravix/app/compartilhar.dart';
 import 'package:ravix/core/ambiente.dart';
+import 'package:ravix/data/backup.dart';
 import 'package:ravix/data/banco.dart';
 import 'package:ravix/data/categoria_repository.dart';
 import 'package:ravix/data/compra_avista_repository.dart';
@@ -53,3 +56,15 @@ TagRepository tagRepository(Ref ref) => TagRepository(
 @Riverpod(keepAlive: true)
 CategoriaRepository categoriaRepository(Ref ref) =>
     CategoriaRepository(ref.watch(bancoProvider));
+
+/// Exportação do backup do banco (Configuração).
+@Riverpod(keepAlive: true)
+BackupRepository backupRepository(Ref ref) => BackupRepository(
+  ref.watch(bancoProvider),
+  relogio: ref.watch(relogioProvider),
+  pastaTemporaria: getTemporaryDirectory,
+);
+
+/// Compartilhamento de arquivos do sistema.
+@Riverpod(keepAlive: true)
+Compartilhador compartilhador(Ref ref) => const CompartilhadorSistema();

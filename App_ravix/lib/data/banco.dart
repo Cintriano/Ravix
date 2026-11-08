@@ -5,6 +5,7 @@ import 'package:drift/internal/versioned_schema.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:ravix/data/backup.dart';
 import 'package:ravix/data/banco.steps.dart';
 import 'package:ravix/data/carga_inicial.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -18,9 +19,12 @@ final class BancoRavix extends _$BancoRavix {
   /// testes, `NativeDatabase.memory(setup: configurarConexao)`.
   new(super.e);
 
-  /// 1: v1 (à vista e tags). 2: v2 (faturado, recorrências, renda).
+  /// Versão atual do esquema. 1: v1 (à vista e tags). 2: v2 (faturado,
+  /// recorrências, renda).
+  static const versaoAtual = 2;
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => versaoAtual;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,12 +117,19 @@ void configurarConexao(Database db) {
 }
 
 /// Abre o banco do app em `ravix.sqlite`, num isolate separado.
+///
+/// Se o banco estiver numa versão anterior, guarda antes uma cópia na mesma
+/// pasta (`ravix_v1_backup_….sqlite`). Se a migração falhar, a transação
+/// desfaz tudo e o banco continua na versão antiga; a cópia fica de reserva.
 BancoRavix abrirBancoRavix() => BancoRavix(
   LazyDatabase(() async {
     final pasta = await getApplicationDocumentsDirectory();
-    return NativeDatabase.createInBackground(
-      File(p.join(pasta.path, 'ravix.sqlite')),
-      setup: configurarConexao,
+    final arquivo = File(p.join(pasta.path, 'ravix.sqlite'));
+    copiarAntesDeMigrar(
+      arquivo,
+      versaoAlvo: BancoRavix.versaoAtual,
+      momento: DateTime.now(),
     );
+    return NativeDatabase.createInBackground(arquivo, setup: configurarConexao);
   }),
 );
