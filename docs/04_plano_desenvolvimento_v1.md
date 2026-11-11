@@ -319,5 +319,5 @@ Os módulos são sequenciais: cada um usa o anterior. As telas (M3 a M6) só com
 
 ## Fora deste plano
 
-- Backup dos dados (fora do escopo por enquanto, DP-36)
+- Backup dos dados (fora do escopo na v1, DP-36; a exportação manual entrou na v2)
 - Tudo o que está marcado como `v2` ou `v3` no backlog

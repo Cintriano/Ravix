@@ -424,6 +424,12 @@ Visão macro (E01-F06, DP-1): faturado do mês = soma das faturas de todos os ca
 
 Com a reconstrução, o `CHECK` de `uuid_recorrencia` e `ocorrencia` fica no banco também no à vista.
 
+### 4.5.1 Backup
+
+- **Exportação manual:** Configuração → Exportar backup grava uma cópia consistente do banco com `VACUUM INTO`, no arquivo `ravix_v<schema>_backup_AAAAMMDD-HHMM.sqlite`, e abre o compartilhamento. A Configuração mostra a data do último backup.
+- **Antes de migrar:** se o banco está numa versão anterior à do app, a migração grava antes uma cópia `ravix_v<versão antiga>_backup_….sqlite` na pasta do banco. Se a migração falhar, a transação é desfeita.
+- **Restauração:** o app ainda não restaura backup; o arquivo é um SQLite comum, que pode ser aberto fora do app.
+
 ### 4.6 Pontos revisados (08/11/2026)
 
 Todos aplicados no schema 2.

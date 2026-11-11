@@ -86,11 +86,11 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 - **Tasks relacionadas:** E01-F03-T06, E04-F01-T02
 - **Decisão:** Serão manuais apenas pelo formulário de gastos faturados.
 
-**Falta aplicar:** levar a decisão para E01-F03-T06 (removendo o "Em aberto" do F03) e fechar E04-F01-T02.
+**Aplicado:** E01-F03-T06 e E04-F01-T02 marcadas como feitas (manual, só pelo formulário).
 
-**Proposta complementar:** pré-preencher o campo com um padrão calculado pelo `dia_fechamento` do cartão, editável, para não pesar no objetivo de baixa latência.
+**Proposta complementar (implementada em 08/11/2026, DP-28):** pré-preencher o campo com um padrão calculado pelo `dia_fechamento` do cartão, editável, para não pesar no objetivo de baixa latência.
 
-**Ponto ainda aberto:** compras vindas da API ou de notificações chegarão sem o campo. Definir se viram um tipo de pendência próprio.
+**Ponto para a v3:** compras vindas da API ou de notificações chegarão sem o campo e entram em Registros pendentes, no tipo "mês de vencimento ausente" (E01-F08-T01, DP-23).
 
 **Por que 🟡:** a decisão está tomada, mas o ponto da API afeta o fluxo de pendências.
 
@@ -411,7 +411,7 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 - Criação inline no formulário e gestão na aba Tags da Configuração, que entra na v1 só com essa aba.
 - Remoção segue a regra dos cartões: arquiva se houver registros, exclui se não houver. Renomear não afeta os registros.
 - Na v1 tudo é manual. A classificação automática (E04) não tenta inferir tag, porque o dado da transação não carrega contexto.
-- Visão por tag e atribuição em lote por período: v2 (E01-F13).
+- Visão por tag: v2 (E01-F13-T01). A atribuição em lote por período foi removida em 08/11/2026: tags são só manuais, registro a registro.
 - Datas e agendamento de tag (tag ativa por período): fora do escopo.
 
 **Consequência:** a categoria 7 · Rolê sai da carga inicial (DP-11).
@@ -428,18 +428,18 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 
 **Proposta aplicada no modelo (revise):**
 
-- Sem `uuid_usuario` nas tabelas locais. Na v2, o servidor associa o usuário na sincronização, pela sessão autenticada.
+- Sem `uuid_usuario` nas tabelas locais. Na v3, o servidor associa o usuário na sincronização, pela sessão autenticada.
 - Datas em texto ISO 8601 no horário local do aparelho (`YYYY-MM-DDTHH:MM:SS`), sem fuso. O mês de um gasto é o mês local em que ele aconteceu. A conversão para UTC, se o servidor exigir, fica para o sync.
-- `criado_em` e `atualizado_em` em toda tabela editável, para a v2 saber o que mudou desde a última sincronização.
+- `criado_em` e `atualizado_em` em toda tabela editável, para a v3 saber o que mudou desde a última sincronização.
 
 **Decisão (22/10/2026):** proposta confirmada.
 
 - Sem `uuid_usuario` nas tabelas locais. O usuário é gravado na carga para o banco da aplicação externo, pela sessão autenticada.
-- Datas do evento (`timestamp_*`) em ISO 8601 no horário local do aparelho, com a coluna `fuso_minutos` (INTEGER, deslocamento em relação ao UTC, −180 = UTC−3) gravada junto. O app lê o fuso do sistema, sem rede. Com data local + deslocamento, a v2 reconstrói o instante exato; o mês do gasto continua sendo o mês local em que ele aconteceu.
-- `criado_em` e `atualizado_em` em ISO 8601 em UTC (com `Z`): são instantes do sistema e servem para a v2 saber o que mudou desde a última sincronização.
+- Datas do evento (`timestamp_*`) em ISO 8601 no horário local do aparelho, com a coluna `fuso_minutos` (INTEGER, deslocamento em relação ao UTC, −180 = UTC−3) gravada junto. O app lê o fuso do sistema, sem rede. Com data local + deslocamento, a v3 reconstrói o instante exato; o mês do gasto continua sendo o mês local em que ele aconteceu.
+- `criado_em` e `atualizado_em` em ISO 8601 em UTC (com `Z`): são instantes do sistema e servem para a v3 saber o que mudou desde a última sincronização.
 - Ao editar a data de um registro, o app usa o fuso atual do aparelho; se a data não for tocada, mantém o gravado.
 - Limitação aceita: o fuso vem do sistema. Em modo avião, sem sinal de rede, o Android mantém o último fuso conhecido até atualizar (ou até o usuário trocar), então um registro feito logo após pousar pode sair com o fuso anterior.
-- Regra da v2: como o SQLite local é de um usuário só, trocar de conta no aparelho exige limpar o banco local.
+- Regra da v3 (com a sincronização, DP-37): como o SQLite local é de um usuário só, trocar de conta no aparelho exige limpar o banco local.
 
 **Por que 🟡:** mudar depois de haver dados exige migração, mas a escolha é localizada.
 
@@ -448,6 +448,7 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 - **Status:** Aplicado · **Risco:** 🟡 Médio · **Versão:** v1, v2 · **Épico:** E01, E02
 - **Tasks relacionadas:** E01-F03-T11, E01-F07-T10, E02-F01, E02-F02-T03
 - **Decisão:** Opção A mas deixa registrado a B para a v2
+- **Atualização (DP-37, 25/10/2026):** a sincronização foi para a v3; a v1 e a v2 usam exclusão física, e a exclusão lógica (`excluido_em`) entra na v3 (E02-F02-T03).
 
 **Contexto:** o formulário exclui registros (E01-F03-T11) e a aba Tags exclui tags sem registros (E01-F07-T10). Na v1, só local, apagar a linha (exclusão física) é o mais simples. Na v2, com sincronização, o servidor precisa saber que algo foi apagado no aparelho; uma linha que sumiu não avisa ninguém.
 
@@ -478,7 +479,7 @@ Quadro único das decisões em aberto do Ravix. Substitui a seção Decisões pe
 
 - **Status:** Aplicado · **Risco:** 🟡 Médio · **Versão:** v1 · **Épico:** E01, E02
 - **Tasks relacionadas:** E01-F03-T16, E02-F01-T07
-- **Decisão:** Stack: drift, Riverpod, go_router, local_auth, uuid, intl, build_runner. Sugestão: descrições que contêm o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms, sobre a nova coluna descricao_normalizada. Ordem alfabética com Diversos por último. Otimização: isolate, WAL, carga só no onCreate, autoDispose, totais na hora. Metas: abertura < 2 s, salvar < 100 ms, cadastro < 10 s. Backup fora do escopo por enquanto.
+- **Decisão:** Stack: drift, Riverpod, go_router, local_auth, uuid, intl, build_runner. Sugestão: descrições que contêm o texto digitado, subcategoria mais frequente (desempate pela mais recente), a partir de 3 caracteres com espera de 300 ms, sobre a nova coluna descricao_normalizada. Ordem alfabética com Diversos por último. Otimização: isolate, WAL, carga só no onCreate, autoDispose, totais na hora. Metas: abertura < 2 s, salvar < 100 ms, cadastro < 10 s. Backup fora do escopo na v1 (exportação manual implementada na v2).
 
 **Contexto:** com o E01 e o E02-F01 fechados, faltava decidir as ferramentas de implementação, a regra da sugestão de categoria pela descrição e o que definir desde já para garantir desempenho.
 
@@ -519,7 +520,7 @@ Arquitetura em três camadas: telas → providers → repositórios → drift. A
 
 **Metas (medidas em profile/release, com massa de ~20 mil registros):** app aberto até a aba à vista utilizável em menos de 2 s; salvar e ver a tabela atualizada em menos de 100 ms; cadastrar um gasto em menos de 10 s.
 
-**Fora do escopo por enquanto:** backup dos dados.
+**Backup (atualização de 08/11/2026):** saiu do "fora do escopo" na v2. Configuração → Exportar backup grava uma cópia consistente do banco (`VACUUM INTO`, arquivo `ravix_v<schema>_backup_AAAAMMDD-HHMM.sqlite`) e abre o compartilhamento; a Configuração mostra o último backup. A migração de schema também faz um backup automático antes de migrar. O app ainda não restaura backup.
 
 **Por que 🟡:** a coluna nova altera o esquema da v1, ainda antes de existirem dados; o resto é configuração de implementação.
 
