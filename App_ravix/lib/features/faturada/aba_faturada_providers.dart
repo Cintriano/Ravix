@@ -87,3 +87,11 @@ final StreamProvider<List<TotalPorCategoria>> faturasPorCategoriaProvider =
           .watch(faturaRepositoryProvider)
           .observarPorCategoria(ref.watch(mesSelecionadoProvider)),
     );
+
+/// Faturas já vencidas com valor em aberto, de todos os cartões.
+final StreamProvider<List<FaturaVencida>> faturasVencidasProvider =
+    StreamProvider.autoDispose(
+      (ref) => ref
+          .watch(faturaRepositoryProvider)
+          .observarVencidasEmAberto(ref.watch(relogioProvider).agora()),
+    );

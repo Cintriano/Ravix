@@ -143,22 +143,72 @@ final class RecorrenciaRepository {
           ]))
           .watch();
 
-  /// Troca a situação da regra (pausar, retomar, cancelar). Cancelar grava
-  /// a data de fim em hoje; o histórico fica (E01-F12-T02).
-  Future<void> mudarSituacao(String uuid, SituacaoRecorrencia situacao) async {
+  /// Troca a situação da regra (pausar, retomar, cancelar) (E01-F12-T02).
+  ///
+  /// Cancelar grava a data de fim em hoje, sem passar de um fim que já
+  /// existia nem ficar antes do início (regra que ainda ia começar); o
+  /// histórico fica. Retomar pula as cobranças do período pausado: regra
+  /// pausada não gera previstos nem lançamentos, nem depois.
+  Future<void> mudarSituacao(
+    String uuid,
+    SituacaoRecorrencia situacao,
+  ) => _banco.transaction(() async {
+    final atual = await buscar(uuid);
+    if (atual == null) throw StateError('Recorrência $uuid não existe');
     final agora = _relogio.agora();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    if (situacao == SituacaoRecorrencia.ativa &&
+        atual.status == SituacaoRecorrencia.pausada.codigo) {
+      await _pularPeriodoPausado(atual, hoje);
+    }
+    var dataFim = const Value<String?>.absent();
+    if (situacao == SituacaoRecorrencia.cancelada) {
+      final inicio = deIsoData(atual.dataInicio);
+      final fimAtual = atual.dataFim == null ? null : deIsoData(atual.dataFim!);
+      var fim = fimAtual != null && fimAtual.isBefore(hoje) ? fimAtual : hoje;
+      if (fim.isBefore(inicio)) fim = inicio;
+      dataFim = Value(paraIsoData(fim));
+    }
     await (_banco.update(
       _banco.tblRecorrencia,
     )..where((r) => r.uuidRecorrencia.equals(uuid))).write(
       TblRecorrenciaCompanion(
         status: Value(situacao.codigo),
-        dataFim: situacao == SituacaoRecorrencia.cancelada
-            ? Value(paraIsoData(agora))
-            : const Value.absent(),
+        dataFim: dataFim,
         atualizadoEm: Value(paraIsoUtc(agora)),
       ),
     );
+  });
+
+  /// Grava como puladas as cobranças de [regra] entre o dia em que foi
+  /// pausada e [hoje] (os dois de fora). O dia da pausa é o `atualizado_em`:
+  /// nada mais altera uma regra pausada de um jeito que mude esse intervalo.
+  Future<void> _pularPeriodoPausado(Recorrencia regra, DateTime hoje) async {
+    final pausa = DateTime.parse(regra.atualizadoEm).toLocal();
+    final diaDaPausa = DateTime(pausa.year, pausa.month, pausa.day);
+    final ja = await _jaTratadas(regra.uuidRecorrencia);
+    final ate = Mes.de(hoje);
+    var mes = Mes.de(diaDaPausa);
+    while (mes.compareTo(ate) <= 0) {
+      for (final data in ocorrenciasNoMes(regra, mes)) {
+        if (!data.isAfter(diaDaPausa) || !data.isBefore(hoje)) continue;
+        if (ja.contains(paraIsoData(data))) continue;
+        await _gravarExcecao(regra.uuidRecorrencia, data);
+      }
+      mes = mes.proximo;
+    }
   }
+
+  Future<void> _gravarExcecao(String uuid, DateTime ocorrencia) => _banco
+      .into(_banco.tblRecorrenciaExcecao)
+      .insert(
+        TblRecorrenciaExcecaoCompanion.insert(
+          uuidRecorrencia: uuid,
+          ocorrencia: paraIsoData(ocorrencia),
+          criadoEm: paraIsoUtc(_relogio.agora()),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
 
   /// "Este e os próximos" (DP-25): encerra a regra [uuid] na véspera de
   /// [aPartirDe] e cria uma regra nova com [dados] começando nela. Os
@@ -198,7 +248,7 @@ final class RecorrenciaRepository {
       return uuid;
     }
     await encerrarAntesDe(uuid, aPartirDe);
-    return await criar((
+    final nova = await criar((
       descricao: dados.descricao,
       valorCentavos: dados.valorCentavos,
       idSubcategoria: dados.idSubcategoria,
@@ -210,7 +260,74 @@ final class RecorrenciaRepository {
       tipoPagamento: dados.tipoPagamento,
       documentoBeneficiario: dados.documentoBeneficiario,
     ));
+    await _herdar(de: atual, para: nova, aPartirDe: aPartirDe);
+    return nova;
   });
+
+  /// Passa para a regra [para] o que a regra [de] já tinha de [aPartirDe]
+  /// em diante: lançamentos, cobranças puladas e a pausa. Sem isso, a
+  /// cobrança já lançada (ou pulada) voltaria como prevista na regra nova,
+  /// porque o índice único é por regra.
+  ///
+  /// Se o mês de [aPartirDe] já teve cobrança na regra antiga e a nova
+  /// cairia em outro dia do mesmo mês (dia de cobrança trocado), essa
+  /// cobrança é pulada: uma por mês.
+  Future<void> _herdar({
+    required Recorrencia de,
+    required String para,
+    required DateTime aPartirDe,
+  }) async {
+    final antiga = de.uuidRecorrencia;
+    final corte = paraIsoData(aPartirDe);
+    final mes = Mes.de(aPartirDe);
+    final jaCobrouNoMes = (await _jaTratadas(antiga))
+        .any((o) => Mes.de(deIsoData(o)) == mes);
+    final agora = Value(paraIsoUtc(_relogio.agora()));
+
+    await (_banco.update(_banco.tblCompraAvista)..where(
+          (c) =>
+              c.uuidRecorrencia.equals(antiga) &
+              c.ocorrencia.isBiggerOrEqualValue(corte),
+        ))
+        .write(
+          TblCompraAvistaCompanion(
+            uuidRecorrencia: Value(para),
+            atualizadoEm: agora,
+          ),
+        );
+    await (_banco.update(_banco.tblCompraFaturada)..where(
+          (c) =>
+              c.uuidRecorrencia.equals(antiga) &
+              c.ocorrencia.isBiggerOrEqualValue(corte),
+        ))
+        .write(
+          TblCompraFaturadaCompanion(
+            uuidRecorrencia: Value(para),
+            atualizadoEm: agora,
+          ),
+        );
+    await (_banco.update(_banco.tblRecorrenciaExcecao)..where(
+          (e) =>
+              e.uuidRecorrencia.equals(antiga) &
+              e.ocorrencia.isBiggerOrEqualValue(corte),
+        ))
+        .write(TblRecorrenciaExcecaoCompanion(uuidRecorrencia: Value(para)));
+
+    if (de.status == SituacaoRecorrencia.pausada.codigo) {
+      await (_banco.update(_banco.tblRecorrencia)
+            ..where((r) => r.uuidRecorrencia.equals(para)))
+          .write(TblRecorrenciaCompanion(status: Value(de.status)));
+    }
+
+    if (!jaCobrouNoMes) return;
+    final nova = await buscar(para);
+    final tratadas = await _jaTratadas(para);
+    for (final data in ocorrenciasNoMes(nova!, mes)) {
+      if (!tratadas.contains(paraIsoData(data))) {
+        await _gravarExcecao(para, data);
+      }
+    }
+  }
 
   /// Encerra a regra [uuid] na véspera de [data]: as cobranças a partir dela
   /// deixam de existir; as anteriores ficam. Se [data] é o início (ou

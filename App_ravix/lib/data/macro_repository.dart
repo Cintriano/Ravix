@@ -221,8 +221,9 @@ Macro calcularMacro({
   );
 }
 
-/// Dia em que a fatura de [mes] entra no consumo: o pagamento, se foi
-/// antes do vencimento; senão, o vencimento; sem ele, o último dia.
+/// Dia em que a fatura de [mes] entra no consumo: o pagamento, se ela foi
+/// quitada antes do vencimento (dia 1 se foi num mês anterior); senão, o
+/// vencimento; sem ele, o último dia. Pagamento parcial não antecipa.
 DateTime diaDaFatura(FaturaDoCartao fatura, Mes mes) {
   final ultimo = ultimoDiaDo(mes);
   final vencimento = DateTime(
@@ -231,8 +232,9 @@ DateTime diaDaFatura(FaturaDoCartao fatura, Mes mes) {
     math.min(fatura.cartao.diaVencimento ?? ultimo, ultimo),
   );
   final pago = fatura.pagoEm;
-  if (pago != null && Mes.de(pago) == mes && pago.isBefore(vencimento)) {
-    return DateTime(pago.year, pago.month, pago.day);
-  }
-  return vencimento;
+  final quitada = pago != null && fatura.pago >= fatura.valor;
+  if (!quitada || !pago.isBefore(vencimento)) return vencimento;
+  return Mes.de(pago) == mes
+      ? DateTime(pago.year, pago.month, pago.day)
+      : DateTime(mes.ano, mes.mes);
 }

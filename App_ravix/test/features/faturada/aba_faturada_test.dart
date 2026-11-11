@@ -137,6 +137,38 @@ void main() {
     expect(find.text('Editar pagamento de fatura'), findsOneWidget);
   });
 
+  // A gravação em si (tudo ou nada) é testada no repositório: gravar depois
+  // de montar o app trava os testes de widget.
+  testarApp('quitar vencidas lista só as vencidas e cancelar não grava', (
+    tester,
+  ) async {
+    await semear(tester);
+    await abrirAba(tester);
+
+    // Só a do Itaú venceu (05/10); a do Nubank, sem dia, vence no fim do mês.
+    expect(find.text('Quitar vencidas'), findsOneWidget);
+    await tester.tap(find.text('Quitar vencidas'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quitar faturas vencidas?'), findsOneWidget);
+    final dialogo = find.byType(AlertDialog);
+    expect(
+      find.descendant(
+        of: dialogo,
+        matching: find.textContaining('Itaú · outubro/2026'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialogo, matching: find.textContaining('Nubank')),
+      findsNothing,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PAGAMENTOS'), findsNothing);
+    expect(find.text('Quitar vencidas'), findsOneWidget);
+  });
+
   testarApp('estorno aparece como crédito e abate a fatura', (tester) async {
     await semear(
       tester,

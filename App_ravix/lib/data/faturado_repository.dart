@@ -3,6 +3,7 @@ import 'package:ravix/core/ambiente.dart';
 import 'package:ravix/core/datas.dart';
 import 'package:ravix/core/texto.dart';
 import 'package:ravix/data/banco.dart';
+import 'package:ravix/data/fatura_repository.dart';
 
 /// Formas de pagamento de uma fatura (DP-14).
 enum FormaPagamentoFatura {
@@ -261,6 +262,31 @@ final class FaturadoRepository {
         );
     return uuid;
   }
+
+  /// Registra um pagamento de [forma] para cada fatura de [faturas] (as
+  /// vencidas em aberto, de `FaturaRepository.observarVencidasEmAberto`), no
+  /// valor que falta e na data do vencimento ao meio-dia. Tudo ou nada.
+  /// Devolve quantos pagamentos criou.
+  Future<int> quitarVencidas(
+    List<FaturaVencida> faturas, {
+    FormaPagamentoFatura forma = FormaPagamentoFatura.pix,
+  }) => _banco.transaction(() async {
+    for (final f in faturas) {
+      await criarPagamento((
+        momento: DateTime(
+          f.vencimento.year,
+          f.vencimento.month,
+          f.vencimento.day,
+          12,
+        ),
+        valorCentavos: f.emAberto,
+        forma: forma,
+        uuidCartao: f.uuidCartao,
+        fatura: f.fatura,
+      ));
+    }
+    return faturas.length;
+  });
 
   /// Substitui o pagamento [uuid]. Lança [StateError] se não existir.
   Future<void> editarPagamento(String uuid, DadosPagamentoFatura dados) async {

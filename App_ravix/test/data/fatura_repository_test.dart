@@ -131,6 +131,76 @@ void main() {
       },
     );
 
+    test('pagamento parcial libera só o que foi pago', () async {
+      await compra(cartao: itau, total: 100000, parcelas: 1);
+      await pagar(itau, Mes(2026, 11), 1000);
+      final f = (await faturas.observarFaturas(Mes(2026, 11)).first).first;
+      expect(f.pago, 1000);
+      expect(f.consumo, 99000);
+    });
+
+    test('pagar a mais numa fatura não abate as outras', () async {
+      await compra(cartao: itau, total: 20000, parcelas: 2);
+      await pagar(itau, Mes(2026, 11), 15000);
+      final f = (await faturas.observarFaturas(Mes(2026, 11)).first).first;
+      expect(f.consumo, 10000);
+    });
+
+    test('fatura vencida sem pagamento registrado segue no limite', () async {
+      await compra(
+        cartao: itau,
+        total: 30000,
+        parcelas: 3,
+        vencimento: Mes(2026, 8),
+      );
+      final f = (await faturas.observarFaturas(Mes(2026, 11)).first).first;
+      expect(f.consumo, 30000);
+    });
+
+    test('vencidas em aberto: só as vencidas, pelo que falta pagar', () async {
+      // Hoje é 08/11/2026; o Itaú vence dia 5. Parcelas de nov a mar.
+      await compra(cartao: itau, total: 50000, parcelas: 5);
+      await compra(
+        cartao: itau,
+        total: 30000,
+        parcelas: 3,
+        vencimento: Mes(2026, 9),
+        descricao: 'TV',
+      );
+      await pagar(itau, Mes(2026, 9), 4000);
+      final v = await faturas
+          .observarVencidasEmAberto(DateTime(2026, 11, 8))
+          .first;
+      expect(v.map((f) => (f.fatura, f.emAberto)), [
+        (Mes(2026, 9), 6000),
+        (Mes(2026, 10), 10000),
+        (Mes(2026, 11), 20000),
+      ]);
+      expect(v.first.vencimento, DateTime(2026, 9, 5));
+      // Antes do dia 5 de novembro, a de novembro ainda não venceu.
+      final antes = await faturas
+          .observarVencidasEmAberto(DateTime(2026, 11, 4))
+          .first;
+      expect(antes, hasLength(2));
+    });
+
+    test('quitar vencidas zera o que venceu e libera o limite', () async {
+      await compra(
+        cartao: itau,
+        total: 30000,
+        parcelas: 3,
+        vencimento: Mes(2026, 9),
+      );
+      final hoje = DateTime(2026, 11, 8);
+      final v = await faturas.observarVencidasEmAberto(hoje).first;
+      expect(await faturado.quitarVencidas(v), 3);
+      expect(await faturas.observarVencidasEmAberto(hoje).first, isEmpty);
+      final f = (await faturas.observarFaturas(Mes(2026, 11)).first).first;
+      expect(f.consumo, 0);
+      expect(f.pago, 10000);
+      expect(f.pagoEm, DateTime(2026, 11, 5, 12));
+    });
+
     test('estorno de fatura não paga libera o limite', () async {
       await compra(cartao: itau, total: 30000, parcelas: 1);
       await estornar(itau, Mes(2026, 11), 30000);

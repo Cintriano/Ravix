@@ -34,15 +34,17 @@ final class BancoRavix extends _$BancoRavix {
     },
     onUpgrade: (m, from, to) async {
       // A reconstrução de tabelas exige as FKs desligadas, e o PRAGMA não
-      // muda dentro de transação: desliga antes e confere depois.
+      // muda dentro de transação: desliga antes e religa depois.
       await customStatement('PRAGMA foreign_keys = OFF');
-      await transaction(
-        () => m.runMigrationSteps(from: from, to: to, steps: _passos),
-      );
-      final quebradas = await customSelect('PRAGMA foreign_key_check').get();
-      if (quebradas.isNotEmpty) {
-        throw StateError('Migração $from → $to deixou FKs inválidas.');
-      }
+      // A checagem fica dentro da transação: se achar FK inválida, o erro
+      // desfaz a migração inteira e o banco continua na versão antiga.
+      await transaction(() async {
+        await m.runMigrationSteps(from: from, to: to, steps: _passos);
+        final quebradas = await customSelect('PRAGMA foreign_key_check').get();
+        if (quebradas.isNotEmpty) {
+          throw StateError('Migração $from → $to deixou FKs inválidas.');
+        }
+      });
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );

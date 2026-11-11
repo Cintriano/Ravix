@@ -378,8 +378,9 @@ CREATE INDEX idx_estorno_fatura               ON tbl_estorno (uuid_cartao_credit
   - Recorrência com lançamentos não é excluída (`RESTRICT`): é cancelada.
 - **Fatura** de um cartão num mês = soma das parcelas daquele mês de vencimento − estornos daquele mês. Os previstos de recorrência aparecem na fatura marcados como previstos (E01-F05-T07).
 - **Fatura paga** (E01-F05-T09): soma dos pagamentos daquela fatura ≥ valor da fatura. Abaixo disso e acima de zero, paga parcialmente.
-- **Consumo do limite** (E01-F05-T01): soma das parcelas de todas as faturas ainda não pagas do cartão, inclusive futuras, menos os estornos delas, dividido por `limite_cartao`. Previstos não entram.
+- **Consumo do limite** (E01-F05-T01): soma, por fatura, de parcelas − estornos − pagamentos daquela fatura (mínimo 0 em cada uma), somando todas as faturas do cartão, inclusive futuras, dividida por `limite_cartao`. Fatura vencida sem pagamento registrado conta inteira (por isso o pagamento de faturas já pagas no banco precisa ser registrado). Previstos não entram.
 - **Estorno** (DP-14): valor positivo que abate da fatura do mês indicado, do consumo e dos totais por categoria e tag. Com compra original, herda subcategoria e tag dela (editáveis).
+- **Quitar vencidas** (E01-F14-T04): grava um pagamento (Pix) por fatura vencida com valor em aberto, no valor que falta e na data do vencimento, numa só transação.
 - **Pagamento de fatura** não entra em nenhuma soma de consumo.
 - **Renda vigente** (DP-6): para um mês, vale a linha de `tbl_renda` com a maior referência menor ou igual a ele. Sem nenhuma linha, a visão macro pede o cadastro da renda.
 - **Remover cartão** (DP-29): o `RESTRICT` impede excluir cartão com compras, pagamentos ou estornos; o app então arquiva. Arquivado some dos seletores e continua nas telas de histórico.

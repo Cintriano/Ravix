@@ -18,5 +18,6 @@ Documentação do projeto trazida do Notion (Projetos / Ravix), exportada pela �
 - **Status:** v1 concluída em 24/10/2026 (M0 a M7). v2 implementada em 08/11/2026, com merge na `main`, e instalada no aparelho. Identidade visual v2 aplicada (DP-39).
 - **v1:** só local (SQLite), aba à vista, formulário, tags e bloqueio pelo PIN do aparelho.
 - **v2:** ainda só local. Schema 2 com a migração 1 → 2 e backup antes de migrar; renda por vigência e cartões (com arquivar e reativar) na Configuração; compra no cartão, pagamento de fatura, estorno e recorrências (à vista previstas com Registrar; no cartão, lançadas sozinhas); abas Macro (inicial), Faturada e À vista; gasto por categoria e visão por tag.
+- **11/11/2026:** revisão completa e correções (consumo do limite por fatura, recorrências, Macro, migração) e botão Quitar vencidas na aba Faturada (E01-F14-T04 e T05).
 - **Falta na v2:** só as validações de uso no aparelho (E01-F14).
 - **Decisões em aberto:** 9 de 39, todas da v3 ou sem versão.

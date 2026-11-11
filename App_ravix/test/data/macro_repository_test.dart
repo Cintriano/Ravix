@@ -175,6 +175,29 @@ void main() {
       expect(m.serie, [0, 100000, 100000]);
     });
 
+    test('quitada no mês anterior já entra no dia 1', () {
+      final m = calcular(
+        hoje: DateTime(2026, 11, 3),
+        faturas: [fatura(100000, pagoEm: DateTime(2026, 10, 29, 9))],
+      );
+      expect(m.faturado, 100000);
+      expect(m.faturadoAVencer, 0);
+      expect(m.serie, [100000, 100000, 100000]);
+    });
+
+    test('pagamento parcial não antecipa a fatura', () {
+      final parcial = (
+        cartao: cartao(),
+        valor: 100000,
+        pago: 1000,
+        pagoEm: DateTime(2026, 11, 2, 9),
+        consumo: 0,
+      );
+      final m = calcular(hoje: DateTime(2026, 11, 3), faturas: [parcial]);
+      expect(m.faturado, 0);
+      expect(m.faturadoAVencer, 100000);
+    });
+
     test('sem dia de vencimento, entra no último dia', () {
       final m = calcular(faturas: [fatura(100000, vencimento: null)]);
       expect(m.faturadoAVencer, 100000);

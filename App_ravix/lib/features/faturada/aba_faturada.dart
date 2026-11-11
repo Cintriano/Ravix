@@ -83,7 +83,9 @@ class _Conteudo extends ConsumerWidget {
       slivers: [
         SliverToBoxAdapter(child: _Resumo(faturas, previstas: previstas)),
         SliverToBoxAdapter(child: _LinhaDoTempo(cores: cores)),
-        const SliverToBoxAdapter(child: _Sobretitulo('CARTÕES')),
+        const SliverToBoxAdapter(
+          child: _Sobretitulo('CARTÕES', acao: _QuitarVencidas()),
+        ),
         SliverList.list(
           children: [
             for (final f in faturas)
@@ -204,6 +206,77 @@ class _Sobretitulo extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Botão que registra o pagamento de todas as faturas já vencidas que
+/// ainda estão em aberto. Some quando não há nenhuma.
+class _QuitarVencidas extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vencidas = ref.watch(faturasVencidasProvider).value ?? const [];
+    if (vencidas.isEmpty) return const SizedBox.shrink();
+    return TextButton(
+      onPressed: () => _confirmar(context, ref, vencidas),
+      child: const Text('Quitar vencidas'),
+    );
+  }
+
+  Future<void> _confirmar(
+    BuildContext context,
+    WidgetRef ref,
+    List<FaturaVencida> vencidas,
+  ) async {
+    final total = vencidas.fold(0, (s, f) => s + f.emAberto);
+    final mensageiro = ScaffoldMessenger.of(context);
+    final repositorio = ref.read(faturadoRepositoryProvider);
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quitar faturas vencidas?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Registra um pagamento por Pix, na data do vencimento, para '
+                'cada fatura abaixo. Use só se elas já foram pagas no banco.',
+              ),
+              const SizedBox(height: TokensRavix.spaceSm),
+              for (final f in vencidas)
+                Text(
+                  '${f.nomeCartao} · ${f.fatura.nome}/${f.fatura.ano}: '
+                  '${formatarCentavos(f.emAberto)}',
+                ),
+              const SizedBox(height: TokensRavix.spaceSm),
+              Text('Total: ${formatarCentavos(total)}'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Quitar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmou != true) return;
+    final n = await repositorio.quitarVencidas(vencidas);
+    mensageiro
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(n == 1 ? '1 fatura quitada.' : '$n faturas quitadas.'),
+        ),
+      );
+  }
 }
 
 /// Card de resumo em Floresta: total das faturas do mês, previstos à parte

@@ -49,6 +49,14 @@ void main() {
   }
 
   Future<void> tocar(WidgetTester tester, Finder alvo) async {
+    // No aparelho o tempo é real: o aviso de "salvo" ainda está na tela e
+    // cobre o que fica no rodapé.
+    for (final mensageiro in tester.stateList<ScaffoldMessengerState>(
+      find.byType(ScaffoldMessenger),
+    )) {
+      mensageiro.clearSnackBars();
+    }
+    await tester.pumpAndSettle();
     await rolarAte(tester, alvo);
     await tester.ensureVisible(alvo);
     await tester.pumpAndSettle();
@@ -109,10 +117,14 @@ void main() {
 
     // Ver na tabela.
     expect(find.text('Padaria do Zé'), findsOneWidget);
-    expect(find.text(formatarCentavos(1250)), findsNWidgets(2));
+    // Total do mês, subtotal do dia e a linha do gasto.
+    expect(find.text(formatarCentavos(1250)), findsNWidgets(3));
 
     // Filtrar.
     await tocar(tester, find.text('Categoria'));
+    // No aparelho, a última opção da folha fica cortada: rola até ela.
+    await tester.ensureVisible(find.text('Transporte').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Transporte').last);
     await tester.pumpAndSettle();
     expect(find.text('Nada com esses filtros'), findsOneWidget);
@@ -123,7 +135,7 @@ void main() {
     await tocar(tester, find.text('Padaria do Zé'));
     await tester.enterText(find.widgetWithText(TextField, 'Valor'), '990');
     await tocar(tester, find.text('Salvar gasto'));
-    expect(find.text(formatarCentavos(990)), findsNWidgets(2));
+    expect(find.text(formatarCentavos(990)), findsNWidgets(3));
 
     // Excluir.
     await tocar(tester, find.text('Padaria do Zé'));

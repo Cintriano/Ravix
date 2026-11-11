@@ -340,6 +340,12 @@ Ajustes encontrados no uso da v1. Os itens entram aqui conforme aparecerem nos t
 - **T01** Validar no uso: cadastrar um gasto em menos de 10 s (meta do DP-36)
 - **T02** Validar no uso: aba à vista com dados reais
 - **T03** Validar no uso: falha do bloqueio no aparelho (cancelar e ver a mensagem)
+- **T04** Botão "Quitar vencidas" na aba Faturada (seção CARTÕES): lista as faturas vencidas em aberto e registra um pagamento de cada uma, para o limite refletir faturas já pagas no banco `v2` (F)
+- **T05** Correções da revisão de 11/11/2026 `v2` (F)
+  - Consumo do limite por fatura (parcelas − estornos − pagamentos, mínimo 0); pagamento maior que a fatura não abate outras.
+  - Recorrência: retomar de pausada pula o período pausado (exceções); cancelar limita `data_fim`; "este e os próximos" herda lançamentos, exceções e pausa e não repete a cobrança do mês.
+  - Macro: fatura só antecipa o dia se estiver quitada.
+  - Migração: `foreign_key_check` dentro da transação.
 
 ### Fora do escopo (E01)
 

@@ -245,4 +245,153 @@ void main() {
     expect(cancelada.status, 'cancelada');
     expect(cancelada.dataFim, '2026-11-08');
   });
+
+  group('pausar e retomar', () {
+    test('retomar não lança as cobranças do período pausado', () async {
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.materializarFaturadas(); // 10/09, 10/10
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.pausada);
+
+      relogio.momento = DateTime(2027, 2, 15, 12);
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.ativa);
+      expect(await repositorio.materializarFaturadas(), 0);
+      expect(await banco.select(banco.tblCompraFaturada).get(), hasLength(2));
+
+      // Daí em diante volta a cobrar.
+      relogio.momento = DateTime(2027, 3, 10, 12);
+      expect(await repositorio.materializarFaturadas(), 1);
+    });
+
+    test('à vista: o período pausado não volta como atrasado', () async {
+      final uuid = await repositorio.criar(aluguel());
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.pausada);
+      relogio.momento = DateTime(2027, 1, 26, 12);
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.ativa);
+
+      expect(await repositorio.previstasAvista(Mes(2026, 11)), isEmpty);
+      expect(await repositorio.previstasAvista(Mes(2026, 12)), isEmpty);
+      expect(await repositorio.previstasAvista(Mes(2027, 1)), isEmpty);
+      // O que já estava previsto antes da pausa continua, e o futuro também.
+      expect(await repositorio.previstasAvista(Mes(2026, 10)), hasLength(1));
+      expect(await repositorio.previstasAvista(Mes(2027, 2)), hasLength(1));
+    });
+
+    test('retomar no dia da cobrança lança a de hoje', () async {
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.materializarFaturadas();
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.pausada);
+      relogio.momento = DateTime(2026, 11, 10, 12);
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.ativa);
+      expect(await repositorio.materializarFaturadas(), 1);
+    });
+
+    test('editar uma regra pausada mantém a pausa', () async {
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.pausada);
+      final nova = await repositorio.editarDaquiPraFrente(
+        uuid,
+        valorCentavos: 6000,
+        diaCobranca: 10,
+        idSubcategoria: 601,
+      );
+      expect((await repositorio.buscar(nova))!.status, 'pausada');
+    });
+  });
+
+  group('cancelar', () {
+    test('regra que começa no futuro termina no próprio início', () async {
+      final uuid = await repositorio.criar(
+        netflix(inicio: DateTime(2026, 12, 10)),
+      );
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.cancelada);
+      final r = (await repositorio.buscar(uuid))!;
+      expect(r.status, 'cancelada');
+      expect(r.dataFim, '2026-12-10');
+    });
+
+    test('não estica um fim que já passou', () async {
+      final uuid = await repositorio.criar(
+        aluguel(inicio: DateTime(2026, 9), fim: DateTime(2026, 10, 31)),
+      );
+      await repositorio.mudarSituacao(uuid, SituacaoRecorrencia.cancelada);
+      expect((await repositorio.buscar(uuid))!.dataFim, '2026-10-31');
+    });
+  });
+
+  group('editar a regra herda o que já foi tratado', () {
+    test('no dia da cobrança já lançada não lança de novo', () async {
+      relogio.momento = DateTime(2026, 11, 10, 12);
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.materializarFaturadas(); // 10/09, 10/10, 10/11
+      final nova = await repositorio.editarDaquiPraFrente(
+        uuid,
+        valorCentavos: 6000,
+        diaCobranca: 10,
+        idSubcategoria: 601,
+      );
+      expect(await repositorio.materializarFaturadas(), 0);
+      final compras = await (banco.select(
+        banco.tblCompraFaturada,
+      )..orderBy([(c) => OrderingTerm.asc(c.ocorrencia)])).get();
+      expect(compras.map((c) => c.ocorrencia), [
+        '2026-09-10',
+        '2026-10-10',
+        '2026-11-10',
+      ]);
+      // A de hoje passa para a regra nova, com o valor com que foi lançada.
+      expect(compras.last.uuidRecorrencia, nova);
+      expect(compras.last.valorTotal, 5590);
+      expect(compras.first.uuidRecorrencia, uuid);
+    });
+
+    test('à vista registrada hoje não volta como prevista', () async {
+      relogio.momento = DateTime(2026, 11, 25, 12);
+      final uuid = await repositorio.criar(aluguel());
+      final prevista = (await repositorio.previstasAvista(Mes(2026, 11)))
+          .single;
+      await repositorio.registrarAvista(
+        prevista,
+        momento: relogio.agora(),
+        valorCentavos: 150000,
+        tipoPagamento: TipoPagamento.pix,
+      );
+      await repositorio.editarDaquiPraFrente(
+        uuid,
+        valorCentavos: 160000,
+        diaCobranca: 25,
+        idSubcategoria: 701,
+      );
+      expect(await repositorio.previstasAvista(Mes(2026, 11)), isEmpty);
+      final dezembro = await repositorio.previstasAvista(Mes(2026, 12));
+      expect(dezembro.single.regra.valorRecorrencia, 160000);
+    });
+
+    test('cobrança pulada continua pulada', () async {
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.pular(uuid, DateTime(2026, 12, 10));
+      await repositorio.editarDaquiPraFrente(
+        uuid,
+        valorCentavos: 6000,
+        diaCobranca: 10,
+        idSubcategoria: 601,
+      );
+      expect(await repositorio.previstasFaturadas(Mes(2026, 12)), isEmpty);
+      expect(await repositorio.previstasFaturadas(Mes(2027, 1)), hasLength(1));
+    });
+
+    test('trocar o dia depois da cobrança do mês: uma por mês', () async {
+      relogio.momento = DateTime(2026, 11, 12, 12);
+      final uuid = await repositorio.criar(netflix());
+      await repositorio.materializarFaturadas(); // até 10/11
+      await repositorio.editarDaquiPraFrente(
+        uuid,
+        valorCentavos: 5590,
+        diaCobranca: 20,
+        idSubcategoria: 601,
+      );
+      expect(await repositorio.previstasFaturadas(Mes(2026, 11)), isEmpty);
+      final dezembro = await repositorio.previstasFaturadas(Mes(2026, 12));
+      expect(dezembro.single.ocorrencia, DateTime(2026, 12, 20));
+    });
+  });
 }
