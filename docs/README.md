@@ -20,4 +20,5 @@ Documentação do projeto trazida do Notion (Projetos / Ravix), exportada pela �
 - **v2:** ainda só local. Schema 2 com a migração 1 → 2 e backup antes de migrar; renda por vigência e cartões (com arquivar e reativar) na Configuração; compra no cartão, pagamento de fatura, estorno e recorrências (à vista previstas com Registrar; no cartão, lançadas sozinhas); abas Macro (inicial), Faturada e À vista; gasto por categoria e visão por tag.
 - **11/11/2026:** revisão completa e correções (consumo do limite por fatura, recorrências, Macro, migração) e botão Quitar vencidas na aba Faturada (E01-F14-T04 e T05).
 - **Falta na v2:** só as validações de uso no aparelho (E01-F14).
+- **Testes da v1:** 1 achado no banco do Notion (valor como primeiro campo do formulário), corrigido; ver E01-F14 em [02_backlog.md](02_backlog.md).
 - **Decisões em aberto:** 9 de 39, todas da v3 ou sem versão.

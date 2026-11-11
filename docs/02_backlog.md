@@ -335,7 +335,9 @@ Recorte dos registros por contexto (viagem, rolê etc.). Não soma nada ao consu
 
 ### E01-F14 — Correções da v1 `v2`
 
-Ajustes encontrados no uso da v1. Os itens entram aqui conforme aparecerem nos testes no aparelho.
+Ajustes encontrados no uso da v1. Os itens entram aqui conforme aparecerem nos testes no aparelho. Os achados ficam no banco "Testes da v1: erros e melhorias" do Notion (tipo, severidade, área e status); cada item aceito vira uma task aqui.
+
+- Achado 1 (29/10/2026, melhoria, formulário, v2): valor como primeiro campo do formulário. Corrigido.
 
 - **T01** Validar no uso: cadastrar um gasto em menos de 10 s (meta do DP-36)
 - **T02** Validar no uso: aba à vista com dados reais
